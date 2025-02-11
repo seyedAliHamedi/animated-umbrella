@@ -1,0 +1,215 @@
+Help on class AnimationInterface in module ns3:
+
+class AnimationInterface(cppyy.gbl.CPPInstance)
+ |  Method resolution order:
+ |      AnimationInterface
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  AddNodeCounter(...)
+ |      unsigned int ns3::AnimationInterface::AddNodeCounter(std::string counterName, ns3::AnimationInterface::CounterType counterType)
+ |
+ |  AddResource(...)
+ |      unsigned int ns3::AnimationInterface::AddResource(std::string resourcePath)
+ |
+ |  AddSourceDestination(...)
+ |      ns3::AnimationInterface& ns3::AnimationInterface::AddSourceDestination(uint32_t fromNodeId, std::string destinationIpv4Address)
+ |
+ |  EnableIpv4L3ProtocolCounters(...)
+ |      void ns3::AnimationInterface::EnableIpv4L3ProtocolCounters(ns3::Time startTime, ns3::Time stopTime, ns3::Time pollInterval = Seconds(1))
+ |
+ |  EnableIpv4RouteTracking(...)
+ |      ns3::AnimationInterface& ns3::AnimationInterface::EnableIpv4RouteTracking(std::string fileName, ns3::Time startTime, ns3::Time stopTime, ns3::Time pollInterval = Seconds(5))
+ |      ns3::AnimationInterface& ns3::AnimationInterface::EnableIpv4RouteTracking(std::string fileName, ns3::Time startTime, ns3::Time stopTime, ns3::NodeContainer nc, ns3::Time pollInterval = Seconds(5))
+ |
+ |  EnablePacketMetadata(...)
+ |      void ns3::AnimationInterface::EnablePacketMetadata(bool enable = true)
+ |
+ |  EnableQueueCounters(...)
+ |      void ns3::AnimationInterface::EnableQueueCounters(ns3::Time startTime, ns3::Time stopTime, ns3::Time pollInterval = Seconds(1))
+ |
+ |  EnableWifiMacCounters(...)
+ |      void ns3::AnimationInterface::EnableWifiMacCounters(ns3::Time startTime, ns3::Time stopTime, ns3::Time pollInterval = Seconds(1))
+ |
+ |  EnableWifiPhyCounters(...)
+ |      void ns3::AnimationInterface::EnableWifiPhyCounters(ns3::Time startTime, ns3::Time stopTime, ns3::Time pollInterval = Seconds(1))
+ |
+ |  GetNodeEnergyFraction(...)
+ |      double ns3::AnimationInterface::GetNodeEnergyFraction(ns3::Ptr<const ns3::Node> node)
+ |
+ |  GetTracePktCount(...)
+ |      unsigned long long ns3::AnimationInterface::GetTracePktCount()
+ |
+ |  IsInitialized(...)
+ |      static bool ns3::AnimationInterface::IsInitialized()
+ |
+ |  IsStarted(...)
+ |      bool ns3::AnimationInterface::IsStarted()
+ |
+ |  ResetAnimWriteCallback(...)
+ |      void ns3::AnimationInterface::ResetAnimWriteCallback()
+ |
+ |  SetAnimWriteCallback(...)
+ |      void ns3::AnimationInterface::SetAnimWriteCallback(ns3::AnimationInterface::AnimWriteCallback cb)
+ |
+ |  SetBackgroundImage(...)
+ |      void ns3::AnimationInterface::SetBackgroundImage(std::string fileName, double x, double y, double scaleX, double scaleY, double opacity)
+ |
+ |  SetConstantPosition(...)
+ |      static void ns3::AnimationInterface::SetConstantPosition(ns3::Ptr<ns3::Node> n, double x, double y, double z = 0)
+ |
+ |  SetMaxPktsPerTraceFile(...)
+ |      void ns3::AnimationInterface::SetMaxPktsPerTraceFile(uint64_t maxPktsPerFile)
+ |
+ |  SetMobilityPollInterval(...)
+ |      void ns3::AnimationInterface::SetMobilityPollInterval(ns3::Time t)
+ |
+ |  SetStartTime(...)
+ |      void ns3::AnimationInterface::SetStartTime(ns3::Time t)
+ |
+ |  SetStopTime(...)
+ |      void ns3::AnimationInterface::SetStopTime(ns3::Time t)
+ |
+ |  SkipPacketTracing(...)
+ |      void ns3::AnimationInterface::SkipPacketTracing()
+ |
+ |  UpdateLinkDescription(...)
+ |      void ns3::AnimationInterface::UpdateLinkDescription(uint32_t fromNode, uint32_t toNode, std::string linkDescription)
+ |      void ns3::AnimationInterface::UpdateLinkDescription(ns3::Ptr<ns3::Node> fromNode, ns3::Ptr<ns3::Node> toNode, std::string linkDescription)
+ |
+ |  UpdateNodeColor(...)
+ |      void ns3::AnimationInterface::UpdateNodeColor(ns3::Ptr<ns3::Node> n, uint8_t r, uint8_t g, uint8_t b)
+ |      void ns3::AnimationInterface::UpdateNodeColor(uint32_t nodeId, uint8_t r, uint8_t g, uint8_t b)
+ |
+ |  UpdateNodeCounter(...)
+ |      void ns3::AnimationInterface::UpdateNodeCounter(uint32_t nodeCounterId, uint32_t nodeId, double counter)
+ |
+ |  UpdateNodeDescription(...)
+ |      void ns3::AnimationInterface::UpdateNodeDescription(ns3::Ptr<ns3::Node> n, std::string descr)
+ |      void ns3::AnimationInterface::UpdateNodeDescription(uint32_t nodeId, std::string descr)
+ |
+ |  UpdateNodeImage(...)
+ |      void ns3::AnimationInterface::UpdateNodeImage(uint32_t nodeId, uint32_t resourceId)
+ |
+ |  UpdateNodeSize(...)
+ |      void ns3::AnimationInterface::UpdateNodeSize(ns3::Ptr<ns3::Node> n, double width, double height)
+ |      void ns3::AnimationInterface::UpdateNodeSize(uint32_t nodeId, double width, double height)
+ |
+ |  __assign__(...)
+ |      ns3::AnimationInterface& ns3::AnimationInterface::operator=(const ns3::AnimationInterface&)
+ |
+ |  __init__(...)
+ |      AnimationInterface::AnimationInterface(const std::string filename)
+ |      AnimationInterface::AnimationInterface(const ns3::AnimationInterface&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors defined here:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes defined here:
+ |
+ |  DOUBLE_COUNTER = (ns3::AnimationInterface::CounterType::DOUBLE_COUNTER...
+ |
+ |  UINT32_COUNTER = (ns3::AnimationInterface::CounterType::UINT32_COUNTER...
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

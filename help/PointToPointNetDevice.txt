@@ -1,0 +1,304 @@
+Help on class PointToPointNetDevice in module ns3:
+
+class PointToPointNetDevice(NetDevice)
+ |  Method resolution order:
+ |      PointToPointNetDevice
+ |      NetDevice
+ |      Object
+ |      SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>
+ |      ObjectBase
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  AddLinkChangeCallback(...)
+ |      void ns3::PointToPointNetDevice::AddLinkChangeCallback(ns3::Callback<void> callback)
+ |
+ |  Attach(...)
+ |      bool ns3::PointToPointNetDevice::Attach(ns3::Ptr<ns3::PointToPointChannel> ch)
+ |
+ |  GetAddress(...)
+ |      ns3::Address ns3::PointToPointNetDevice::GetAddress()
+ |
+ |  GetBroadcast(...)
+ |      ns3::Address ns3::PointToPointNetDevice::GetBroadcast()
+ |
+ |  GetChannel(...)
+ |      ns3::Ptr<ns3::Channel> ns3::PointToPointNetDevice::GetChannel()
+ |
+ |  GetIfIndex(...)
+ |      unsigned int ns3::PointToPointNetDevice::GetIfIndex()
+ |
+ |  GetMtu(...)
+ |      unsigned short ns3::PointToPointNetDevice::GetMtu()
+ |
+ |  GetMulticast(...)
+ |      ns3::Address ns3::PointToPointNetDevice::GetMulticast(ns3::Ipv4Address multicastGroup)
+ |      ns3::Address ns3::PointToPointNetDevice::GetMulticast(ns3::Ipv6Address addr)
+ |
+ |  GetNode(...)
+ |      ns3::Ptr<ns3::Node> ns3::PointToPointNetDevice::GetNode()
+ |
+ |  GetQueue(...)
+ |      ns3::Ptr<ns3::Queue<ns3::Packet>> ns3::PointToPointNetDevice::GetQueue()
+ |
+ |  GetTypeId(...)
+ |      static ns3::TypeId ns3::PointToPointNetDevice::GetTypeId()
+ |
+ |  IsBridge(...)
+ |      bool ns3::PointToPointNetDevice::IsBridge()
+ |
+ |  IsBroadcast(...)
+ |      bool ns3::PointToPointNetDevice::IsBroadcast()
+ |
+ |  IsLinkUp(...)
+ |      bool ns3::PointToPointNetDevice::IsLinkUp()
+ |
+ |  IsMulticast(...)
+ |      bool ns3::PointToPointNetDevice::IsMulticast()
+ |
+ |  IsPointToPoint(...)
+ |      bool ns3::PointToPointNetDevice::IsPointToPoint()
+ |
+ |  NeedsArp(...)
+ |      bool ns3::PointToPointNetDevice::NeedsArp()
+ |
+ |  Receive(...)
+ |      void ns3::PointToPointNetDevice::Receive(ns3::Ptr<ns3::Packet> p)
+ |
+ |  Send(...)
+ |      bool ns3::PointToPointNetDevice::Send(ns3::Ptr<ns3::Packet> packet, const ns3::Address& dest, uint16_t protocolNumber)
+ |
+ |  SendFrom(...)
+ |      bool ns3::PointToPointNetDevice::SendFrom(ns3::Ptr<ns3::Packet> packet, const ns3::Address& source, const ns3::Address& dest, uint16_t protocolNumber)
+ |
+ |  SetAddress(...)
+ |      void ns3::PointToPointNetDevice::SetAddress(ns3::Address address)
+ |
+ |  SetDataRate(...)
+ |      void ns3::PointToPointNetDevice::SetDataRate(ns3::DataRate bps)
+ |
+ |  SetIfIndex(...)
+ |      void ns3::PointToPointNetDevice::SetIfIndex(const uint32_t index)
+ |
+ |  SetInterframeGap(...)
+ |      void ns3::PointToPointNetDevice::SetInterframeGap(ns3::Time t)
+ |
+ |  SetMtu(...)
+ |      bool ns3::PointToPointNetDevice::SetMtu(const uint16_t mtu)
+ |
+ |  SetNode(...)
+ |      void ns3::PointToPointNetDevice::SetNode(ns3::Ptr<ns3::Node> node)
+ |
+ |  SetPromiscReceiveCallback(...)
+ |      void ns3::PointToPointNetDevice::SetPromiscReceiveCallback(ns3::NetDevice::PromiscReceiveCallback cb)
+ |
+ |  SetQueue(...)
+ |      void ns3::PointToPointNetDevice::SetQueue(ns3::Ptr<ns3::Queue<ns3::Packet>> queue)
+ |
+ |  SetReceiveCallback(...)
+ |      void ns3::PointToPointNetDevice::SetReceiveCallback(ns3::NetDevice::ReceiveCallback cb)
+ |
+ |  SetReceiveErrorModel(...)
+ |      void ns3::PointToPointNetDevice::SetReceiveErrorModel(ns3::Ptr<ns3::ErrorModel> em)
+ |
+ |  SupportsSendFrom(...)
+ |      bool ns3::PointToPointNetDevice::SupportsSendFrom()
+ |
+ |  __init__(...)
+ |      PointToPointNetDevice::PointToPointNetDevice()
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from NetDevice:
+ |
+ |  __assign__(...)
+ |      ns3::NetDevice& ns3::NetDevice::operator=(const ns3::NetDevice&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes inherited from NetDevice:
+ |
+ |  NS3_PACKET_BROADCAST = (ns3::NetDevice::PacketType::NS3_PACKET_BROADCA...
+ |
+ |  NS3_PACKET_HOST = (ns3::NetDevice::PacketType::NS3_PACKET_HOST) : (uns...
+ |
+ |  NS3_PACKET_MULTICAST = (ns3::NetDevice::PacketType::NS3_PACKET_MULTICA...
+ |
+ |  NS3_PACKET_OTHERHOST = (ns3::NetDevice::PacketType::NS3_PACKET_OTHERHO...
+ |
+ |  PACKET_BROADCAST = (ns3::NetDevice::PacketType::PACKET_BROADCAST) : (u...
+ |
+ |  PACKET_HOST = (ns3::NetDevice::PacketType::PACKET_HOST) : (unsigned in...
+ |
+ |  PACKET_MULTICAST = (ns3::NetDevice::PacketType::PACKET_MULTICAST) : (u...
+ |
+ |  PACKET_OTHERHOST = (ns3::NetDevice::PacketType::PACKET_OTHERHOST) : (u...
+ |
+ |  PacketType = <class 'inspect.PacketType'>
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from Object:
+ |
+ |  AggregateObject(...)
+ |      void ns3::Object::AggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  Dispose(...)
+ |      void ns3::Object::Dispose()
+ |
+ |  GetAggregateIterator(...)
+ |      ns3::Object::AggregateIterator ns3::Object::GetAggregateIterator()
+ |
+ |  GetInstanceTypeId(...)
+ |      ns3::TypeId ns3::Object::GetInstanceTypeId()
+ |
+ |  GetObject = <cppyy.TemplateProxy object>
+ |  Initialize(...)
+ |      void ns3::Object::Initialize()
+ |
+ |  IsInitialized(...)
+ |      bool ns3::Object::IsInitialized()
+ |
+ |  UnidirectionalAggregateObject(...)
+ |      void ns3::Object::UnidirectionalAggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>:
+ |
+ |  GetReferenceCount(...)
+ |      unsigned int ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::GetReferenceCount()
+ |
+ |  Ref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Ref()
+ |
+ |  Unref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Unref()
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ObjectBase:
+ |
+ |  GetAttribute(...)
+ |      void ns3::ObjectBase::GetAttribute(std::string name, ns3::AttributeValue& value, bool permissive = false)
+ |
+ |  GetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::GetAttributeFailSafe(std::string name, ns3::AttributeValue& value)
+ |
+ |  SetAttribute(...)
+ |      void ns3::ObjectBase::SetAttribute(std::string name, const ns3::AttributeValue& value)
+ |
+ |  SetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::SetAttributeFailSafe(std::string name, const ns3::AttributeValue& value)
+ |
+ |  TraceConnect(...)
+ |      bool ns3::ObjectBase::TraceConnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceConnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceConnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnect(...)
+ |      bool ns3::ObjectBase::TraceDisconnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceDisconnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ObjectBase:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

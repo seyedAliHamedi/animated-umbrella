@@ -1,0 +1,204 @@
+Help on class YansWifiPhyHelper in module ns3:
+
+class YansWifiPhyHelper(WifiPhyHelper)
+ |  Method resolution order:
+ |      YansWifiPhyHelper
+ |      WifiPhyHelper
+ |      PcapHelperForDevice
+ |      AsciiTraceHelperForDevice
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  SetChannel(...)
+ |      void ns3::YansWifiPhyHelper::SetChannel(ns3::Ptr<ns3::YansWifiChannel> channel)
+ |      void ns3::YansWifiPhyHelper::SetChannel(std::string channelName)
+ |
+ |  __assign__(...)
+ |      ns3::YansWifiPhyHelper& ns3::YansWifiPhyHelper::operator=(const ns3::YansWifiPhyHelper&)
+ |      ns3::YansWifiPhyHelper& ns3::YansWifiPhyHelper::operator=(ns3::YansWifiPhyHelper&&)
+ |
+ |  __init__(...)
+ |      YansWifiPhyHelper::YansWifiPhyHelper()
+ |      YansWifiPhyHelper::YansWifiPhyHelper(const ns3::YansWifiPhyHelper&)
+ |      YansWifiPhyHelper::YansWifiPhyHelper(ns3::YansWifiPhyHelper&&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from WifiPhyHelper:
+ |
+ |  Create(...)
+ |      std::vector<ns3::Ptr<ns3::WifiPhy>> ns3::WifiPhyHelper::Create(ns3::Ptr<ns3::Node> node, ns3::Ptr<ns3::WifiNetDevice> device)
+ |
+ |  DisablePreambleDetectionModel(...)
+ |      void ns3::WifiPhyHelper::DisablePreambleDetectionModel()
+ |
+ |  GetPcapCaptureType(...)
+ |      ns3::WifiPhyHelper::PcapCaptureType ns3::WifiPhyHelper::GetPcapCaptureType()
+ |
+ |  GetPcapDataLinkType(...)
+ |      ns3::PcapHelper::DataLinkType ns3::WifiPhyHelper::GetPcapDataLinkType()
+ |
+ |  Set(...)
+ |      void ns3::WifiPhyHelper::Set(std::string name, const ns3::AttributeValue& v)
+ |      void ns3::WifiPhyHelper::Set(uint8_t linkId, std::string name, const ns3::AttributeValue& v)
+ |
+ |  SetErrorRateModel = <cppyy.TemplateProxy object>
+ |  SetFrameCaptureModel = <cppyy.TemplateProxy object>
+ |  SetInterferenceHelper = <cppyy.TemplateProxy object>
+ |  SetPcapCaptureType(...)
+ |      void ns3::WifiPhyHelper::SetPcapCaptureType(ns3::WifiPhyHelper::PcapCaptureType type)
+ |
+ |  SetPcapDataLinkType(...)
+ |      void ns3::WifiPhyHelper::SetPcapDataLinkType(ns3::WifiPhyHelper::SupportedPcapDataLinkTypes dlt)
+ |
+ |  SetPreambleDetectionModel = <cppyy.TemplateProxy object>
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes inherited from WifiPhyHelper:
+ |
+ |  DLT_IEEE802_11 = (ns3::WifiPhyHelper::SupportedPcapDataLinkTypes::DLT_...
+ |
+ |  DLT_IEEE802_11_RADIO = (ns3::WifiPhyHelper::SupportedPcapDataLinkTypes...
+ |
+ |  DLT_PRISM_HEADER = (ns3::WifiPhyHelper::SupportedPcapDataLinkTypes::DL...
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from PcapHelperForDevice:
+ |
+ |  EnablePcap(...)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, ns3::Ptr<ns3::NetDevice> nd, bool promiscuous = false, bool explicitFilename = false)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, std::string ndName, bool promiscuous = false, bool explicitFilename = false)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, ns3::NetDeviceContainer d, bool promiscuous = false)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, ns3::NodeContainer n, bool promiscuous = false)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, uint32_t nodeid, uint32_t deviceid, bool promiscuous = false)
+ |
+ |  EnablePcapAll(...)
+ |      void ns3::PcapHelperForDevice::EnablePcapAll(std::string prefix, bool promiscuous = false)
+ |
+ |  EnablePcapInternal(...)
+ |      void ns3::PcapHelperForDevice::EnablePcapInternal(std::string prefix, ns3::Ptr<ns3::NetDevice> nd, bool promiscuous, bool explicitFilename)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from PcapHelperForDevice:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from AsciiTraceHelperForDevice:
+ |
+ |  EnableAscii(...)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, ns3::Ptr<ns3::NetDevice> nd, bool explicitFilename = false)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::Ptr<ns3::NetDevice> nd)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, std::string ndName, bool explicitFilename = false)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, std::string ndName)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, ns3::NetDeviceContainer d)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::NetDeviceContainer d)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, ns3::NodeContainer n)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::NodeContainer n)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, uint32_t nodeid, uint32_t deviceid, bool explicitFilename)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, uint32_t nodeid, uint32_t deviceid)
+ |
+ |  EnableAsciiAll(...)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAsciiAll(std::string prefix)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAsciiAll(ns3::Ptr<ns3::OutputStreamWrapper> stream)
+ |
+ |  EnableAsciiInternal(...)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAsciiInternal(ns3::Ptr<ns3::OutputStreamWrapper> stream, std::string prefix, ns3::Ptr<ns3::NetDevice> nd, bool explicitFilename)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

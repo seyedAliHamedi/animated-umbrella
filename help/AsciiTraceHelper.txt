@@ -1,0 +1,160 @@
+Help on class AsciiTraceHelper in module ns3:
+
+class AsciiTraceHelper(cppyy.gbl.CPPInstance)
+ |  Method resolution order:
+ |      AsciiTraceHelper
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  CreateFileStream(...)
+ |      ns3::Ptr<ns3::OutputStreamWrapper> ns3::AsciiTraceHelper::CreateFileStream(std::string filename, std::basic_ios<char,std::char_traits<char>>::openmode filemode = std::ios::out)
+ |
+ |  DefaultDequeueSinkWithContext(...)
+ |      static void ns3::AsciiTraceHelper::DefaultDequeueSinkWithContext(ns3::Ptr<ns3::OutputStreamWrapper> file, std::string context, ns3::Ptr<const ns3::Packet> p)
+ |
+ |  DefaultDequeueSinkWithoutContext(...)
+ |      static void ns3::AsciiTraceHelper::DefaultDequeueSinkWithoutContext(ns3::Ptr<ns3::OutputStreamWrapper> file, ns3::Ptr<const ns3::Packet> p)
+ |
+ |  DefaultDropSinkWithContext(...)
+ |      static void ns3::AsciiTraceHelper::DefaultDropSinkWithContext(ns3::Ptr<ns3::OutputStreamWrapper> file, std::string context, ns3::Ptr<const ns3::Packet> p)
+ |
+ |  DefaultDropSinkWithoutContext(...)
+ |      static void ns3::AsciiTraceHelper::DefaultDropSinkWithoutContext(ns3::Ptr<ns3::OutputStreamWrapper> file, ns3::Ptr<const ns3::Packet> p)
+ |
+ |  DefaultEnqueueSinkWithContext(...)
+ |      static void ns3::AsciiTraceHelper::DefaultEnqueueSinkWithContext(ns3::Ptr<ns3::OutputStreamWrapper> file, std::string context, ns3::Ptr<const ns3::Packet> p)
+ |
+ |  DefaultEnqueueSinkWithoutContext(...)
+ |      static void ns3::AsciiTraceHelper::DefaultEnqueueSinkWithoutContext(ns3::Ptr<ns3::OutputStreamWrapper> file, ns3::Ptr<const ns3::Packet> p)
+ |
+ |  DefaultReceiveSinkWithContext(...)
+ |      static void ns3::AsciiTraceHelper::DefaultReceiveSinkWithContext(ns3::Ptr<ns3::OutputStreamWrapper> file, std::string context, ns3::Ptr<const ns3::Packet> p)
+ |
+ |  DefaultReceiveSinkWithoutContext(...)
+ |      static void ns3::AsciiTraceHelper::DefaultReceiveSinkWithoutContext(ns3::Ptr<ns3::OutputStreamWrapper> file, ns3::Ptr<const ns3::Packet> p)
+ |
+ |  GetFilenameFromDevice(...)
+ |      std::string ns3::AsciiTraceHelper::GetFilenameFromDevice(std::string prefix, ns3::Ptr<ns3::NetDevice> device, bool useObjectNames = true)
+ |
+ |  GetFilenameFromInterfacePair(...)
+ |      std::string ns3::AsciiTraceHelper::GetFilenameFromInterfacePair(std::string prefix, ns3::Ptr<ns3::Object> object, uint32_t interface, bool useObjectNames = true)
+ |
+ |  HookDefaultDequeueSinkWithContext = <cppyy.TemplateProxy object>
+ |  HookDefaultDequeueSinkWithoutContext = <cppyy.TemplateProxy object>
+ |  HookDefaultDropSinkWithContext = <cppyy.TemplateProxy object>
+ |  HookDefaultDropSinkWithoutContext = <cppyy.TemplateProxy object>
+ |  HookDefaultEnqueueSinkWithContext = <cppyy.TemplateProxy object>
+ |  HookDefaultEnqueueSinkWithoutContext = <cppyy.TemplateProxy object>
+ |  HookDefaultReceiveSinkWithContext = <cppyy.TemplateProxy object>
+ |  HookDefaultReceiveSinkWithoutContext = <cppyy.TemplateProxy object>
+ |  __assign__(...)
+ |      ns3::AsciiTraceHelper& ns3::AsciiTraceHelper::operator=(const ns3::AsciiTraceHelper&)
+ |
+ |  __init__(...)
+ |      AsciiTraceHelper::AsciiTraceHelper()
+ |      AsciiTraceHelper::AsciiTraceHelper(const ns3::AsciiTraceHelper&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors defined here:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

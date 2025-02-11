@@ -1,0 +1,143 @@
+Help on class FlowMonitorHelper in module ns3:
+
+class FlowMonitorHelper(cppyy.gbl.CPPInstance)
+ |  Method resolution order:
+ |      FlowMonitorHelper
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  GetClassifier(...)
+ |      ns3::Ptr<ns3::FlowClassifier> ns3::FlowMonitorHelper::GetClassifier()
+ |
+ |  GetClassifier6(...)
+ |      ns3::Ptr<ns3::FlowClassifier> ns3::FlowMonitorHelper::GetClassifier6()
+ |
+ |  GetMonitor(...)
+ |      ns3::Ptr<ns3::FlowMonitor> ns3::FlowMonitorHelper::GetMonitor()
+ |
+ |  Install(...)
+ |      ns3::Ptr<ns3::FlowMonitor> ns3::FlowMonitorHelper::Install(ns3::NodeContainer nodes)
+ |      ns3::Ptr<ns3::FlowMonitor> ns3::FlowMonitorHelper::Install(ns3::Ptr<ns3::Node> node)
+ |
+ |  InstallAll(...)
+ |      ns3::Ptr<ns3::FlowMonitor> ns3::FlowMonitorHelper::InstallAll()
+ |
+ |  SerializeToXmlFile(...)
+ |      void ns3::FlowMonitorHelper::SerializeToXmlFile(std::string fileName, bool enableHistograms, bool enableProbes)
+ |
+ |  SerializeToXmlStream(...)
+ |      void ns3::FlowMonitorHelper::SerializeToXmlStream(std::ostream& os, uint16_t indent, bool enableHistograms, bool enableProbes)
+ |
+ |  SerializeToXmlString(...)
+ |      std::string ns3::FlowMonitorHelper::SerializeToXmlString(uint16_t indent, bool enableHistograms, bool enableProbes)
+ |
+ |  SetMonitorAttribute(...)
+ |      void ns3::FlowMonitorHelper::SetMonitorAttribute(std::string n1, const ns3::AttributeValue& v1)
+ |
+ |  __init__(...)
+ |      FlowMonitorHelper::FlowMonitorHelper()
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors defined here:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

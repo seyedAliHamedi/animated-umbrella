@@ -1,0 +1,198 @@
+Help on class UdpSocketFactory in module ns3:
+
+class UdpSocketFactory(SocketFactory)
+ |  Method resolution order:
+ |      UdpSocketFactory
+ |      SocketFactory
+ |      Object
+ |      SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>
+ |      ObjectBase
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  GetTypeId(...)
+ |      static ns3::TypeId ns3::UdpSocketFactory::GetTypeId()
+ |
+ |  __assign__(...)
+ |      ns3::UdpSocketFactory& ns3::UdpSocketFactory::operator=(const ns3::UdpSocketFactory&)
+ |      ns3::UdpSocketFactory& ns3::UdpSocketFactory::operator=(ns3::UdpSocketFactory&&)
+ |
+ |  __init__(...)
+ |      UdpSocketFactory::UdpSocketFactory()
+ |      UdpSocketFactory::UdpSocketFactory(const ns3::UdpSocketFactory&)
+ |      UdpSocketFactory::UdpSocketFactory(ns3::UdpSocketFactory&&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from SocketFactory:
+ |
+ |  CreateSocket(...)
+ |      ns3::Ptr<ns3::Socket> ns3::SocketFactory::CreateSocket()
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from Object:
+ |
+ |  AggregateObject(...)
+ |      void ns3::Object::AggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  Dispose(...)
+ |      void ns3::Object::Dispose()
+ |
+ |  GetAggregateIterator(...)
+ |      ns3::Object::AggregateIterator ns3::Object::GetAggregateIterator()
+ |
+ |  GetInstanceTypeId(...)
+ |      ns3::TypeId ns3::Object::GetInstanceTypeId()
+ |
+ |  GetObject = <cppyy.TemplateProxy object>
+ |  Initialize(...)
+ |      void ns3::Object::Initialize()
+ |
+ |  IsInitialized(...)
+ |      bool ns3::Object::IsInitialized()
+ |
+ |  UnidirectionalAggregateObject(...)
+ |      void ns3::Object::UnidirectionalAggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>:
+ |
+ |  GetReferenceCount(...)
+ |      unsigned int ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::GetReferenceCount()
+ |
+ |  Ref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Ref()
+ |
+ |  Unref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Unref()
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ObjectBase:
+ |
+ |  GetAttribute(...)
+ |      void ns3::ObjectBase::GetAttribute(std::string name, ns3::AttributeValue& value, bool permissive = false)
+ |
+ |  GetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::GetAttributeFailSafe(std::string name, ns3::AttributeValue& value)
+ |
+ |  SetAttribute(...)
+ |      void ns3::ObjectBase::SetAttribute(std::string name, const ns3::AttributeValue& value)
+ |
+ |  SetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::SetAttributeFailSafe(std::string name, const ns3::AttributeValue& value)
+ |
+ |  TraceConnect(...)
+ |      bool ns3::ObjectBase::TraceConnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceConnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceConnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnect(...)
+ |      bool ns3::ObjectBase::TraceDisconnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceDisconnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ObjectBase:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

@@ -1,0 +1,368 @@
+Help on class LteHelper in module ns3:
+
+class LteHelper(Object)
+ |  Method resolution order:
+ |      LteHelper
+ |      Object
+ |      SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>
+ |      ObjectBase
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  ActivateDataRadioBearer(...)
+ |      void ns3::LteHelper::ActivateDataRadioBearer(ns3::NetDeviceContainer ueDevices, ns3::EpsBearer bearer)
+ |      void ns3::LteHelper::ActivateDataRadioBearer(ns3::Ptr<ns3::NetDevice> ueDevice, ns3::EpsBearer bearer)
+ |
+ |  ActivateDedicatedEpsBearer(...)
+ |      uint8_t ns3::LteHelper::ActivateDedicatedEpsBearer(ns3::NetDeviceContainer ueDevices, ns3::EpsBearer bearer, ns3::Ptr<ns3::EpcTft> tft)
+ |      uint8_t ns3::LteHelper::ActivateDedicatedEpsBearer(ns3::Ptr<ns3::NetDevice> ueDevice, ns3::EpsBearer bearer, ns3::Ptr<ns3::EpcTft> tft)
+ |
+ |  AddX2Interface(...)
+ |      void ns3::LteHelper::AddX2Interface(ns3::NodeContainer enbNodes)
+ |      void ns3::LteHelper::AddX2Interface(ns3::Ptr<ns3::Node> enbNode1, ns3::Ptr<ns3::Node> enbNode2)
+ |
+ |  AssignStreams(...)
+ |      long long ns3::LteHelper::AssignStreams(ns3::NetDeviceContainer c, int64_t stream)
+ |
+ |  Attach(...)
+ |      void ns3::LteHelper::Attach(ns3::NetDeviceContainer ueDevices)
+ |      void ns3::LteHelper::Attach(ns3::Ptr<ns3::NetDevice> ueDevice)
+ |      void ns3::LteHelper::Attach(ns3::NetDeviceContainer ueDevices, ns3::Ptr<ns3::NetDevice> enbDevice)
+ |      void ns3::LteHelper::Attach(ns3::Ptr<ns3::NetDevice> ueDevice, ns3::Ptr<ns3::NetDevice> enbDevice, uint8_t componentCarrierId = 0)
+ |
+ |  AttachToClosestEnb(...)
+ |      void ns3::LteHelper::AttachToClosestEnb(ns3::NetDeviceContainer ueDevices, ns3::NetDeviceContainer enbDevices)
+ |      void ns3::LteHelper::AttachToClosestEnb(ns3::Ptr<ns3::NetDevice> ueDevice, ns3::NetDeviceContainer enbDevices)
+ |
+ |  DeActivateDedicatedEpsBearer(...)
+ |      void ns3::LteHelper::DeActivateDedicatedEpsBearer(ns3::Ptr<ns3::NetDevice> ueDevice, ns3::Ptr<ns3::NetDevice> enbDevice, uint8_t bearerId)
+ |
+ |  DoDispose(...)
+ |      void ns3::LteHelper::DoDispose()
+ |
+ |  EnableDlMacTraces(...)
+ |      void ns3::LteHelper::EnableDlMacTraces()
+ |
+ |  EnableDlPhyTraces(...)
+ |      void ns3::LteHelper::EnableDlPhyTraces()
+ |
+ |  EnableDlRxPhyTraces(...)
+ |      void ns3::LteHelper::EnableDlRxPhyTraces()
+ |
+ |  EnableDlTxPhyTraces(...)
+ |      void ns3::LteHelper::EnableDlTxPhyTraces()
+ |
+ |  EnableLogComponents(...)
+ |      void ns3::LteHelper::EnableLogComponents()
+ |
+ |  EnableMacTraces(...)
+ |      void ns3::LteHelper::EnableMacTraces()
+ |
+ |  EnablePdcpTraces(...)
+ |      void ns3::LteHelper::EnablePdcpTraces()
+ |
+ |  EnablePhyTraces(...)
+ |      void ns3::LteHelper::EnablePhyTraces()
+ |
+ |  EnableRlcTraces(...)
+ |      void ns3::LteHelper::EnableRlcTraces()
+ |
+ |  EnableTraces(...)
+ |      void ns3::LteHelper::EnableTraces()
+ |
+ |  EnableUlMacTraces(...)
+ |      void ns3::LteHelper::EnableUlMacTraces()
+ |
+ |  EnableUlPhyTraces(...)
+ |      void ns3::LteHelper::EnableUlPhyTraces()
+ |
+ |  EnableUlRxPhyTraces(...)
+ |      void ns3::LteHelper::EnableUlRxPhyTraces()
+ |
+ |  EnableUlTxPhyTraces(...)
+ |      void ns3::LteHelper::EnableUlTxPhyTraces()
+ |
+ |  GetDownlinkSpectrumChannel(...)
+ |      ns3::Ptr<ns3::SpectrumChannel> ns3::LteHelper::GetDownlinkSpectrumChannel()
+ |
+ |  GetEnbComponentCarrierManagerType(...)
+ |      std::string ns3::LteHelper::GetEnbComponentCarrierManagerType()
+ |
+ |  GetFfrAlgorithmType(...)
+ |      std::string ns3::LteHelper::GetFfrAlgorithmType()
+ |
+ |  GetHandoverAlgorithmType(...)
+ |      std::string ns3::LteHelper::GetHandoverAlgorithmType()
+ |
+ |  GetPdcpStats(...)
+ |      ns3::Ptr<ns3::RadioBearerStatsCalculator> ns3::LteHelper::GetPdcpStats()
+ |
+ |  GetRlcStats(...)
+ |      ns3::Ptr<ns3::RadioBearerStatsCalculator> ns3::LteHelper::GetRlcStats()
+ |
+ |  GetSchedulerType(...)
+ |      std::string ns3::LteHelper::GetSchedulerType()
+ |
+ |  GetTypeId(...)
+ |      static ns3::TypeId ns3::LteHelper::GetTypeId()
+ |
+ |  GetUeComponentCarrierManagerType(...)
+ |      std::string ns3::LteHelper::GetUeComponentCarrierManagerType()
+ |
+ |  GetUplinkSpectrumChannel(...)
+ |      ns3::Ptr<ns3::SpectrumChannel> ns3::LteHelper::GetUplinkSpectrumChannel()
+ |
+ |  HandoverRequest(...)
+ |      void ns3::LteHelper::HandoverRequest(ns3::Time hoTime, ns3::Ptr<ns3::NetDevice> ueDev, ns3::Ptr<ns3::NetDevice> sourceEnbDev, ns3::Ptr<ns3::NetDevice> targetEnbDev)
+ |      void ns3::LteHelper::HandoverRequest(ns3::Time hoTime, ns3::Ptr<ns3::NetDevice> ueDev, ns3::Ptr<ns3::NetDevice> sourceEnbDev, uint16_t targetCellId)
+ |
+ |  InstallEnbDevice(...)
+ |      ns3::NetDeviceContainer ns3::LteHelper::InstallEnbDevice(ns3::NodeContainer c)
+ |
+ |  InstallUeDevice(...)
+ |      ns3::NetDeviceContainer ns3::LteHelper::InstallUeDevice(ns3::NodeContainer c)
+ |
+ |  SetEnbAntennaModelAttribute(...)
+ |      void ns3::LteHelper::SetEnbAntennaModelAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetEnbAntennaModelType(...)
+ |      void ns3::LteHelper::SetEnbAntennaModelType(std::string type)
+ |
+ |  SetEnbComponentCarrierManagerAttribute(...)
+ |      void ns3::LteHelper::SetEnbComponentCarrierManagerAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetEnbComponentCarrierManagerType(...)
+ |      void ns3::LteHelper::SetEnbComponentCarrierManagerType(std::string type)
+ |
+ |  SetEnbDeviceAttribute(...)
+ |      void ns3::LteHelper::SetEnbDeviceAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetEpcHelper(...)
+ |      void ns3::LteHelper::SetEpcHelper(ns3::Ptr<ns3::EpcHelper> h)
+ |
+ |  SetFadingModel(...)
+ |      void ns3::LteHelper::SetFadingModel(std::string type)
+ |
+ |  SetFadingModelAttribute(...)
+ |      void ns3::LteHelper::SetFadingModelAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetFfrAlgorithmAttribute(...)
+ |      void ns3::LteHelper::SetFfrAlgorithmAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetFfrAlgorithmType(...)
+ |      void ns3::LteHelper::SetFfrAlgorithmType(std::string type)
+ |
+ |  SetHandoverAlgorithmAttribute(...)
+ |      void ns3::LteHelper::SetHandoverAlgorithmAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetHandoverAlgorithmType(...)
+ |      void ns3::LteHelper::SetHandoverAlgorithmType(std::string type)
+ |
+ |  SetPathlossModelAttribute(...)
+ |      void ns3::LteHelper::SetPathlossModelAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetPathlossModelType(...)
+ |      void ns3::LteHelper::SetPathlossModelType(ns3::TypeId type)
+ |
+ |  SetSchedulerAttribute(...)
+ |      void ns3::LteHelper::SetSchedulerAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetSchedulerType(...)
+ |      void ns3::LteHelper::SetSchedulerType(std::string type)
+ |
+ |  SetSpectrumChannelAttribute(...)
+ |      void ns3::LteHelper::SetSpectrumChannelAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetSpectrumChannelType(...)
+ |      void ns3::LteHelper::SetSpectrumChannelType(std::string type)
+ |
+ |  SetUeAntennaModelAttribute(...)
+ |      void ns3::LteHelper::SetUeAntennaModelAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetUeAntennaModelType(...)
+ |      void ns3::LteHelper::SetUeAntennaModelType(std::string type)
+ |
+ |  SetUeComponentCarrierManagerAttribute(...)
+ |      void ns3::LteHelper::SetUeComponentCarrierManagerAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  SetUeComponentCarrierManagerType(...)
+ |      void ns3::LteHelper::SetUeComponentCarrierManagerType(std::string type)
+ |
+ |  SetUeDeviceAttribute(...)
+ |      void ns3::LteHelper::SetUeDeviceAttribute(std::string n, const ns3::AttributeValue& v)
+ |
+ |  __assign__(...)
+ |      ns3::LteHelper& ns3::LteHelper::operator=(const ns3::LteHelper&)
+ |
+ |  __init__(...)
+ |      LteHelper::LteHelper()
+ |      LteHelper::LteHelper(const ns3::LteHelper&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from Object:
+ |
+ |  AggregateObject(...)
+ |      void ns3::Object::AggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  Dispose(...)
+ |      void ns3::Object::Dispose()
+ |
+ |  GetAggregateIterator(...)
+ |      ns3::Object::AggregateIterator ns3::Object::GetAggregateIterator()
+ |
+ |  GetInstanceTypeId(...)
+ |      ns3::TypeId ns3::Object::GetInstanceTypeId()
+ |
+ |  GetObject = <cppyy.TemplateProxy object>
+ |  Initialize(...)
+ |      void ns3::Object::Initialize()
+ |
+ |  IsInitialized(...)
+ |      bool ns3::Object::IsInitialized()
+ |
+ |  UnidirectionalAggregateObject(...)
+ |      void ns3::Object::UnidirectionalAggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>:
+ |
+ |  GetReferenceCount(...)
+ |      unsigned int ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::GetReferenceCount()
+ |
+ |  Ref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Ref()
+ |
+ |  Unref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Unref()
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ObjectBase:
+ |
+ |  GetAttribute(...)
+ |      void ns3::ObjectBase::GetAttribute(std::string name, ns3::AttributeValue& value, bool permissive = false)
+ |
+ |  GetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::GetAttributeFailSafe(std::string name, ns3::AttributeValue& value)
+ |
+ |  SetAttribute(...)
+ |      void ns3::ObjectBase::SetAttribute(std::string name, const ns3::AttributeValue& value)
+ |
+ |  SetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::SetAttributeFailSafe(std::string name, const ns3::AttributeValue& value)
+ |
+ |  TraceConnect(...)
+ |      bool ns3::ObjectBase::TraceConnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceConnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceConnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnect(...)
+ |      bool ns3::ObjectBase::TraceDisconnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceDisconnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ObjectBase:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

@@ -1,0 +1,419 @@
+Help on class Ipv4RawSocketImpl in module ns3:
+
+class Ipv4RawSocketImpl(Socket)
+ |  Method resolution order:
+ |      Ipv4RawSocketImpl
+ |      Socket
+ |      Object
+ |      SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>
+ |      ObjectBase
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  Bind(...)
+ |      int ns3::Ipv4RawSocketImpl::Bind(const ns3::Address& address)
+ |      int ns3::Ipv4RawSocketImpl::Bind()
+ |
+ |  Bind6(...)
+ |      int ns3::Ipv4RawSocketImpl::Bind6()
+ |
+ |  Close(...)
+ |      int ns3::Ipv4RawSocketImpl::Close()
+ |
+ |  Connect(...)
+ |      int ns3::Ipv4RawSocketImpl::Connect(const ns3::Address& address)
+ |
+ |  ForwardUp(...)
+ |      bool ns3::Ipv4RawSocketImpl::ForwardUp(ns3::Ptr<const ns3::Packet> p, ns3::Ipv4Header ipHeader, ns3::Ptr<ns3::Ipv4Interface> incomingInterface)
+ |
+ |  GetAllowBroadcast(...)
+ |      bool ns3::Ipv4RawSocketImpl::GetAllowBroadcast()
+ |
+ |  GetErrno(...)
+ |      ns3::Socket::SocketErrno ns3::Ipv4RawSocketImpl::GetErrno()
+ |
+ |  GetNode(...)
+ |      ns3::Ptr<ns3::Node> ns3::Ipv4RawSocketImpl::GetNode()
+ |
+ |  GetPeerName(...)
+ |      int ns3::Ipv4RawSocketImpl::GetPeerName(ns3::Address& address)
+ |
+ |  GetRxAvailable(...)
+ |      unsigned int ns3::Ipv4RawSocketImpl::GetRxAvailable()
+ |
+ |  GetSockName(...)
+ |      int ns3::Ipv4RawSocketImpl::GetSockName(ns3::Address& address)
+ |
+ |  GetSocketType(...)
+ |      ns3::Socket::SocketType ns3::Ipv4RawSocketImpl::GetSocketType()
+ |
+ |  GetTxAvailable(...)
+ |      unsigned int ns3::Ipv4RawSocketImpl::GetTxAvailable()
+ |
+ |  GetTypeId(...)
+ |      static ns3::TypeId ns3::Ipv4RawSocketImpl::GetTypeId()
+ |
+ |  Listen(...)
+ |      int ns3::Ipv4RawSocketImpl::Listen()
+ |
+ |  Recv(...)
+ |      ns3::Ptr<ns3::Packet> ns3::Ipv4RawSocketImpl::Recv(uint32_t maxSize, uint32_t flags)
+ |
+ |  RecvFrom(...)
+ |      ns3::Ptr<ns3::Packet> ns3::Ipv4RawSocketImpl::RecvFrom(uint32_t maxSize, uint32_t flags, ns3::Address& fromAddress)
+ |
+ |  Send(...)
+ |      int ns3::Ipv4RawSocketImpl::Send(ns3::Ptr<ns3::Packet> p, uint32_t flags)
+ |
+ |  SendTo(...)
+ |      int ns3::Ipv4RawSocketImpl::SendTo(ns3::Ptr<ns3::Packet> p, uint32_t flags, const ns3::Address& toAddress)
+ |
+ |  SetAllowBroadcast(...)
+ |      bool ns3::Ipv4RawSocketImpl::SetAllowBroadcast(bool allowBroadcast)
+ |
+ |  SetNode(...)
+ |      void ns3::Ipv4RawSocketImpl::SetNode(ns3::Ptr<ns3::Node> node)
+ |
+ |  SetProtocol(...)
+ |      void ns3::Ipv4RawSocketImpl::SetProtocol(uint16_t protocol)
+ |
+ |  ShutdownRecv(...)
+ |      int ns3::Ipv4RawSocketImpl::ShutdownRecv()
+ |
+ |  ShutdownSend(...)
+ |      int ns3::Ipv4RawSocketImpl::ShutdownSend()
+ |
+ |  __assign__(...)
+ |      ns3::Ipv4RawSocketImpl& ns3::Ipv4RawSocketImpl::operator=(const ns3::Ipv4RawSocketImpl&)
+ |      ns3::Ipv4RawSocketImpl& ns3::Ipv4RawSocketImpl::operator=(ns3::Ipv4RawSocketImpl&&)
+ |
+ |  __init__(...)
+ |      Ipv4RawSocketImpl::Ipv4RawSocketImpl()
+ |      Ipv4RawSocketImpl::Ipv4RawSocketImpl(const ns3::Ipv4RawSocketImpl&)
+ |      Ipv4RawSocketImpl::Ipv4RawSocketImpl(ns3::Ipv4RawSocketImpl&&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from Socket:
+ |
+ |  BindToNetDevice(...)
+ |      void ns3::Socket::BindToNetDevice(ns3::Ptr<ns3::NetDevice> netdevice)
+ |
+ |  CreateSocket(...)
+ |      static ns3::Ptr<ns3::Socket> ns3::Socket::CreateSocket(ns3::Ptr<ns3::Node> node, ns3::TypeId tid)
+ |
+ |  GetBoundNetDevice(...)
+ |      ns3::Ptr<ns3::NetDevice> ns3::Socket::GetBoundNetDevice()
+ |
+ |  GetIpTos(...)
+ |      uint8_t ns3::Socket::GetIpTos()
+ |
+ |  GetIpTtl(...)
+ |      uint8_t ns3::Socket::GetIpTtl()
+ |
+ |  GetIpv6HopLimit(...)
+ |      uint8_t ns3::Socket::GetIpv6HopLimit()
+ |
+ |  GetIpv6Tclass(...)
+ |      uint8_t ns3::Socket::GetIpv6Tclass()
+ |
+ |  GetPriority(...)
+ |      uint8_t ns3::Socket::GetPriority()
+ |
+ |  IpTos2Priority(...)
+ |      static uint8_t ns3::Socket::IpTos2Priority(uint8_t ipTos)
+ |
+ |  Ipv6JoinGroup(...)
+ |      void ns3::Socket::Ipv6JoinGroup(ns3::Ipv6Address address, ns3::Socket::Ipv6MulticastFilterMode filterMode, std::vector<ns3::Ipv6Address> sourceAddresses)
+ |      void ns3::Socket::Ipv6JoinGroup(ns3::Ipv6Address address)
+ |
+ |  Ipv6LeaveGroup(...)
+ |      void ns3::Socket::Ipv6LeaveGroup()
+ |
+ |  IsIpRecvTos(...)
+ |      bool ns3::Socket::IsIpRecvTos()
+ |
+ |  IsIpRecvTtl(...)
+ |      bool ns3::Socket::IsIpRecvTtl()
+ |
+ |  IsIpv6RecvHopLimit(...)
+ |      bool ns3::Socket::IsIpv6RecvHopLimit()
+ |
+ |  IsIpv6RecvTclass(...)
+ |      bool ns3::Socket::IsIpv6RecvTclass()
+ |
+ |  IsRecvPktInfo(...)
+ |      bool ns3::Socket::IsRecvPktInfo()
+ |
+ |  SetAcceptCallback(...)
+ |      void ns3::Socket::SetAcceptCallback(ns3::Callback<bool,ns3::Ptr<ns3::Socket>,const ns3::Address&> connectionRequest, ns3::Callback<void,ns3::Ptr<ns3::Socket>,const ns3::Address&> newConnectionCreated)
+ |
+ |  SetCloseCallbacks(...)
+ |      void ns3::Socket::SetCloseCallbacks(ns3::Callback<void,ns3::Ptr<ns3::Socket>> normalClose, ns3::Callback<void,ns3::Ptr<ns3::Socket>> errorClose)
+ |
+ |  SetConnectCallback(...)
+ |      void ns3::Socket::SetConnectCallback(ns3::Callback<void,ns3::Ptr<ns3::Socket>> connectionSucceeded, ns3::Callback<void,ns3::Ptr<ns3::Socket>> connectionFailed)
+ |
+ |  SetDataSentCallback(...)
+ |      void ns3::Socket::SetDataSentCallback(ns3::Callback<void,ns3::Ptr<ns3::Socket>,unsigned int> dataSent)
+ |
+ |  SetIpRecvTos(...)
+ |      void ns3::Socket::SetIpRecvTos(bool ipv4RecvTos)
+ |
+ |  SetIpRecvTtl(...)
+ |      void ns3::Socket::SetIpRecvTtl(bool ipv4RecvTtl)
+ |
+ |  SetIpTos(...)
+ |      void ns3::Socket::SetIpTos(uint8_t ipTos)
+ |
+ |  SetIpTtl(...)
+ |      void ns3::Socket::SetIpTtl(uint8_t ipTtl)
+ |
+ |  SetIpv6HopLimit(...)
+ |      void ns3::Socket::SetIpv6HopLimit(uint8_t ipHopLimit)
+ |
+ |  SetIpv6RecvHopLimit(...)
+ |      void ns3::Socket::SetIpv6RecvHopLimit(bool ipv6RecvHopLimit)
+ |
+ |  SetIpv6RecvTclass(...)
+ |      void ns3::Socket::SetIpv6RecvTclass(bool ipv6RecvTclass)
+ |
+ |  SetIpv6Tclass(...)
+ |      void ns3::Socket::SetIpv6Tclass(int ipTclass)
+ |
+ |  SetPriority(...)
+ |      void ns3::Socket::SetPriority(uint8_t priority)
+ |
+ |  SetRecvCallback(...)
+ |      void ns3::Socket::SetRecvCallback(ns3::Callback<void,ns3::Ptr<ns3::Socket>> receivedData)
+ |
+ |  SetRecvPktInfo(...)
+ |      void ns3::Socket::SetRecvPktInfo(bool flag)
+ |
+ |  SetSendCallback(...)
+ |      void ns3::Socket::SetSendCallback(ns3::Callback<void,ns3::Ptr<ns3::Socket>,unsigned int> sendCb)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data and other attributes inherited from Socket:
+ |
+ |  ERROR_ADDRINUSE = (ns3::Socket::SocketErrno::ERROR_ADDRINUSE) : (unsig...
+ |
+ |  ERROR_ADDRNOTAVAIL = (ns3::Socket::SocketErrno::ERROR_ADDRNOTAVAIL) : ...
+ |
+ |  ERROR_AFNOSUPPORT = (ns3::Socket::SocketErrno::ERROR_AFNOSUPPORT) : (u...
+ |
+ |  ERROR_AGAIN = (ns3::Socket::SocketErrno::ERROR_AGAIN) : (unsigned int)...
+ |
+ |  ERROR_BADF = (ns3::Socket::SocketErrno::ERROR_BADF) : (unsigned int) 9
+ |
+ |  ERROR_INVAL = (ns3::Socket::SocketErrno::ERROR_INVAL) : (unsigned int)...
+ |
+ |  ERROR_ISCONN = (ns3::Socket::SocketErrno::ERROR_ISCONN) : (unsigned in...
+ |
+ |  ERROR_MSGSIZE = (ns3::Socket::SocketErrno::ERROR_MSGSIZE) : (unsigned ...
+ |
+ |  ERROR_NODEV = (ns3::Socket::SocketErrno::ERROR_NODEV) : (unsigned int)...
+ |
+ |  ERROR_NOROUTETOHOST = (ns3::Socket::SocketErrno::ERROR_NOROUTETOHOST) ...
+ |
+ |  ERROR_NOTCONN = (ns3::Socket::SocketErrno::ERROR_NOTCONN) : (unsigned ...
+ |
+ |  ERROR_NOTERROR = (ns3::Socket::SocketErrno::ERROR_NOTERROR) : (unsigne...
+ |
+ |  ERROR_OPNOTSUPP = (ns3::Socket::SocketErrno::ERROR_OPNOTSUPP) : (unsig...
+ |
+ |  ERROR_SHUTDOWN = (ns3::Socket::SocketErrno::ERROR_SHUTDOWN) : (unsigne...
+ |
+ |  EXCLUDE = (ns3::Socket::Ipv6MulticastFilterMode::EXCLUDE) : (unsigned ...
+ |
+ |  INCLUDE = (ns3::Socket::Ipv6MulticastFilterMode::INCLUDE) : (unsigned ...
+ |
+ |  NS3_PRIO_BESTEFFORT = (ns3::Socket::SocketPriority::NS3_PRIO_BESTEFFOR...
+ |
+ |  NS3_PRIO_BULK = (ns3::Socket::SocketPriority::NS3_PRIO_BULK) : (unsign...
+ |
+ |  NS3_PRIO_CONTROL = (ns3::Socket::SocketPriority::NS3_PRIO_CONTROL) : (...
+ |
+ |  NS3_PRIO_FILLER = (ns3::Socket::SocketPriority::NS3_PRIO_FILLER) : (un...
+ |
+ |  NS3_PRIO_INTERACTIVE = (ns3::Socket::SocketPriority::NS3_PRIO_INTERACT...
+ |
+ |  NS3_PRIO_INTERACTIVE_BULK = (ns3::Socket::SocketPriority::NS3_PRIO_INT...
+ |
+ |  NS3_SOCK_DGRAM = (ns3::Socket::SocketType::NS3_SOCK_DGRAM) : (unsigned...
+ |
+ |  NS3_SOCK_RAW = (ns3::Socket::SocketType::NS3_SOCK_RAW) : (unsigned int...
+ |
+ |  NS3_SOCK_SEQPACKET = (ns3::Socket::SocketType::NS3_SOCK_SEQPACKET) : (...
+ |
+ |  NS3_SOCK_STREAM = (ns3::Socket::SocketType::NS3_SOCK_STREAM) : (unsign...
+ |
+ |  SOCKET_ERRNO_LAST = (ns3::Socket::SocketErrno::SOCKET_ERRNO_LAST) : (u...
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from Object:
+ |
+ |  AggregateObject(...)
+ |      void ns3::Object::AggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  Dispose(...)
+ |      void ns3::Object::Dispose()
+ |
+ |  GetAggregateIterator(...)
+ |      ns3::Object::AggregateIterator ns3::Object::GetAggregateIterator()
+ |
+ |  GetInstanceTypeId(...)
+ |      ns3::TypeId ns3::Object::GetInstanceTypeId()
+ |
+ |  GetObject = <cppyy.TemplateProxy object>
+ |  Initialize(...)
+ |      void ns3::Object::Initialize()
+ |
+ |  IsInitialized(...)
+ |      bool ns3::Object::IsInitialized()
+ |
+ |  UnidirectionalAggregateObject(...)
+ |      void ns3::Object::UnidirectionalAggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>:
+ |
+ |  GetReferenceCount(...)
+ |      unsigned int ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::GetReferenceCount()
+ |
+ |  Ref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Ref()
+ |
+ |  Unref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Unref()
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ObjectBase:
+ |
+ |  GetAttribute(...)
+ |      void ns3::ObjectBase::GetAttribute(std::string name, ns3::AttributeValue& value, bool permissive = false)
+ |
+ |  GetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::GetAttributeFailSafe(std::string name, ns3::AttributeValue& value)
+ |
+ |  SetAttribute(...)
+ |      void ns3::ObjectBase::SetAttribute(std::string name, const ns3::AttributeValue& value)
+ |
+ |  SetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::SetAttributeFailSafe(std::string name, const ns3::AttributeValue& value)
+ |
+ |  TraceConnect(...)
+ |      bool ns3::ObjectBase::TraceConnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceConnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceConnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnect(...)
+ |      bool ns3::ObjectBase::TraceDisconnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceDisconnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ObjectBase:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+
