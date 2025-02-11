@@ -1,0 +1,229 @@
+Help on class InternetStackHelper in module ns3:
+
+class InternetStackHelper(PcapHelperForIpv4, PcapHelperForIpv6, AsciiTraceHelperForIpv4, AsciiTraceHelperForIpv6)
+ |  Method resolution order:
+ |      InternetStackHelper
+ |      PcapHelperForIpv4
+ |      PcapHelperForIpv6
+ |      AsciiTraceHelperForIpv4
+ |      AsciiTraceHelperForIpv6
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  AssignStreams(...)
+ |      long long ns3::InternetStackHelper::AssignStreams(ns3::NodeContainer c, int64_t stream)
+ |
+ |  Install(...)
+ |      void ns3::InternetStackHelper::Install(std::string nodeName)
+ |      void ns3::InternetStackHelper::Install(ns3::Ptr<ns3::Node> node)
+ |      void ns3::InternetStackHelper::Install(ns3::NodeContainer c)
+ |
+ |  InstallAll(...)
+ |      void ns3::InternetStackHelper::InstallAll()
+ |
+ |  Reset(...)
+ |      void ns3::InternetStackHelper::Reset()
+ |
+ |  SetIpv4ArpJitter(...)
+ |      void ns3::InternetStackHelper::SetIpv4ArpJitter(bool enable)
+ |
+ |  SetIpv4StackInstall(...)
+ |      void ns3::InternetStackHelper::SetIpv4StackInstall(bool enable)
+ |
+ |  SetIpv6NsRsJitter(...)
+ |      void ns3::InternetStackHelper::SetIpv6NsRsJitter(bool enable)
+ |
+ |  SetIpv6StackInstall(...)
+ |      void ns3::InternetStackHelper::SetIpv6StackInstall(bool enable)
+ |
+ |  SetRoutingHelper(...)
+ |      void ns3::InternetStackHelper::SetRoutingHelper(const ns3::Ipv4RoutingHelper& routing)
+ |      void ns3::InternetStackHelper::SetRoutingHelper(const ns3::Ipv6RoutingHelper& routing)
+ |
+ |  __assign__(...)
+ |      ns3::InternetStackHelper& ns3::InternetStackHelper::operator=(const ns3::InternetStackHelper& o)
+ |
+ |  __init__(...)
+ |      InternetStackHelper::InternetStackHelper()
+ |      InternetStackHelper::InternetStackHelper(const ns3::InternetStackHelper& o)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from PcapHelperForIpv4:
+ |
+ |  EnablePcapIpv4(...)
+ |      void ns3::PcapHelperForIpv4::EnablePcapIpv4(std::string prefix, ns3::Ptr<ns3::Ipv4> ipv4, uint32_t interface, bool explicitFilename = false)
+ |      void ns3::PcapHelperForIpv4::EnablePcapIpv4(std::string prefix, std::string ipv4Name, uint32_t interface, bool explicitFilename = false)
+ |      void ns3::PcapHelperForIpv4::EnablePcapIpv4(std::string prefix, ns3::Ipv4InterfaceContainer c)
+ |      void ns3::PcapHelperForIpv4::EnablePcapIpv4(std::string prefix, ns3::NodeContainer n)
+ |      void ns3::PcapHelperForIpv4::EnablePcapIpv4(std::string prefix, uint32_t nodeid, uint32_t interface, bool explicitFilename)
+ |
+ |  EnablePcapIpv4All(...)
+ |      void ns3::PcapHelperForIpv4::EnablePcapIpv4All(std::string prefix)
+ |
+ |  EnablePcapIpv4Internal(...)
+ |      void ns3::PcapHelperForIpv4::EnablePcapIpv4Internal(std::string prefix, ns3::Ptr<ns3::Ipv4> ipv4, uint32_t interface, bool explicitFilename)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from PcapHelperForIpv4:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from PcapHelperForIpv6:
+ |
+ |  EnablePcapIpv6(...)
+ |      void ns3::PcapHelperForIpv6::EnablePcapIpv6(std::string prefix, ns3::Ptr<ns3::Ipv6> ipv6, uint32_t interface, bool explicitFilename = false)
+ |      void ns3::PcapHelperForIpv6::EnablePcapIpv6(std::string prefix, std::string ipv6Name, uint32_t interface, bool explicitFilename = false)
+ |      void ns3::PcapHelperForIpv6::EnablePcapIpv6(std::string prefix, ns3::Ipv6InterfaceContainer c)
+ |      void ns3::PcapHelperForIpv6::EnablePcapIpv6(std::string prefix, ns3::NodeContainer n)
+ |      void ns3::PcapHelperForIpv6::EnablePcapIpv6(std::string prefix, uint32_t nodeid, uint32_t interface, bool explicitFilename)
+ |
+ |  EnablePcapIpv6All(...)
+ |      void ns3::PcapHelperForIpv6::EnablePcapIpv6All(std::string prefix)
+ |
+ |  EnablePcapIpv6Internal(...)
+ |      void ns3::PcapHelperForIpv6::EnablePcapIpv6Internal(std::string prefix, ns3::Ptr<ns3::Ipv6> ipv6, uint32_t interface, bool explicitFilename)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from AsciiTraceHelperForIpv4:
+ |
+ |  EnableAsciiIpv4(...)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(std::string prefix, ns3::Ptr<ns3::Ipv4> ipv4, uint32_t interface, bool explicitFilename = false)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::Ptr<ns3::Ipv4> ipv4, uint32_t interface)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(std::string prefix, std::string ipv4Name, uint32_t interface, bool explicitFilename = false)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(ns3::Ptr<ns3::OutputStreamWrapper> stream, std::string ipv4Name, uint32_t interface)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(std::string prefix, ns3::Ipv4InterfaceContainer c)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::Ipv4InterfaceContainer c)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(std::string prefix, ns3::NodeContainer n)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::NodeContainer n)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(std::string prefix, uint32_t nodeid, uint32_t deviceid, bool explicitFilename)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4(ns3::Ptr<ns3::OutputStreamWrapper> stream, uint32_t nodeid, uint32_t interface, bool explicitFilename)
+ |
+ |  EnableAsciiIpv4All(...)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4All(std::string prefix)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4All(ns3::Ptr<ns3::OutputStreamWrapper> stream)
+ |
+ |  EnableAsciiIpv4Internal(...)
+ |      void ns3::AsciiTraceHelperForIpv4::EnableAsciiIpv4Internal(ns3::Ptr<ns3::OutputStreamWrapper> stream, std::string prefix, ns3::Ptr<ns3::Ipv4> ipv4, uint32_t interface, bool explicitFilename)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from AsciiTraceHelperForIpv6:
+ |
+ |  EnableAsciiIpv6(...)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(std::string prefix, ns3::Ptr<ns3::Ipv6> ipv6, uint32_t interface, bool explicitFilename = false)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::Ptr<ns3::Ipv6> ipv6, uint32_t interface)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(std::string prefix, std::string ipv6Name, uint32_t interface, bool explicitFilename = false)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(ns3::Ptr<ns3::OutputStreamWrapper> stream, std::string ipv6Name, uint32_t interface)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(std::string prefix, ns3::Ipv6InterfaceContainer c)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::Ipv6InterfaceContainer c)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(std::string prefix, ns3::NodeContainer n)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::NodeContainer n)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(std::string prefix, uint32_t nodeid, uint32_t interface, bool explicitFilename)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6(ns3::Ptr<ns3::OutputStreamWrapper> stream, uint32_t nodeid, uint32_t interface)
+ |
+ |  EnableAsciiIpv6All(...)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6All(std::string prefix)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6All(ns3::Ptr<ns3::OutputStreamWrapper> stream)
+ |
+ |  EnableAsciiIpv6Internal(...)
+ |      void ns3::AsciiTraceHelperForIpv6::EnableAsciiIpv6Internal(ns3::Ptr<ns3::OutputStreamWrapper> stream, std::string prefix, ns3::Ptr<ns3::Ipv6> ipv6, uint32_t interface, bool explicitFilename)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

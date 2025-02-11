@@ -1,0 +1,167 @@
+Help on class Trailer in module ns3:
+
+class Trailer(Chunk)
+ |  Method resolution order:
+ |      Trailer
+ |      Chunk
+ |      ObjectBase
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  Deserialize(...)
+ |      unsigned int ns3::Trailer::Deserialize(ns3::Buffer::Iterator end)
+ |      unsigned int ns3::Trailer::Deserialize(ns3::Buffer::Iterator start, ns3::Buffer::Iterator end)
+ |
+ |  GetSerializedSize(...)
+ |      unsigned int ns3::Trailer::GetSerializedSize()
+ |
+ |  GetTypeId(...)
+ |      static ns3::TypeId ns3::Trailer::GetTypeId()
+ |
+ |  Print(...)
+ |      void ns3::Trailer::Print(std::ostream& os)
+ |
+ |  Serialize(...)
+ |      void ns3::Trailer::Serialize(ns3::Buffer::Iterator start)
+ |
+ |  __assign__(...)
+ |      ns3::Trailer& ns3::Trailer::operator=(const ns3::Trailer&)
+ |
+ |  __init__(...)
+ |      Trailer::Trailer()
+ |      Trailer::Trailer(const ns3::Trailer&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ObjectBase:
+ |
+ |  GetAttribute(...)
+ |      void ns3::ObjectBase::GetAttribute(std::string name, ns3::AttributeValue& value, bool permissive = false)
+ |
+ |  GetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::GetAttributeFailSafe(std::string name, ns3::AttributeValue& value)
+ |
+ |  GetInstanceTypeId(...)
+ |      ns3::TypeId ns3::ObjectBase::GetInstanceTypeId()
+ |
+ |  SetAttribute(...)
+ |      void ns3::ObjectBase::SetAttribute(std::string name, const ns3::AttributeValue& value)
+ |
+ |  SetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::SetAttributeFailSafe(std::string name, const ns3::AttributeValue& value)
+ |
+ |  TraceConnect(...)
+ |      bool ns3::ObjectBase::TraceConnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceConnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceConnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnect(...)
+ |      bool ns3::ObjectBase::TraceDisconnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceDisconnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ObjectBase:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

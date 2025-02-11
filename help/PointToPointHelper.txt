@@ -1,0 +1,176 @@
+Help on class PointToPointHelper in module ns3:
+
+class PointToPointHelper(PcapHelperForDevice, AsciiTraceHelperForDevice)
+ |  Method resolution order:
+ |      PointToPointHelper
+ |      PcapHelperForDevice
+ |      AsciiTraceHelperForDevice
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  DisableFlowControl(...)
+ |      void ns3::PointToPointHelper::DisableFlowControl()
+ |
+ |  Install(...)
+ |      ns3::NetDeviceContainer ns3::PointToPointHelper::Install(ns3::NodeContainer c)
+ |      ns3::NetDeviceContainer ns3::PointToPointHelper::Install(ns3::Ptr<ns3::Node> a, ns3::Ptr<ns3::Node> b)
+ |      ns3::NetDeviceContainer ns3::PointToPointHelper::Install(ns3::Ptr<ns3::Node> a, std::string bName)
+ |      ns3::NetDeviceContainer ns3::PointToPointHelper::Install(std::string aName, ns3::Ptr<ns3::Node> b)
+ |      ns3::NetDeviceContainer ns3::PointToPointHelper::Install(std::string aNode, std::string bNode)
+ |
+ |  SetChannelAttribute(...)
+ |      void ns3::PointToPointHelper::SetChannelAttribute(std::string name, const ns3::AttributeValue& value)
+ |
+ |  SetDeviceAttribute(...)
+ |      void ns3::PointToPointHelper::SetDeviceAttribute(std::string name, const ns3::AttributeValue& value)
+ |
+ |  SetQueue = <cppyy.TemplateProxy object>
+ |  __assign__(...)
+ |      ns3::PointToPointHelper& ns3::PointToPointHelper::operator=(const ns3::PointToPointHelper&)
+ |
+ |  __init__(...)
+ |      PointToPointHelper::PointToPointHelper()
+ |      PointToPointHelper::PointToPointHelper(const ns3::PointToPointHelper&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from PcapHelperForDevice:
+ |
+ |  EnablePcap(...)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, ns3::Ptr<ns3::NetDevice> nd, bool promiscuous = false, bool explicitFilename = false)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, std::string ndName, bool promiscuous = false, bool explicitFilename = false)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, ns3::NetDeviceContainer d, bool promiscuous = false)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, ns3::NodeContainer n, bool promiscuous = false)
+ |      void ns3::PcapHelperForDevice::EnablePcap(std::string prefix, uint32_t nodeid, uint32_t deviceid, bool promiscuous = false)
+ |
+ |  EnablePcapAll(...)
+ |      void ns3::PcapHelperForDevice::EnablePcapAll(std::string prefix, bool promiscuous = false)
+ |
+ |  EnablePcapInternal(...)
+ |      void ns3::PcapHelperForDevice::EnablePcapInternal(std::string prefix, ns3::Ptr<ns3::NetDevice> nd, bool promiscuous, bool explicitFilename)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from PcapHelperForDevice:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from AsciiTraceHelperForDevice:
+ |
+ |  EnableAscii(...)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, ns3::Ptr<ns3::NetDevice> nd, bool explicitFilename = false)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::Ptr<ns3::NetDevice> nd)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, std::string ndName, bool explicitFilename = false)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, std::string ndName)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, ns3::NetDeviceContainer d)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::NetDeviceContainer d)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, ns3::NodeContainer n)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, ns3::NodeContainer n)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(std::string prefix, uint32_t nodeid, uint32_t deviceid, bool explicitFilename)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAscii(ns3::Ptr<ns3::OutputStreamWrapper> stream, uint32_t nodeid, uint32_t deviceid)
+ |
+ |  EnableAsciiAll(...)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAsciiAll(std::string prefix)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAsciiAll(ns3::Ptr<ns3::OutputStreamWrapper> stream)
+ |
+ |  EnableAsciiInternal(...)
+ |      void ns3::AsciiTraceHelperForDevice::EnableAsciiInternal(ns3::Ptr<ns3::OutputStreamWrapper> stream, std::string prefix, ns3::Ptr<ns3::NetDevice> nd, bool explicitFilename)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

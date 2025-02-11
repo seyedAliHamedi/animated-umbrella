@@ -1,0 +1,445 @@
+Help on class WifiMac in module ns3:
+
+class WifiMac(Object)
+ |  Method resolution order:
+ |      WifiMac
+ |      Object
+ |      SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>
+ |      ObjectBase
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  AssignStreams(...)
+ |      long long ns3::WifiMac::AssignStreams(int64_t stream)
+ |
+ |  BlockUnicastTxOnLinks(...)
+ |      void ns3::WifiMac::BlockUnicastTxOnLinks(ns3::WifiQueueBlockedReason reason, const ns3::Mac48Address& address, const std::set<unsigned char>& linkIds)
+ |
+ |  CanForwardPacketsTo(...)
+ |      bool ns3::WifiMac::CanForwardPacketsTo(ns3::Mac48Address to)
+ |
+ |  Enqueue(...)
+ |      void ns3::WifiMac::Enqueue(ns3::Ptr<ns3::Packet> packet, ns3::Mac48Address to)
+ |      void ns3::WifiMac::Enqueue(ns3::Ptr<ns3::Packet> packet, ns3::Mac48Address to, ns3::Mac48Address from)
+ |      void ns3::WifiMac::Enqueue(ns3::Ptr<ns3::Packet> packet, ns3::Mac48Address to, ns3::Mac48Address from, uint8_t tid)
+ |
+ |  GetAddress(...)
+ |      ns3::Mac48Address ns3::WifiMac::GetAddress()
+ |
+ |  GetBaAgreementEstablishedAsOriginator(...)
+ |      std::optional<std::reference_wrapper<const ns3::OriginatorBlockAckAgreement>> ns3::WifiMac::GetBaAgreementEstablishedAsOriginator(ns3::Mac48Address recipient, uint8_t tid)
+ |
+ |  GetBaAgreementEstablishedAsRecipient(...)
+ |      std::optional<std::reference_wrapper<const ns3::RecipientBlockAckAgreement>> ns3::WifiMac::GetBaAgreementEstablishedAsRecipient(ns3::Mac48Address originator, uint8_t tid)
+ |
+ |  GetBaTypeAsOriginator(...)
+ |      ns3::BlockAckType ns3::WifiMac::GetBaTypeAsOriginator(const ns3::Mac48Address& recipient, uint8_t tid)
+ |
+ |  GetBaTypeAsRecipient(...)
+ |      ns3::BlockAckType ns3::WifiMac::GetBaTypeAsRecipient(ns3::Mac48Address originator, uint8_t tid)
+ |
+ |  GetBarTypeAsOriginator(...)
+ |      ns3::BlockAckReqType ns3::WifiMac::GetBarTypeAsOriginator(const ns3::Mac48Address& recipient, uint8_t tid)
+ |
+ |  GetBarTypeAsRecipient(...)
+ |      ns3::BlockAckReqType ns3::WifiMac::GetBarTypeAsRecipient(ns3::Mac48Address originator, uint8_t tid)
+ |
+ |  GetBssid(...)
+ |      ns3::Mac48Address ns3::WifiMac::GetBssid(uint8_t linkId)
+ |
+ |  GetChannelAccessManager(...)
+ |      ns3::Ptr<ns3::ChannelAccessManager> ns3::WifiMac::GetChannelAccessManager(uint8_t linkId = SINGLE_LINK_OP_ID)
+ |
+ |  GetDevice(...)
+ |      ns3::Ptr<ns3::WifiNetDevice> ns3::WifiMac::GetDevice()
+ |
+ |  GetDsssSupported(...)
+ |      bool ns3::WifiMac::GetDsssSupported(uint8_t linkId)
+ |
+ |  GetEhtCapabilities(...)
+ |      ns3::EhtCapabilities ns3::WifiMac::GetEhtCapabilities(uint8_t linkId)
+ |
+ |  GetEhtConfiguration(...)
+ |      ns3::Ptr<ns3::EhtConfiguration> ns3::WifiMac::GetEhtConfiguration()
+ |
+ |  GetEhtSupported(...)
+ |      bool ns3::WifiMac::GetEhtSupported()
+ |      bool ns3::WifiMac::GetEhtSupported(const ns3::Mac48Address& address)
+ |
+ |  GetErpSupported(...)
+ |      bool ns3::WifiMac::GetErpSupported(uint8_t linkId)
+ |
+ |  GetExtendedCapabilities(...)
+ |      ns3::ExtendedCapabilities ns3::WifiMac::GetExtendedCapabilities()
+ |
+ |  GetFrameExchangeManager(...)
+ |      ns3::Ptr<ns3::FrameExchangeManager> ns3::WifiMac::GetFrameExchangeManager(uint8_t linkId = SINGLE_LINK_OP_ID)
+ |
+ |  GetFrameRetryLimit(...)
+ |      unsigned int ns3::WifiMac::GetFrameRetryLimit()
+ |
+ |  GetHe6GhzBandCapabilities(...)
+ |      ns3::He6GhzBandCapabilities ns3::WifiMac::GetHe6GhzBandCapabilities(uint8_t linkId)
+ |
+ |  GetHeCapabilities(...)
+ |      ns3::HeCapabilities ns3::WifiMac::GetHeCapabilities(uint8_t linkId)
+ |
+ |  GetHeConfiguration(...)
+ |      ns3::Ptr<ns3::HeConfiguration> ns3::WifiMac::GetHeConfiguration()
+ |
+ |  GetHeSupported(...)
+ |      bool ns3::WifiMac::GetHeSupported()
+ |      bool ns3::WifiMac::GetHeSupported(const ns3::Mac48Address& address)
+ |
+ |  GetHtCapabilities(...)
+ |      ns3::HtCapabilities ns3::WifiMac::GetHtCapabilities(uint8_t linkId)
+ |
+ |  GetHtConfiguration(...)
+ |      ns3::Ptr<ns3::HtConfiguration> ns3::WifiMac::GetHtConfiguration()
+ |
+ |  GetHtSupported(...)
+ |      bool ns3::WifiMac::GetHtSupported(uint8_t linkId)
+ |      bool ns3::WifiMac::GetHtSupported(const ns3::Mac48Address& address)
+ |
+ |  GetLinkForPhy(...)
+ |      std::optional<unsigned char> ns3::WifiMac::GetLinkForPhy(ns3::Ptr<const ns3::WifiPhy> phy)
+ |      std::optional<unsigned char> ns3::WifiMac::GetLinkForPhy(std::size_t phyId)
+ |
+ |  GetLinkIdByAddress(...)
+ |      std::optional<unsigned char> ns3::WifiMac::GetLinkIdByAddress(const ns3::Mac48Address& address)
+ |
+ |  GetLinkIds(...)
+ |      const std::set<unsigned char>& ns3::WifiMac::GetLinkIds()
+ |
+ |  GetLocalAddress(...)
+ |      ns3::Mac48Address ns3::WifiMac::GetLocalAddress(const ns3::Mac48Address& remoteAddr)
+ |
+ |  GetMacQueueScheduler(...)
+ |      ns3::Ptr<ns3::WifiMacQueueScheduler> ns3::WifiMac::GetMacQueueScheduler()
+ |
+ |  GetMaxAmpduSize(...)
+ |      unsigned int ns3::WifiMac::GetMaxAmpduSize(ns3::AcIndex ac)
+ |
+ |  GetMaxAmsduSize(...)
+ |      unsigned short ns3::WifiMac::GetMaxAmsduSize(ns3::AcIndex ac)
+ |
+ |  GetMaxBaBufferSize(...)
+ |      unsigned short ns3::WifiMac::GetMaxBaBufferSize(std::optional<ns3::Mac48Address> address = std::nullopt)
+ |
+ |  GetMldAddress(...)
+ |      std::optional<ns3::Mac48Address> ns3::WifiMac::GetMldAddress(const ns3::Mac48Address& remoteAddr)
+ |
+ |  GetMpduBufferSize(...)
+ |      unsigned short ns3::WifiMac::GetMpduBufferSize()
+ |
+ |  GetNLinks(...)
+ |      uint8_t ns3::WifiMac::GetNLinks()
+ |
+ |  GetQosSupported(...)
+ |      bool ns3::WifiMac::GetQosSupported()
+ |
+ |  GetQosTxop(...)
+ |      ns3::Ptr<ns3::QosTxop> ns3::WifiMac::GetQosTxop(ns3::AcIndex ac)
+ |      ns3::Ptr<ns3::QosTxop> ns3::WifiMac::GetQosTxop(uint8_t tid)
+ |
+ |  GetSsid(...)
+ |      ns3::Ssid ns3::WifiMac::GetSsid()
+ |
+ |  GetTidToLinkMapping(...)
+ |      std::optional<std::reference_wrapper<const std::map<unsigned char,std::set<unsigned char>>>> ns3::WifiMac::GetTidToLinkMapping(ns3::Mac48Address mldAddr, ns3::WifiDirection dir)
+ |
+ |  GetTxBlockedOnLink(...)
+ |      bool ns3::WifiMac::GetTxBlockedOnLink(ns3::AcIndex ac, const ns3::WifiContainerQueueId& queueId, uint8_t linkId, ns3::WifiQueueBlockedReason reason = WifiQueueBlockedReason::REASONS_COUNT)
+ |
+ |  GetTxop(...)
+ |      ns3::Ptr<ns3::Txop> ns3::WifiMac::GetTxop()
+ |
+ |  GetTxopQueue(...)
+ |      ns3::Ptr<ns3::WifiMacQueue> ns3::WifiMac::GetTxopQueue(ns3::AcIndex ac)
+ |
+ |  GetTypeId(...)
+ |      static ns3::TypeId ns3::WifiMac::GetTypeId()
+ |
+ |  GetTypeOfStation(...)
+ |      ns3::TypeOfStation ns3::WifiMac::GetTypeOfStation()
+ |
+ |  GetVhtCapabilities(...)
+ |      ns3::VhtCapabilities ns3::WifiMac::GetVhtCapabilities(uint8_t linkId)
+ |
+ |  GetVhtConfiguration(...)
+ |      ns3::Ptr<ns3::VhtConfiguration> ns3::WifiMac::GetVhtConfiguration()
+ |
+ |  GetVhtSupported(...)
+ |      bool ns3::WifiMac::GetVhtSupported(uint8_t linkId)
+ |      bool ns3::WifiMac::GetVhtSupported(const ns3::Mac48Address& address)
+ |
+ |  GetWifiPhy(...)
+ |      ns3::Ptr<ns3::WifiPhy> ns3::WifiMac::GetWifiPhy(uint8_t linkId = SINGLE_LINK_OP_ID)
+ |
+ |  GetWifiRemoteStationManager(...)
+ |      ns3::Ptr<ns3::WifiRemoteStationManager> ns3::WifiMac::GetWifiRemoteStationManager(uint8_t linkId = 0)
+ |
+ |  HasFramesToTransmit(...)
+ |      bool ns3::WifiMac::HasFramesToTransmit(uint8_t linkId)
+ |
+ |  Is6GhzBand(...)
+ |      bool ns3::WifiMac::Is6GhzBand(uint8_t linkId)
+ |
+ |  NotifyChannelSwitching(...)
+ |      void ns3::WifiMac::NotifyChannelSwitching(uint8_t linkId)
+ |
+ |  NotifyPromiscRx(...)
+ |      void ns3::WifiMac::NotifyPromiscRx(ns3::Ptr<const ns3::Packet> packet)
+ |
+ |  NotifyRx(...)
+ |      void ns3::WifiMac::NotifyRx(ns3::Ptr<const ns3::Packet> packet)
+ |
+ |  NotifyRxDrop(...)
+ |      void ns3::WifiMac::NotifyRxDrop(ns3::Ptr<const ns3::Packet> packet)
+ |
+ |  NotifyTx(...)
+ |      void ns3::WifiMac::NotifyTx(ns3::Ptr<const ns3::Packet> packet)
+ |
+ |  NotifyTxDrop(...)
+ |      void ns3::WifiMac::NotifyTxDrop(ns3::Ptr<const ns3::Packet> packet)
+ |
+ |  ResetWifiPhys(...)
+ |      void ns3::WifiMac::ResetWifiPhys()
+ |
+ |  SetAddress(...)
+ |      void ns3::WifiMac::SetAddress(ns3::Mac48Address address)
+ |
+ |  SetBssid(...)
+ |      void ns3::WifiMac::SetBssid(ns3::Mac48Address bssid, uint8_t linkId)
+ |
+ |  SetChannelAccessManagers(...)
+ |      void ns3::WifiMac::SetChannelAccessManagers(const std::vector<ns3::Ptr<ns3::ChannelAccessManager>>& caManagers)
+ |
+ |  SetCtsToSelfSupported(...)
+ |      void ns3::WifiMac::SetCtsToSelfSupported(bool enable)
+ |
+ |  SetDevice(...)
+ |      void ns3::WifiMac::SetDevice(const ns3::Ptr<ns3::WifiNetDevice> device)
+ |
+ |  SetForwardUpCallback(...)
+ |      void ns3::WifiMac::SetForwardUpCallback(ns3::WifiMac::ForwardUpCallback upCallback)
+ |
+ |  SetFrameExchangeManagers(...)
+ |      void ns3::WifiMac::SetFrameExchangeManagers(const std::vector<ns3::Ptr<ns3::FrameExchangeManager>>& feManagers)
+ |
+ |  SetFrameRetryLimit(...)
+ |      void ns3::WifiMac::SetFrameRetryLimit(uint32_t limit)
+ |
+ |  SetLinkDownCallback(...)
+ |      void ns3::WifiMac::SetLinkDownCallback(ns3::Callback<void> linkDown)
+ |
+ |  SetLinkUpCallback(...)
+ |      void ns3::WifiMac::SetLinkUpCallback(ns3::Callback<void> linkUp)
+ |
+ |  SetMacQueueScheduler(...)
+ |      void ns3::WifiMac::SetMacQueueScheduler(ns3::Ptr<ns3::WifiMacQueueScheduler> scheduler)
+ |
+ |  SetMpduBufferSize(...)
+ |      void ns3::WifiMac::SetMpduBufferSize(uint16_t size)
+ |
+ |  SetPromisc(...)
+ |      void ns3::WifiMac::SetPromisc()
+ |
+ |  SetSsid(...)
+ |      void ns3::WifiMac::SetSsid(ns3::Ssid ssid)
+ |
+ |  SetTypeOfStation(...)
+ |      void ns3::WifiMac::SetTypeOfStation(ns3::TypeOfStation type)
+ |
+ |  SetWifiPhys(...)
+ |      void ns3::WifiMac::SetWifiPhys(const std::vector<ns3::Ptr<ns3::WifiPhy>>& phys)
+ |
+ |  SetWifiRemoteStationManager(...)
+ |      void ns3::WifiMac::SetWifiRemoteStationManager(ns3::Ptr<ns3::WifiRemoteStationManager> stationManager)
+ |
+ |  SetWifiRemoteStationManagers(...)
+ |      void ns3::WifiMac::SetWifiRemoteStationManagers(const std::vector<ns3::Ptr<ns3::WifiRemoteStationManager>>& stationManagers)
+ |
+ |  SupportsSendFrom(...)
+ |      bool ns3::WifiMac::SupportsSendFrom()
+ |
+ |  TidMappedOnLink(...)
+ |      bool ns3::WifiMac::TidMappedOnLink(ns3::Mac48Address mldAddr, ns3::WifiDirection dir, uint8_t tid, uint8_t linkId)
+ |
+ |  UnblockUnicastTxOnLinks(...)
+ |      void ns3::WifiMac::UnblockUnicastTxOnLinks(ns3::WifiQueueBlockedReason reason, const ns3::Mac48Address& address, const std::set<unsigned char>& linkIds)
+ |
+ |  __init__(...)
+ |      WifiMac::WifiMac()
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from Object:
+ |
+ |  AggregateObject(...)
+ |      void ns3::Object::AggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  Dispose(...)
+ |      void ns3::Object::Dispose()
+ |
+ |  GetAggregateIterator(...)
+ |      ns3::Object::AggregateIterator ns3::Object::GetAggregateIterator()
+ |
+ |  GetInstanceTypeId(...)
+ |      ns3::TypeId ns3::Object::GetInstanceTypeId()
+ |
+ |  GetObject = <cppyy.TemplateProxy object>
+ |  Initialize(...)
+ |      void ns3::Object::Initialize()
+ |
+ |  IsInitialized(...)
+ |      bool ns3::Object::IsInitialized()
+ |
+ |  UnidirectionalAggregateObject(...)
+ |      void ns3::Object::UnidirectionalAggregateObject(ns3::Ptr<ns3::Object> other)
+ |
+ |  __assign__(...)
+ |      ns3::Object& ns3::Object::operator=(const ns3::Object&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>:
+ |
+ |  GetReferenceCount(...)
+ |      unsigned int ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::GetReferenceCount()
+ |
+ |  Ref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Ref()
+ |
+ |  Unref(...)
+ |      void ns3::SimpleRefCount<ns3::Object,ns3::ObjectBase,ns3::ObjectDeleter>::Unref()
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ObjectBase:
+ |
+ |  GetAttribute(...)
+ |      void ns3::ObjectBase::GetAttribute(std::string name, ns3::AttributeValue& value, bool permissive = false)
+ |
+ |  GetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::GetAttributeFailSafe(std::string name, ns3::AttributeValue& value)
+ |
+ |  SetAttribute(...)
+ |      void ns3::ObjectBase::SetAttribute(std::string name, const ns3::AttributeValue& value)
+ |
+ |  SetAttributeFailSafe(...)
+ |      bool ns3::ObjectBase::SetAttributeFailSafe(std::string name, const ns3::AttributeValue& value)
+ |
+ |  TraceConnect(...)
+ |      bool ns3::ObjectBase::TraceConnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceConnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceConnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnect(...)
+ |      bool ns3::ObjectBase::TraceDisconnect(std::string name, std::string context, const ns3::CallbackBase& cb)
+ |
+ |  TraceDisconnectWithoutContext(...)
+ |      bool ns3::ObjectBase::TraceDisconnectWithoutContext(std::string name, const ns3::CallbackBase& cb)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ObjectBase:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+

@@ -1,0 +1,143 @@
+Help on class PacketSinkHelper in module ns3:
+
+class PacketSinkHelper(ApplicationHelper)
+ |  Method resolution order:
+ |      PacketSinkHelper
+ |      ApplicationHelper
+ |      cppyy.gbl.CPPInstance
+ |      builtins.object
+ |
+ |  Methods defined here:
+ |
+ |  __assign__(...)
+ |      ns3::PacketSinkHelper& ns3::PacketSinkHelper::operator=(const ns3::PacketSinkHelper&)
+ |      ns3::PacketSinkHelper& ns3::PacketSinkHelper::operator=(ns3::PacketSinkHelper&&)
+ |
+ |  __init__(...)
+ |      PacketSinkHelper::PacketSinkHelper(const std::string& protocol, const ns3::Address& address)
+ |      PacketSinkHelper::PacketSinkHelper(const ns3::PacketSinkHelper&)
+ |      PacketSinkHelper::PacketSinkHelper(ns3::PacketSinkHelper&&)
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from ApplicationHelper:
+ |
+ |  AssignStreams(...)
+ |      long long ns3::ApplicationHelper::AssignStreams(ns3::NodeContainer c, int64_t stream)
+ |
+ |  AssignStreamsToAllApps(...)
+ |      static long long ns3::ApplicationHelper::AssignStreamsToAllApps(ns3::NodeContainer c, int64_t stream)
+ |
+ |  Install(...)
+ |      ns3::ApplicationContainer ns3::ApplicationHelper::Install(ns3::NodeContainer c)
+ |      ns3::ApplicationContainer ns3::ApplicationHelper::Install(ns3::Ptr<ns3::Node> node)
+ |      ns3::ApplicationContainer ns3::ApplicationHelper::Install(const std::string& nodeName)
+ |
+ |  SetAttribute(...)
+ |      void ns3::ApplicationHelper::SetAttribute(const std::string& name, const ns3::AttributeValue& value)
+ |
+ |  SetTypeId(...)
+ |      void ns3::ApplicationHelper::SetTypeId(ns3::TypeId typeId)
+ |      void ns3::ApplicationHelper::SetTypeId(const std::string& typeId)
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from ApplicationHelper:
+ |
+ |  __dict__
+ |      dictionary for instance variables
+ |
+ |  __weakref__
+ |      list of weak references to the object
+ |
+ |  ----------------------------------------------------------------------
+ |  Methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __add__(self, value, /)
+ |      Return self+value.
+ |
+ |  __bool__(self, /)
+ |      True if self else False
+ |
+ |  __destruct__(...)
+ |      call the C++ destructor
+ |
+ |  __dispatch__(...)
+ |      dispatch to selected overload
+ |
+ |  __eq__(self, value, /)
+ |      Return self==value.
+ |
+ |  __ge__(self, value, /)
+ |      Return self>=value.
+ |
+ |  __getitem__(...)
+ |      pointer dereferencing
+ |
+ |  __gt__(self, value, /)
+ |      Return self>value.
+ |
+ |  __hash__(self, /)
+ |      Return hash(self).
+ |
+ |  __invert__(self, /)
+ |      ~self
+ |
+ |  __le__(self, value, /)
+ |      Return self<=value.
+ |
+ |  __lt__(self, value, /)
+ |      Return self<value.
+ |
+ |  __mul__(self, value, /)
+ |      Return self*value.
+ |
+ |  __ne__(self, value, /)
+ |      Return self!=value.
+ |
+ |  __neg__(self, /)
+ |      -self
+ |
+ |  __pos__(self, /)
+ |      +self
+ |
+ |  __radd__(self, value, /)
+ |      Return value+self.
+ |
+ |  __repr__(self, /)
+ |      Return repr(self).
+ |
+ |  __reshape__(...)
+ |      cast pointer to 1D array type
+ |
+ |  __rmul__(self, value, /)
+ |      Return value*self.
+ |
+ |  __rsub__(self, value, /)
+ |      Return value-self.
+ |
+ |  __rtruediv__(self, value, /)
+ |      Return value/self.
+ |
+ |  __smartptr__(...)
+ |      get associated smart pointer, if any
+ |
+ |  __str__(self, /)
+ |      Return str(self).
+ |
+ |  __sub__(self, value, /)
+ |      Return self-value.
+ |
+ |  __truediv__(self, value, /)
+ |      Return self/value.
+ |
+ |  ----------------------------------------------------------------------
+ |  Static methods inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __new__(*args, **kwargs) class method of cppyy.gbl.CPPInstance
+ |      Create and return a new object.  See help(type) for accurate signature.
+ |
+ |  ----------------------------------------------------------------------
+ |  Data descriptors inherited from cppyy.gbl.CPPInstance:
+ |
+ |  __python_owns__
+ |      If true, python manages the life time of this object
+
