@@ -19,38 +19,37 @@ internet = ns.InternetStackHelper()
 internet.Install(allNodes)
 
 # Step 4: Create network devices and assign them to the nodes
-devices = ns.NetDeviceContainer()
 p2p = ns.PointToPointHelper()
 p2p.SetDeviceAttribute("DataRate", ns.StringValue("10Mbps"))
 p2p.SetChannelAttribute("Delay", ns.StringValue("5ms"))
 
-# Create the links between nodes (P2P connections) and get devices
-devices.Add(p2p.Install(endpoints.Get(0), routers.Get(0)))  # n0 <-> r0
-devices.Add(p2p.Install(routers.Get(0), routers.Get(1)))    # r0 <-> r1
-devices.Add(p2p.Install(routers.Get(1), endpoints.Get(1)))  # r1 <-> n1
-devices.Add(p2p.Install(routers.Get(0), routers.Get(2)))    # r0 <-> r2
-devices.Add(p2p.Install(routers.Get(2), routers.Get(3)))    # r2 <-> r3
-devices.Add(p2p.Install(routers.Get(3), endpoints.Get(1)))  # r3 <-> n1
-devices.Add(p2p.Install(routers.Get(1), routers.Get(2)))    # r1 <-> r2
+# Create the links between nodes (P2P connections)
+devices = ns.NetDeviceContainer()
+links = []  # Store device containers for IP assignment
 
-# Step 5: Create bridge for each node (except the endpoints, which only have one link)
-for i in range(routers.GetN()):
-    node =q
-    
-    bridge = ns.BridgeHelper()
-    bridge.Install(node, devices)
+links.append(p2p.Install(endpoints.Get(0), routers.Get(0)))  # n0 <-> r0
+links.append(p2p.Install(routers.Get(0), routers.Get(1)))    # r0 <-> r1
+links.append(p2p.Install(routers.Get(1), endpoints.Get(1)))  # r1 <-> n1
+links.append(p2p.Install(routers.Get(0), routers.Get(2)))    # r0 <-> r2
+links.append(p2p.Install(routers.Get(2), routers.Get(3)))    # r2 <-> r3
+links.append(p2p.Install(routers.Get(3), endpoints.Get(1)))  # r3 <-> n1
+links.append(p2p.Install(routers.Get(1), routers.Get(2)))    # r1 <-> r2
 
-# Step 6: Assign IP addresses to each device (node) using a single address per node
-address = ns.Ipv4AddressHelper()
-address.SetBase(ns.Ipv4Address("10.1.1.0"), ns.Ipv4Mask("255.255.255.0"))
+# Step 5: Assign Unique IP Addresses to Each Link
+ipv4 = ns.Ipv4AddressHelper()
+subnet_prefix = "10.1.{}.0"
 
-# Assign IPs to devices and capture the interfaces
-ipv4_interfaces = address.Assign(devices)
+interfaces = []  # Store interfaces for later use
 
-# Print the IP addresses
-for j in range(ipv4_interfaces.GetN()):
-    ipv4 = ipv4_interfaces.GetAddress(j, 0)  # This will give you the local IP address directly
-    print(ipv4)
+for i, link in enumerate(links):
+    ipv4.SetBase(ns.Ipv4Address(subnet_prefix.format(i + 1)), ns.Ipv4Mask("255.255.255.0"))
+    interfaces.append(ipv4.Assign(link))
+
+# Step 6: Print IP Addresses
+for i, iface in enumerate(interfaces):
+    print(f"Link {i + 1} - Network: {subnet_prefix.format(i + 1)}")
+    print(f"  Node 1 IP: {iface.GetAddress(0)}")
+    print(f"  Node 2 IP: {iface.GetAddress(1)}")
 
 # Run the simulation
 ns.Simulator.Run()
