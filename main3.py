@@ -15,6 +15,9 @@ def SinkTracer(packet: ns.Packet, src_address: ns.Address, dst_address: ns.Addre
     print(f"At {ns.Simulator.Now().GetSeconds():.0f}s, '{dst_address}' received packet"
           f" with {packet.__deref__().GetSerializedSize()} bytes from '{src_address}'")
 
+
+  
+
 # Create network topology
 # ======================
 
@@ -45,6 +48,7 @@ internet.Install(all_nodes)
 p2p = ns.PointToPointHelper()
 p2p.SetDeviceAttribute("DataRate", ns.StringValue("1Gbps"))
 p2p.SetChannelAttribute("Delay", ns.StringValue("2ms"))
+p2p.EnablePcapAll("router-trace")
 
 # Connect HUBs to routers
 hub1_devices = ns.NetDeviceContainer()
@@ -59,11 +63,6 @@ hub3_devices = ns.NetDeviceContainer()
 for i in range(hub3.GetN()):
     hub3_devices.Add(p2p.Install(hub3.Get(i), routers.Get(4)))
 
-# Connect routers in full mesh
-router_devices = ns.NetDeviceContainer()
-for i in range(routers.GetN()):
-    for j in range(i+1, routers.GetN()):
-        router_devices.Add(p2p.Install(routers.Get(i), routers.Get(j)))
 
 # Assign IP addresses
 ipv4 = ns.Ipv4AddressHelper()
@@ -80,9 +79,28 @@ hub2_ips = ipv4.Assign(hub2_devices)
 ipv4.SetBase(ns.Ipv4Address("10.1.0.0"), ns.Ipv4Mask("255.255.0.0"))
 hub3_ips = ipv4.Assign(hub3_devices)
 
-# Routers: 192.168.5.0/27
-ipv4.SetBase(ns.Ipv4Address("192.168.5.0"), ns.Ipv4Mask("255.255.255.224"))
-router_ips = ipv4.Assign(router_devices)
+
+# Connect routers in full mesh
+router_links = [
+    (0, 1, "192.168.5.0/30"),    # R0-R1
+    (0, 5, "192.168.6.0/30"),    # R0-R5
+    (1, 2, "192.168.7.0/30"),    # R1-R2
+    (2, 3, "192.168.8.0/30"),    # R2-R3
+    (3, 4, "192.168.9.0/30"),    # R3-R4
+    (4, 5, "192.168.10.0/30")    # R4-R5
+]
+
+router_ips = ns.Ipv4AddressHelper()
+router_devices = ns.NetDeviceContainer()
+
+for i, j, subnet in router_links:
+    # Assign unique subnet per link
+    router_ips.SetBase(ns.Ipv4Address(subnet.split('/')[0]), 
+                    ns.Ipv4Mask("255.255.255.252"))  # /30 mask
+    devices = p2p.Install(routers.Get(i), routers.Get(j))
+    router_ips.Assign(devices)
+    router_devices.Add(devices)
+
 
 # Configure static routing
 def add_route(router, dest, mask, next_hop):
@@ -91,13 +109,18 @@ def add_route(router, dest, mask, next_hop):
     static.AddNetworkRouteTo(ns.Ipv4Address(dest), ns.Ipv4Mask(mask), 
                            ns.Ipv4Address(next_hop), 1)
 
+
+# Hub 0
+add_route(hub1.Get(0), "192.169.1.0", "255.255.255.0", "192.168.1.1")  # To R0
+
+
 # R0 routes
 add_route(routers.Get(0), "192.169.1.0", "255.255.255.0", "192.168.5.2")  # To R1
 add_route(routers.Get(0), "10.1.0.0", "255.255.0.0", "192.168.6.2")     # To R5
 
 # R1 routes
-add_route(routers.Get(1), "192.168.1.0", "255.255.255.0", "192.168.5.1")  # To R0
-add_route(routers.Get(1), "192.169.1.0", "255.255.255.0", "192.168.7.2")  # To R2
+add_route(routers.Get(1), "192.168.1.0", "255.255.255.0", "192.168.5.1") # To R0
+add_route(routers.Get(1), "192.169.1.0", "255.255.255.0", "192.168.7.2") # To R2
 
 # R2 routes
 add_route(routers.Get(2), "192.168.1.0", "255.255.255.0", "192.168.7.1")  # To R1
@@ -113,7 +136,7 @@ add_route(routers.Get(4), "192.168.1.0", "255.255.255.0", "192.168.10.2") # To R
 
 # R5 routes
 add_route(routers.Get(5), "192.168.1.0", "255.255.255.0", "192.168.10.1") # To R0
-add_route(routers.Get(5), "10.1.0.0", "255.255.0.0", "192.168.6.1")      # To R4
+add_route(routers.Get(5), "192.169.1.0", "255.255.255.0", "192.168.10.2")    # To R4
 
 
 print("\n=== Network Configuration ===")
@@ -145,7 +168,7 @@ client.SetAttribute("PacketSize", ns.UintegerValue(1024))
 
 client_app = client.Install(hub1.Get(0))
 client_app.Start(ns.Seconds(2.0))
-client_app.Stop(ns.Seconds(10.0))
+client_app.Stop(ns.Seconds(5.0))
 
 # Enable tracing
 sinkTraceCallback = ns.cppyy.gbl.make_sinktrace_callback(SinkTracer)
