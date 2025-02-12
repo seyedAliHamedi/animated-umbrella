@@ -1,129 +1,163 @@
 from ns import ns
-import cppyy
 
-# Step 1: Create HUB nodes (end devices)
-hub1_devices = ns.NodeContainer()
-hub1_devices.Create(5)  # 5 devices in HUB1
 
-hub2_devices = ns.NodeContainer()
-hub2_devices.Create(5)  # 5 devices in HUB2
+ns.cppyy.cppdef("""
+            using namespace ns3;
 
-hub3_devices = ns.NodeContainer()
-hub3_devices.Create(5)  # 5 devices in HUB3
+            Callback<void,Ptr<const Packet>,const Address&,const Address&>
+            make_sinktrace_callback(void(*func)(Ptr<const Packet>, const Address&,const Address&))
+            {
+                return MakeCallback(func);
+            }
+        """)
 
-# Step 2: Create 6 routers (R0 to R5)
+def SinkTracer(packet: ns.Packet, src_address: ns.Address, dst_address: ns.Address) -> None:
+    print(f"At {ns.Simulator.Now().GetSeconds():.0f}s, '{dst_address}' received packet"
+          f" with {packet.__deref__().GetSerializedSize()} bytes from '{src_address}'")
+
+# Create network topology
+# ======================
+
+# Create HUB nodes (end devices)
+hub1 = ns.NodeContainer()
+hub1.Create(5)
+hub2 = ns.NodeContainer()
+hub2.Create(5)
+hub3 = ns.NodeContainer()
+hub3.Create(5)
+
+# Create routers
 routers = ns.NodeContainer()
 routers.Create(6)
 
-# Add all nodes to a container
-allNodes = ns.NodeContainer()
-allNodes.Add(hub1_devices)
-allNodes.Add(hub2_devices)
-allNodes.Add(hub3_devices)
-allNodes.Add(routers)
+# Combine all nodes
+all_nodes = ns.NodeContainer()
+all_nodes.Add(hub1)
+all_nodes.Add(hub2)
+all_nodes.Add(hub3)
+all_nodes.Add(routers)
 
-
-# Step 3: Install Internet Stack
+# Install internet stack
 internet = ns.InternetStackHelper()
-internet.Install(allNodes)
+internet.Install(all_nodes)
 
-# Step 4: Create PointToPoint helper
+# Create connections
 p2p = ns.PointToPointHelper()
-p2p.SetDeviceAttribute("DataRate", ns.StringValue("1Gbps"))  # Set bandwidth
-p2p.SetChannelAttribute("Delay", ns.StringValue("2ms"))      # Set delay
+p2p.SetDeviceAttribute("DataRate", ns.StringValue("1Gbps"))
+p2p.SetChannelAttribute("Delay", ns.StringValue("2ms"))
 
-# Containers for network devices
-hub1_net_devices = ns.NetDeviceContainer()
-hub2_net_devices = ns.NetDeviceContainer()
-hub3_net_devices = ns.NetDeviceContainer()
-router_net_devices = ns.NetDeviceContainer()
+# Connect HUBs to routers
+hub1_devices = ns.NetDeviceContainer()
+for i in range(hub1.GetN()):
+    hub1_devices.Add(p2p.Install(hub1.Get(i), routers.Get(0)))
 
-# Connect HUB1 to R0
-for i in range(hub1_devices.GetN()):
-    hub1_net_devices.Add(p2p.Install(hub1_devices.Get(i), routers.Get(0)))
+hub2_devices = ns.NetDeviceContainer()
+for i in range(hub2.GetN()):
+    hub2_devices.Add(p2p.Install(hub2.Get(i), routers.Get(2)))
 
-# Connect HUB2 to R2
-for i in range(hub2_devices.GetN()):
-    hub2_net_devices.Add(p2p.Install(hub2_devices.Get(i), routers.Get(2)))
+hub3_devices = ns.NetDeviceContainer()
+for i in range(hub3.GetN()):
+    hub3_devices.Add(p2p.Install(hub3.Get(i), routers.Get(4)))
 
-# Connect HUB3 to R4
-for i in range(hub3_devices.GetN()):
-    hub3_net_devices.Add(p2p.Install(hub3_devices.Get(i), routers.Get(4)))
-
-# Fully connect the 6 routers (R0 to R5)
+# Connect routers in full mesh
+router_devices = ns.NetDeviceContainer()
 for i in range(routers.GetN()):
-    for j in range(i + 1, routers.GetN()):
-        router_net_devices.Add(p2p.Install(routers.Get(i), routers.Get(j)))
+    for j in range(i+1, routers.GetN()):
+        router_devices.Add(p2p.Install(routers.Get(i), routers.Get(j)))
+
+# Assign IP addresses
+ipv4 = ns.Ipv4AddressHelper()
+
+# Hub1: 192.168.1.0/24
+ipv4.SetBase(ns.Ipv4Address("192.168.1.0"), ns.Ipv4Mask("255.255.255.0"))
+hub1_ips = ipv4.Assign(hub1_devices)
+
+# Hub2: 192.169.1.0/24
+ipv4.SetBase(ns.Ipv4Address("192.169.1.0"), ns.Ipv4Mask("255.255.255.0"))
+hub2_ips = ipv4.Assign(hub2_devices)
+
+# Hub3: 10.1.0.0/16
+ipv4.SetBase(ns.Ipv4Address("10.1.0.0"), ns.Ipv4Mask("255.255.0.0"))
+hub3_ips = ipv4.Assign(hub3_devices)
+
+# Routers: 192.168.5.0/27
+ipv4.SetBase(ns.Ipv4Address("192.168.5.0"), ns.Ipv4Mask("255.255.255.224"))
+router_ips = ipv4.Assign(router_devices)
+
+# Configure static routing
+def add_route(router, dest, mask, next_hop):
+    ipv4 = router.GetObject[ns.Ipv4]()
+    static = ns.Ipv4StaticRoutingHelper().GetStaticRouting(ipv4)
+    static.AddNetworkRouteTo(ns.Ipv4Address(dest), ns.Ipv4Mask(mask), 
+                           ns.Ipv4Address(next_hop), 1)
+
+# R0 routes
+add_route(routers.Get(0), "192.169.1.0", "255.255.255.0", "192.168.5.2")  # To R1
+add_route(routers.Get(0), "10.1.0.0", "255.255.0.0", "192.168.6.2")     # To R5
+
+# R1 routes
+add_route(routers.Get(1), "192.168.1.0", "255.255.255.0", "192.168.5.1")  # To R0
+add_route(routers.Get(1), "192.169.1.0", "255.255.255.0", "192.168.7.2")  # To R2
+
+# R2 routes
+add_route(routers.Get(2), "192.168.1.0", "255.255.255.0", "192.168.7.1")  # To R1
+add_route(routers.Get(2), "10.1.0.0", "255.255.0.0", "192.168.8.2")      # To R3
+
+# R3 routes
+add_route(routers.Get(3), "192.169.1.0", "255.255.255.0", "192.168.8.1")  # To R2
+add_route(routers.Get(3), "10.1.0.0", "255.255.0.0", "192.168.9.2")      # To R4
+
+# R4 routes
+add_route(routers.Get(4), "192.169.1.0", "255.255.255.0", "192.168.9.1")  # To R3
+add_route(routers.Get(4), "192.168.1.0", "255.255.255.0", "192.168.10.2") # To R5
+
+# R5 routes
+add_route(routers.Get(5), "192.168.1.0", "255.255.255.0", "192.168.10.1") # To R0
+add_route(routers.Get(5), "10.1.0.0", "255.255.0.0", "192.168.6.1")      # To R4
 
 
-# Step 5: Assign IP Addresses
-address = ns.Ipv4AddressHelper()
-
-# Assign IPs for HUB1
-address.SetBase(ns.Ipv4Address("192.168.1.0"), ns.Ipv4Mask("255.255.255.0"))
-hub1_interfaces = address.Assign(hub1_net_devices)
-
-# Assign IPs for HUB2
-address.SetBase(ns.Ipv4Address("192.169.1.0"), ns.Ipv4Mask("255.255.255.0"))
-hub2_interfaces = address.Assign(hub2_net_devices)
-
-# Assign IPs for HUB3
-address.SetBase(ns.Ipv4Address("10.1.0.0"), ns.Ipv4Mask("255.255.0.0")) # /16 subnet (32 IPs)
-hub3_interfaces = address.Assign(hub3_net_devices)
-
-router_address = ns.Ipv4AddressHelper()
-router_address.SetBase(ns.Ipv4Address("192.168.5.0"), ns.Ipv4Mask("255.255.255.224"))  # /27 subnet (32 IPs)
-router_interfaces = router_address.Assign(router_net_devices)
-
-
-
-
-# hub1 <->hub2 : r0<->r1<->r2
-# hub2 <->hub3 : r2<->r3<->r4
-# hub1 <->hub3 : r0<->r5<->r4
-
-# Step 6: Set Up Basic Static Routing
-static_routing_helper = ns.Ipv4StaticRoutingHelper()
-
-# Function to add a static route
-def add_static_route(router, destination, mask, next_hop):
-    ipv4 = router.GetObject[ns.Ipv4]() 
-    static_router = static_routing_helper.GetStaticRouting(ipv4)  
-
-    static_router.AddNetworkRouteTo(ns.Ipv4Address(destination), ns.Ipv4Mask(mask), ns.Ipv4Address(next_hop), 1)
-    print(f"✅ Route added on Router {router.GetId()} → {destination} via {next_hop}")
-
-
-# Routes for R0 (HUB1 <-> HUB2, HUB1 <-> HUB3)
-add_static_route(routers.Get(0), "192.169.1.0", "255.255.255.0", "192.168.5.2")  # Route to HUB2 via R1
-add_static_route(routers.Get(0), "10.1.0.0", "255.255.0.0", "192.168.6.2")  # Route to HUB3 via R5
-
-# Routes for R1 (HUB1 <-> HUB2)
-add_static_route(routers.Get(1), "192.168.1.0", "255.255.255.0", "192.168.5.1")  # Route to HUB1 via R0
-add_static_route(routers.Get(1), "192.169.1.0", "255.255.255.0", "192.168.7.2")  # Route to HUB2 via R2
-
-# Routes for R2 (HUB1 <-> HUB2 and HUB2 <-> HUB3)
-add_static_route(routers.Get(2), "192.168.1.0", "255.255.255.0", "192.168.7.1")  # Route to HUB1 via R1
-add_static_route(routers.Get(2), "10.1.0.0", "255.255.0.0", "192.168.8.2")  # Route to HUB3 via R3
-
-# Routes for R3 (HUB2 <-> HUB3)
-add_static_route(routers.Get(3), "192.169.1.0", "255.255.255.0", "192.168.8.1")  # Route to HUB2 via R2
-add_static_route(routers.Get(3), "10.1.0.0", "255.255.0.0", "192.168.9.2")  # Route to HUB3 via R4
-
-# Routes for R4 (HUB2 <-> HUB3, HUB1 <-> HUB3)
-add_static_route(routers.Get(4), "192.169.1.0", "255.255.255.0", "192.168.9.1")  # Route to HUB2 via R3
-add_static_route(routers.Get(4), "192.168.1.0", "255.255.255.0", "192.168.10.2")  # Route to HUB1 via R5
-
-# Routes for R5 (HUB1 <-> HUB3)
-add_static_route(routers.Get(5), "192.168.1.0", "255.255.255.0", "192.168.10.1")  # Route to HUB1 via R0
-add_static_route(routers.Get(5), "10.1.0.0", "255.255.0.0", "192.168.6.1")  # Route to HUB3 via R4
-
-
-for i in range(allNodes.GetN()):
-    node = allNodes.Get(i)
-    ipv4 = node.GetObject[ns.Ipv4]()  # Get the IPv4 object
-    print(f"Node {i}:")
+print("\n=== Network Configuration ===")
+for i in range(all_nodes.GetN()):
+    node = all_nodes.Get(i)
+    ipv4 = node.GetObject[ns.Ipv4]()
+    print(f"Node {i} ({'Router' if i >= 15 else 'End Device'}):")
     for j in range(ipv4.GetNInterfaces()):
-        ip = ipv4.GetAddress(j, 0)  # Get the assigned IP
-        print(f"  Interface {j}: {ip}")
+        addr = ipv4.GetAddress(j, 0)
+        print(f"  Interface {j}: {addr.GetLocal()}")
 
+
+# Create applications
+# ==================
+server_port = 9
+server_ip = hub2_ips.GetAddress(0).ConvertTo()
+
+# Server application
+server = ns.UdpEchoServerHelper(server_port)
+server_app = server.Install(hub2.Get(0))
+server_app.Start(ns.Seconds(1.0))
+server_app.Stop(ns.Seconds(10.0))
+
+# Client application
+client = ns.UdpEchoClientHelper(server_ip, server_port)
+client.SetAttribute("MaxPackets", ns.UintegerValue(10))
+client.SetAttribute("Interval", ns.TimeValue(ns.Seconds(1.0)))
+client.SetAttribute("PacketSize", ns.UintegerValue(1024))
+
+client_app = client.Install(hub1.Get(0))
+client_app.Start(ns.Seconds(2.0))
+client_app.Stop(ns.Seconds(10.0))
+
+# Enable tracing
+sinkTraceCallback = ns.cppyy.gbl.make_sinktrace_callback(SinkTracer)
+server_app.Get(0).__deref__().TraceConnectWithoutContext("RxWithAddresses", sinkTraceCallback);
+
+# Simulation Control ----------------------------------------------
+ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
+ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
+ns.LogComponentEnable("Ipv4StaticRouting", ns.LOG_LEVEL_DEBUG)
+
+ns.Simulator.Stop(ns.Seconds(11.0))
+print("\n=== Starting Simulation ===")
+ns.Simulator.Run()
+ns.Simulator.Destroy()
+print("=== Simulation Complete ===")
