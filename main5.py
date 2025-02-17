@@ -1,7 +1,5 @@
 try:
     from ns import ns
-    import cppyy
-    cppyy.include("ns3/ipv4-address.h")
 except ModuleNotFoundError:
     raise SystemExit(
         "Error: ns3 Python module not found; Python bindings may not be enabled"
@@ -21,6 +19,8 @@ def main(argv):
     net2 = ns.NodeContainer()
     net2.Add(all.Get(1))
     net2.Add(all.Get(2))
+
+
 
     # Create IPv4 Internet Stack
     internetv4 = ns.InternetStackHelper()
@@ -56,8 +56,10 @@ def main(argv):
     interPacketInterval = ns.Seconds(1)
     local_address = node1_ipv4.GetAddress(0, 0)  # Get the first address of the first node
     remote_address = node1_ipv4.GetAddress(1, 0)  # Get the first address of the second node
-
-    print(repr(remote_address.GetLocal().ConvertTo()))
+    print(type(node1_ipv4),node1_ipv4)
+    print(type(remote_address),remote_address)
+    print(type(remote_address.GetLocal()),remote_address.GetLocal())
+    print(type(remote_address.GetLocal().ConvertTo()),remote_address.GetLocal().ConvertTo())
     ping = ns.PingHelper(remote_address.GetLocal().ConvertTo())
     # ping.SetLocal(local_address.GetLocal())  # Local address of n0
     # ping.SetRemote(remote_address.GetLocal())  # Remote address of n1
@@ -79,5 +81,6 @@ def main(argv):
     ns.Simulator.Run()
     ns.Simulator.Destroy()
 
-
-    main()
+if __name__ == "__main__":
+    import sys
+    main(sys.argv)
