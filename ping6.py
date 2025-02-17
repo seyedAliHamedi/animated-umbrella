@@ -98,6 +98,7 @@ def main(argv):
     # p2p.EnableAsciiAll(ascii.CreateFileStream("simple-routing-ping6.tr"))
     # p2p.EnablePcapAll("simple-routing-ping6", True)
 
+    ns.Simulator.Stop(ns.Seconds(25.0))
     # Run Simulation
     ns.Simulator.Run()
     ns.Simulator.Destroy()

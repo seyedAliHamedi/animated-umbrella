@@ -79,6 +79,7 @@ def main(argv):
     csma.EnableAsciiAll(ascii.CreateFileStream("simple-routing-ping4.tr"))
     csma.EnablePcapAll("simple-routing-ping4", True)
 
+    ns.Simulator.Stop(ns.Seconds(25.0))
     # Run Simulation
     ns.Simulator.Run()
     ns.Simulator.Destroy()
