@@ -1,22 +1,37 @@
 from ns import ns
-
+import sys
 
 ns.cppyy.cppdef("""
-            using namespace ns3;
+    #include "ns3/callback.h"
+    #include "ns3/ptr.h"
+    #include "ns3/packet.h"
+    #include <string>
+    using namespace ns3;
 
-            Callback<void,Ptr<const Packet>,const Address&,const Address&>
-            make_sinktrace_callback(void(*func)(Ptr<const Packet>, const Address&,const Address&))
-            {
-                return MakeCallback(func);
-            }
-        """)
+    // For router tracing: note the updated return type.
+    Callback<void, Ptr<const Packet>, const std::string&, bool>
+    make_routertrace_callback(void(*func)(Ptr<const Packet>, const std::string&, bool)) {
+        return MakeCallback(func);
+    }
+
+    // For server tracing remains the same.
+    Callback<void, Ptr<const Packet>, const Address&, const Address&>
+    make_sinktrace_callback(void(*func)(Ptr<const Packet>, const Address&, const Address&)) {
+        return MakeCallback(func);
+    }
+""")
 
 def SinkTracer(packet: ns.Packet, src_address: ns.Address, dst_address: ns.Address) -> None:
     print(f"At {ns.Simulator.Now().GetSeconds():.0f}s, '{dst_address}' received packet"
           f" with {packet.__deref__().GetSerializedSize()} bytes from '{src_address}'")
 
 
-  
+def RouterTracer(packet: ns.Packet, src_address: ns.Address, dst_address: ns.Address, interface_ip: str, is_tx: bool):
+    action = "Transmitted" if is_tx else "Received"
+    print(f"[Router Trace] At {ns.Simulator.Now().GetSeconds():.2f}s: "
+          f"Router {interface_ip} {action} packet: {src_address.ConvertTo()} ➔ {dst_address.ConvertTo()} "
+          f"({packet.GetSize()} bytes)")
+    sys.stdout.flush()
 
 # Create network topology
 # ======================
@@ -149,6 +164,29 @@ for i in range(all_nodes.GetN()):
         print(f"  Interface {j}: {addr.GetLocal()}")
 
 
+
+# ======== Add Router Tracing ========
+print("\n=== Configuring Router Tracing ===")
+for i in range(routers.GetN()):
+    router = routers.Get(i)
+    ipv4 = router.GetObject[ns.Ipv4]()
+    print(f"Installing traces on Router {i}")
+    
+    for j in range(1, ipv4.GetNInterfaces()):  # Skip loopback interface
+        interface_address = ipv4.GetAddress(j, 0).GetLocal().ConvertTo()
+        dev = ipv4.GetNetDevice(j)
+        
+        # Transmit (Tx) tracing
+        tx_callback = ns.cppyy.gbl.make_routertrace_callback(
+            lambda p, s, d, ip=interface_address: RouterTracer(p, s, d, ip, True))
+        dev.TraceConnectWithoutContext("Tx", tx_callback)
+        
+        # Receive (Rx) tracing
+        rx_callback = ns.cppyy.gbl.make_routertrace_callback(
+            lambda p, s, d, ip=interface_address: RouterTracer(p, s, d, ip, False))
+        dev.TraceConnectWithoutContext("Rx", rx_callback)
+
+
 # Create applications
 # ==================
 server_port = 9
@@ -168,7 +206,7 @@ client.SetAttribute("PacketSize", ns.UintegerValue(1024))
 
 client_app = client.Install(hub1.Get(0))
 client_app.Start(ns.Seconds(2.0))
-client_app.Stop(ns.Seconds(5.0))
+client_app.Stop(ns.Seconds(3.0))
 
 # Enable tracing
 sinkTraceCallback = ns.cppyy.gbl.make_sinktrace_callback(SinkTracer)
