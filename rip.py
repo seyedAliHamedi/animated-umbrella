@@ -99,6 +99,7 @@ def main(argv):
     csma.EnableAsciiAll(ascii.CreateFileStream("dual-router-ping6.tr"))
     csma.EnablePcapAll("dual-router-ping6", True)
 
+    ns.Simulator.Stop(ns.Seconds(25.0))
     # Run Simulation
     ns.Simulator.Run()
     ns.Simulator.Destroy()
