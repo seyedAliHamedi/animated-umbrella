@@ -20,7 +20,10 @@ interfaces.GetAddress(2).ConvertTo() -->Address
 ** ConvertTo
 
 --------------------- Simulation Get Stuck ---------------------
-when you define a TCP/UDP server and client 
-you define a start and start time for each
+when you define a app(TCP/UDP/ping) server and client 
+you define a start and stop time for each
 
 ** you should put ns.Simulator.Stop(ns.Seconds(N)) too | or else the run would freeze
+
+-------------------- 
+??flowClass has ["sourceAddress", "destinationAddress", "protocol", "sourcePort", "destinationPort"] ??
