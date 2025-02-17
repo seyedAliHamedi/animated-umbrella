@@ -79,9 +79,5 @@ def main(argv):
     ns.Simulator.Run()
     ns.Simulator.Destroy()
 
-if __name__ == "__main__":
-    import sys
-    main(sys.argv)
 
-    import sys
-    main(sys.argv)
+    main()
