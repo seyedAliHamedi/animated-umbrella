@@ -8,6 +8,34 @@ except ModuleNotFoundError:
     )
 
 
+def set_interface_state(r, interface_index, state):
+    """    
+    Parameters:
+    r - The router node
+    interface_index - The interface to modify (-1 for all interfaces)
+    state - Boolean (True = UP, False = DOWN)
+    """
+    ipv6 = r.GetObject[ns.Ipv6]()  # Get the IPv6 stack
+    num_interfaces = ipv6.GetNInterfaces()  # Get total interfaces
+
+    if interface_index == -1:
+        # Apply to all interfaces (except loopback, usually index 0)
+        for i in range(1, num_interfaces):
+            ipv6.SetUp(i) if state else ipv6.SetDown(i)
+        print(
+            f"Router {r.GetId()} {'enabled' if state else 'disabled'} (all {num_interfaces-1} interfaces)")
+    else:
+        # Apply only to the specified interface
+        if 0 < interface_index < num_interfaces:
+            ipv6.SetUp(interface_index) if state else ipv6.SetDown(
+                interface_index)
+            print(
+                f"Router {r.GetId()} {'enabled' if state else 'disabled'} (interface {interface_index})")
+        else:
+            print(
+                f"Invalid interface index {interface_index} for router {r.GetId()}")
+
+
 def main(argv):
     cmd = ns.CommandLine()
     cmd.Parse(argv)
@@ -78,6 +106,9 @@ def main(argv):
 
     ipv6.SetBase(ns.Ipv6Address("2001:4::"), ns.Ipv6Prefix(64))
     i4 = ipv6.Assign(d4)
+
+    set_interface_state(r1, -1, False)
+    set_interface_state(r0, -1, False)
 
     # Create a Ping6 application (n0 -> n1)
     print("Application")
