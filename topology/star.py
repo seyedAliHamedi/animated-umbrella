@@ -1,4 +1,5 @@
 from ns import ns
+import cppyy
 
 ################# STAR TOPOLOGY #################
 """
@@ -11,7 +12,6 @@ from ns import ns
 # ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
 # ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
 print("\n\n\n")
-
 # define end devices
 endDevices = ns.NodeContainer()
 endDevices.Create(4)  
@@ -87,18 +87,24 @@ monitor = flowmonHelper.InstallAll()
 # ? stop simulator
 ns.Simulator.Stop(ns.Seconds(12.0))
 
-# Run the simulation
+# run the simulation
 ns.Simulator.Run()
 print("-------- simulation started --------- \n")
 
-# Print Flow Monitor Statistics
 monitor.CheckForLostPackets()
 classifier = flowmonHelper.GetClassifier()
 
 for flow_id, flowStats in monitor.GetFlowStats():
     flowClass = classifier.FindFlow(flow_id)
-    proto = "UDP" if flowClass.protocol == 9 else "TCP" 
-    print(f"📊 Flow {flow_id}: {proto}, Src: {flowClass.sourceAddress}, Dst: {flowClass.destinationAddress}")
+    proto = "TCP" if flowClass.protocol == 6 else "UDP"  # Extract protocol
+
+    print(f"📊 Flow {flow_id}: {proto}")
+    print(f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
     print(f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
+    print(f"   Lost Packets: {flowStats.lostPackets}")
+    print(f"   Throughput: {flowStats.rxBytes * 8 / 10**6} Mbps")  # Convert bytes to Mbps
+    print(f"   Mean Delay: {flowStats.delaySum.GetSeconds() / flowStats.rxPackets} sec")
+    print(f"   Mean Jitter: {flowStats.jitterSum.GetSeconds() / flowStats.rxPackets} sec")
     
+flowmonHelper.SerializeToXmlFile("flow-monitor-results.xml", True, True)
 ns.Simulator.Destroy()
