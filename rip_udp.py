@@ -22,6 +22,8 @@ def set_interface_state(r, interface_index, state):
         # Apply to all interfaces (except loopback, usually index 0)
         for i in range(1, num_interfaces):
             ipv6.SetUp(i) if state else ipv6.SetDown(i)
+            ipv6.GetRoutingProtocol().NotifyInterfaceDown(
+                i) if not state else ipv6.GetRoutingProtocol().NotifyInterfaceUp(i)
         print(
             f"Router {r.GetId()} {'enabled' if state else 'disabled'} (all {num_interfaces-1} interfaces)")
     else:
@@ -29,6 +31,8 @@ def set_interface_state(r, interface_index, state):
         if 0 < interface_index < num_interfaces:
             ipv6.SetUp(interface_index) if state else ipv6.SetDown(
                 interface_index)
+            ipv6.GetRoutingProtocol().NotifyInterfaceDown(
+                i) if not state else ipv6.GetRoutingProtocol().NotifyInterfaceUp(i)
             print(
                 f"Router {r.GetId()} {'enabled' if state else 'disabled'} (interface {interface_index})")
         else:
@@ -81,6 +85,7 @@ def main(argv):
     csma.SetChannelAttribute(
         "DataRate", ns.DataRateValue(ns.DataRate(5000000)))
     csma.SetChannelAttribute("Delay", ns.TimeValue(ns.MilliSeconds(2)))
+
     csma2 = ns.CsmaHelper()
     csma2.SetChannelAttribute(
         "DataRate", ns.DataRateValue(ns.DataRate(2000000)))
@@ -107,31 +112,38 @@ def main(argv):
     ipv6.SetBase(ns.Ipv6Address("2001:4::"), ns.Ipv6Prefix(64))
     i4 = ipv6.Assign(d4)
 
-    set_interface_state(r1, -1, False)
-    set_interface_state(r0, -1, False)
+    # set_interface_state(r1, -1, False)
+    # set_interface_state(r0, -1, False)
 
-    # Create a Ping6 application (n0 -> n1)
-    print("Application")
-    packetSize = 1024
-    maxPacketCount = 5
-    interPacketInterval = ns.Seconds(1.0)
+    # Create UDP Server on n1
+    print("Setting up UDP Server")
+    udpServer = ns.UdpEchoServerHelper(9)  # Port 9
+    serverApps = udpServer.Install(n1)
+    serverApps.Start(ns.Seconds(1.0))
+    serverApps.Stop(ns.Seconds(30.0))
 
-    ping = ns.PingHelper(i3.GetAddress(1, 1).ConvertTo())  # Ping n1
-    ping.SetAttribute("Count", ns.UintegerValue(maxPacketCount))
-    ping.SetAttribute("Interval", ns.TimeValue(interPacketInterval))
-    ping.SetAttribute("Size", ns.UintegerValue(packetSize))
+    # Create UDP Client on n0
+    print("Setting up UDP Client")
+    udpClient = ns.UdpEchoClientHelper(i3.GetAddress(1, 1).ConvertTo(), 9)
+    udpClient.SetAttribute("MaxPackets", ns.UintegerValue(5))  # Send 5 packets
+    udpClient.SetAttribute("Interval", ns.TimeValue(
+        ns.Seconds(1.0)))  # 1-second interval
+    udpClient.SetAttribute(
+        "PacketSize", ns.UintegerValue(1024))  # 1024-byte packets
 
-    apps = ping.Install(ns.NodeContainer(n0))
-    apps.Start(ns.Seconds(2.0))
-    apps.Stop(ns.Seconds(20.0))
+    clientApps = udpClient.Install(n0)
+    clientApps.Start(ns.Seconds(2.0))
+    clientApps.Stop(ns.Seconds(25.0))
 
     print("Tracing")
     ascii = ns.AsciiTraceHelper()
-    csma.EnableAsciiAll(ascii.CreateFileStream("dual-router-ping6.tr"))
-    csma.EnablePcapAll("dual-router-ping6", True)
+    csma.EnableAsciiAll(ascii.CreateFileStream("dual-router-udp.tr"))
+    csma.EnablePcapAll("dual-router-udp", True)
+
+    ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
+    ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
 
     ns.Simulator.Stop(ns.Seconds(25.0))
-    # Run Simulation
     ns.Simulator.Run()
     ns.Simulator.Destroy()
 
