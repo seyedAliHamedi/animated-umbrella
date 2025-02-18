@@ -47,12 +47,13 @@ def main(argv):
     # Create nodes
     print("Create nodes")
     all_nodes = ns.NodeContainer()
-    all_nodes.Create(4)  # n0, r0, r1, n1
+    all_nodes.Create(5)  # n0, r0, r1, r2,n1
 
     n0 = all_nodes.Get(0)
     r0 = all_nodes.Get(1)
     r1 = all_nodes.Get(2)
-    n1 = all_nodes.Get(3)
+    r2 = all_nodes.Get(3)
+    n1 = all_nodes.Get(4)
 
     net1 = ns.NodeContainer()
     net1.Add(n0)
@@ -64,11 +65,15 @@ def main(argv):
 
     net3 = ns.NodeContainer()
     net3.Add(r0)
-    net3.Add(n1)
+    net3.Add(r2)
 
     net4 = ns.NodeContainer()
     net4.Add(r1)
-    net4.Add(n1)
+    net4.Add(r2)
+
+    net5 = ns.NodeContainer()
+    net5.Add(r2)
+    net5.Add(n1)
 
     # Install IPv6 Internet Stack
     internetv6 = ns.InternetStackHelper()
@@ -81,20 +86,21 @@ def main(argv):
     internetv6.Install(all_nodes)
 
     # Create channels
-    csma = ns.CsmaHelper()
-    csma.SetChannelAttribute(
-        "DataRate", ns.DataRateValue(ns.DataRate(5000000)))
-    csma.SetChannelAttribute("Delay", ns.TimeValue(ns.MilliSeconds(2)))
-
     csma2 = ns.CsmaHelper()
     csma2.SetChannelAttribute(
+        "DataRate", ns.DataRateValue(ns.DataRate(5000000)))
+    csma2.SetChannelAttribute("Delay", ns.TimeValue(ns.MilliSeconds(2)))
+
+    csma = ns.CsmaHelper()
+    csma.SetChannelAttribute(
         "DataRate", ns.DataRateValue(ns.DataRate(2000000)))
-    csma2.SetChannelAttribute("Delay", ns.TimeValue(ns.MilliSeconds(4)))
+    csma.SetChannelAttribute("Delay", ns.TimeValue(ns.MilliSeconds(4)))
 
     d1 = csma.Install(net1)  # n0 - r0
     d2 = csma2.Install(net2)  # n0 - r1
-    d3 = csma.Install(net3)  # r0 - n1
-    d4 = csma2.Install(net4)  # r1 - n1
+    d3 = csma.Install(net3)  # r0 - r2
+    d4 = csma2.Install(net4)  # r1 - r2
+    d5 = csma.Install(net5)  #r2 - n1
 
     # Assign IPv6 Addresses
     print("Addressing")
@@ -112,6 +118,9 @@ def main(argv):
     ipv6.SetBase(ns.Ipv6Address("2001:4::"), ns.Ipv6Prefix(64))
     i4 = ipv6.Assign(d4)
 
+    ipv6.SetBase(ns.Ipv6Address("2001:5::"), ns.Ipv6Prefix(64))
+    i5 = ipv6.Assign(d5)
+
     # set_interface_state(r1, -1, False)
     # set_interface_state(r0, -1, False)
 
@@ -124,8 +133,8 @@ def main(argv):
 
     # Create UDP Client on n0
     print("Setting up UDP Client")
-    udpClient = ns.UdpEchoClientHelper(i3.GetAddress(1, 1).ConvertTo(), 9)
-    udpClient.SetAttribute("MaxPackets", ns.UintegerValue(5))  # Send 5 packets
+    udpClient = ns.UdpEchoClientHelper(i5.GetAddress(1, 1).ConvertTo(), 9)
+    udpClient.SetAttribute("MaxPackets", ns.UintegerValue(20))  # Send 20 packets
     udpClient.SetAttribute("Interval", ns.TimeValue(
         ns.Seconds(1.0)))  # 1-second interval
     udpClient.SetAttribute(
@@ -143,7 +152,40 @@ def main(argv):
     ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
     ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
 
+    animFile = "./animated-umbrella/rip_udp.xml"  # Output XML file for NetAnim
+    anim = ns.AnimationInterface(animFile)
+    
+    # 🚀 Optional: Set node descriptions in NetAnim
+    anim.SetConstantPosition(all_nodes.Get(0), 0.0, 3.0)  # n0
+    anim.SetConstantPosition(all_nodes.Get(1), 6.0, 0.0)  # r0
+    anim.SetConstantPosition(all_nodes.Get(2), 6.0, 6.0) # r1
+    anim.SetConstantPosition(all_nodes.Get(3), 12.0, 3.0)  # r2
+    anim.SetConstantPosition(all_nodes.Get(4), 18.0, 3.0)  # n1
+
+    print_time = ns.Seconds(10)
+    end_time = ns.Seconds(25)  # Stop simulation at 25s
+    class EventImpl(ns.EventImpl):
+        def __init__(self, message, interval, end_time):
+            super().__init__()
+            self.message = message
+            self.interval = interval
+            self.end_time = end_time
+            self.current_time = ns.Simulator.Now()
+
+        def Notify(self):
+            print(f"---------------- {self.message} at {self.current_time.GetSeconds()}s ----------------")
+            set_interface_state(r1, -1, False)
+            # Schedule next event if within simulation time
+            self.current_time += self.interval
+            if self.current_time < self.end_time:
+                ns.Simulator.Schedule(self.interval, self)
+
+    # Schedule first event
+    event = EventImpl("r0 turned off", print_time, end_time)
+
+
     ns.Simulator.Stop(ns.Seconds(25.0))
+    ns.Simulator.Schedule(print_time, event)
     ns.Simulator.Run()
     ns.Simulator.Destroy()
 

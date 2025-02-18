@@ -98,6 +98,21 @@ def main(argv):
     # p2p.EnableAsciiAll(ascii.CreateFileStream("simple-routing-ping6.tr"))
     # p2p.EnablePcapAll("simple-routing-ping6", True)
 
+    flowmonHelper = ns.FlowMonitorHelper()
+    monitor = flowmonHelper.InstallAll()
+    
+    monitor.CheckForLostPackets()
+    flowmonHelper.SerializeToXmlFile("r.xml", True, True)
+
+   # 🚀 Enable Animation Interface for XML Output
+    animFile = "simple-routing-animation.xml"  # Output XML file for NetAnim
+    anim = ns.AnimationInterface(animFile)
+    
+    # 🚀 Optional: Set node descriptions in NetAnim
+    anim.SetConstantPosition(all.Get(0), 0.0, 1.0)  # n0
+    anim.SetConstantPosition(all.Get(1), 5.0, 2.0)  # router
+    anim.SetConstantPosition(all.Get(2), 10.0, 1.0) 
+
     ns.Simulator.Stop(ns.Seconds(25.0))
     # Run Simulation
     ns.Simulator.Run()
