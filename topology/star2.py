@@ -22,7 +22,7 @@ routers.Create(1)
 router = routers.Get(0)
 
 # define p2p links
-link = ns.PointToPointHelper()
+link = ns.CsmaHelper()
 link.SetDeviceAttribute("DataRate", ns.StringValue("5Mbps"))
 link.SetChannelAttribute("Delay", ns.StringValue("2ms"))
 
