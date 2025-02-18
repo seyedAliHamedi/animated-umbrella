@@ -24,6 +24,8 @@ def set_interface_state(r, interface_index, state):
             ipv6.SetUp(i) if state else ipv6.SetDown(i)
             ipv6.GetRoutingProtocol().NotifyInterfaceDown(
                 i) if not state else ipv6.GetRoutingProtocol().NotifyInterfaceUp(i)
+            # ipv6.GetRoutingProtocol().NotifyAddRoute(i)  # Force update
+
         print(
             f"Router {r.GetId()} {'enabled' if state else 'disabled'} (all {num_interfaces-1} interfaces)")
     else:
@@ -84,7 +86,6 @@ def main(argv):
 
     internetv6.SetRoutingHelper(ipv6RoutingHelper)
     internetv6.Install(all_nodes)
-
     # Create channels
     csma2 = ns.CsmaHelper()
     csma2.SetChannelAttribute(
@@ -129,12 +130,12 @@ def main(argv):
     udpServer = ns.UdpEchoServerHelper(9)  # Port 9
     serverApps = udpServer.Install(n1)
     serverApps.Start(ns.Seconds(1.0))
-    serverApps.Stop(ns.Seconds(30.0))
+    serverApps.Stop(ns.Seconds(60.0))
 
     # Create UDP Client on n0
     print("Setting up UDP Client")
     udpClient = ns.UdpEchoClientHelper(i5.GetAddress(1, 1).ConvertTo(), 9)
-    udpClient.SetAttribute("MaxPackets", ns.UintegerValue(20))  # Send 20 packets
+    udpClient.SetAttribute("MaxPackets", ns.UintegerValue(1000))  # Send 20 packets
     udpClient.SetAttribute("Interval", ns.TimeValue(
         ns.Seconds(1.0)))  # 1-second interval
     udpClient.SetAttribute(
@@ -142,7 +143,7 @@ def main(argv):
 
     clientApps = udpClient.Install(n0)
     clientApps.Start(ns.Seconds(2.0))
-    clientApps.Stop(ns.Seconds(25.0))
+    clientApps.Stop(ns.Seconds(60.0))
 
     print("Tracing")
     ascii = ns.AsciiTraceHelper()
@@ -151,19 +152,11 @@ def main(argv):
 
     ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
     ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
+    ns.LogComponentEnable("RipNg", ns.LOG_LEVEL_INFO)
 
-    animFile = "./animated-umbrella/rip_udp.xml"  # Output XML file for NetAnim
-    anim = ns.AnimationInterface(animFile)
-    
-    # 🚀 Optional: Set node descriptions in NetAnim
-    anim.SetConstantPosition(all_nodes.Get(0), 0.0, 3.0)  # n0
-    anim.SetConstantPosition(all_nodes.Get(1), 6.0, 0.0)  # r0
-    anim.SetConstantPosition(all_nodes.Get(2), 6.0, 6.0) # r1
-    anim.SetConstantPosition(all_nodes.Get(3), 12.0, 3.0)  # r2
-    anim.SetConstantPosition(all_nodes.Get(4), 18.0, 3.0)  # n1
 
     print_time = ns.Seconds(10)
-    end_time = ns.Seconds(25)  # Stop simulation at 25s
+    end_time = ns.Seconds(60)  # Stop simulation at 25s
     class EventImpl(ns.EventImpl):
         def __init__(self, message, interval, end_time):
             super().__init__()
@@ -184,7 +177,73 @@ def main(argv):
     event = EventImpl("r0 turned off", print_time, end_time)
 
 
-    ns.Simulator.Stop(ns.Seconds(25.0))
+        # ✅ Step 1: Install mobility and explicitly set node positions
+    mobility = ns.MobilityHelper()
+    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
+    mobility.Install(all_nodes)
+
+    # ✅ Assign correct positions before AnimationInterface is initialized
+    positions = [
+        ns.Vector(0, 3, 0),  # n0
+        ns.Vector(6, 0, 0),  # r0
+        ns.Vector(6, 6, 0),  # r1
+        ns.Vector(12, 3, 0),  # r2
+        ns.Vector(18, 3, 0)   # n1
+    ]
+
+    for i in range(all_nodes.GetN()):
+        mobility_model = all_nodes.Get(i).GetObject[ns.MobilityModel]()
+        if mobility_model:
+            mobility_model.SetPosition(positions[i])
+        else:
+            print(f"🚨 Node {i} does not have a mobility model!")
+
+    # ✅ Step 2: Initialize AnimationInterface after mobility setup
+    animFile = "./animated-umbrella/rip_udp.xml"
+    anim = ns.AnimationInterface(animFile)
+
+    # ✅ Step 3: Set NetAnim positions using correct values
+    anim.SetConstantPosition(all_nodes.Get(0), 0, 3)  # n0
+    anim.SetConstantPosition(all_nodes.Get(1), 6, 0)  # r0
+    anim.SetConstantPosition(all_nodes.Get(2), 6, 6)  # r1
+    anim.SetConstantPosition(all_nodes.Get(3), 12, 3)  # r2
+    anim.SetConstantPosition(all_nodes.Get(4), 18, 1.5)  # n1
+
+    # ✅ Step 4: Print final node positions to verify
+    print("\n✅ Final Node Positions:")
+    for i in range(all_nodes.GetN()):
+        pos = all_nodes.Get(i).GetObject[ns.MobilityModel]().GetPosition()
+        print(f"Node {i}: x={pos.x}, y={pos.y}")
+
+    def get_all_ipv6_addresses(node):
+        """ Retrieves all IPv6 addresses assigned to a node's interfaces. """
+        ipv6 = node.GetObject[ns.Ipv6]()
+        if ipv6 is None:
+            return ["No IPv6"]
+
+        num_interfaces = ipv6.GetNInterfaces()
+        addresses = []
+
+        for i in range(1,num_interfaces):
+            for j in range(ipv6.GetNAddresses(i)):
+                addr = ipv6.GetAddress(i, j).GetAddress()    
+                if not addr.IsLinkLocal():  # Ignore link-local addresses
+                    addresses.append(f"{addr.ConvertTo()} (iface {i})\n")
+
+        return addresses
+
+    for i, node in enumerate([n0, r0, r1, r2, n1]):
+        ip_list = get_all_ipv6_addresses(node)
+        ip_text = "&#10;".join(ip_list)  # Format multiple IPs
+        anim.SetConstantPosition(node, positions[i].x, positions[i].y)
+        anim.UpdateNodeDescription(node, f"Node {i} &#10; {ip_text}")  # Show all interfaces
+
+    print("\n✅ Assigned IPv6 Addresses for Each Interface:")
+    for i, node in enumerate([n0, r0, r1, r2, n1]):
+        ip_list = get_all_ipv6_addresses(node)
+        print(f"Node {i} Interfaces:\n" + "\n".join(ip_list))
+
+    ns.Simulator.Stop(ns.Seconds(60.0))
     ns.Simulator.Schedule(print_time, event)
     ns.Simulator.Run()
     ns.Simulator.Destroy()
