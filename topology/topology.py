@@ -1,12 +1,14 @@
 from ns import ns
 
+import sys
+import os
 import math
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-
-from utils import create_xml
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from utils import fix_xml,create_xml
 
 sample_adj_matrix = [
     [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1],
@@ -28,14 +30,8 @@ sample_adj_matrix = [
 sample_links_type=['csma', 'p2p', 'p2p', 'csma', 'csma', 'p2p', 'csma', 'p2p', 'csma', 'p2p', 'p2p', 'csma', 'csma', 'p2p', 'csma']
 sample_links_rate=['5Mbps', '5Mbps', '1Mbps', '10Mbps', '5Mbps', '5Mbps', '10Mbps', '1Mbps', '5Mbps', '5Mbps', '5Mbps', '1Mbps', '1Mbps', '5Mbps', '5Mbps']
 sample_links_delay = ['5ms', '10ms', '10ms', '10ms', '5ms', '1ms', '5ms', '10ms', '1ms', '10ms', '1ms', '5ms', '10ms', '1ms', '5ms']
-G = nx.from_numpy_array(np.array(sample_adj_matrix))
-
-# Draw the graph
-plt.figure(figsize=(6, 6))
-nx.draw(G, with_labels=True, node_color='lightblue', edge_color='gray', node_size=1000, font_size=14)
-plt.show()
 class Toplogy:
-    def __init__(self,adj_matrix=sample_adj_matrix,links_type=sample_links_type,links_rate=sample_links_rate,links_delay=sample_links_delay,base_network="192.168.1.0/24",animation_file ="./top.xml"):
+    def __init__(self,adj_matrix=sample_adj_matrix,links_type=sample_links_type,links_rate=sample_links_rate,links_delay=sample_links_delay,base_network="192.168.1.0/24",animation_file ="./visual/topology/top1.xml"):
         self.adj_matrix=adj_matrix
         self.N_routers=len(self.adj_matrix)
         self.N_links = sum(sum(row) for row in self.adj_matrix) // 2 
@@ -44,6 +40,7 @@ class Toplogy:
         self.links_delays=sample_links_delay
         self.base_networks = base_network
         self.animation_file = animation_file
+        print(self.N_links)
         self.nodes, self.devices, self.interfaces, self.ip_interfaces = self.initialize()
 
     def initialize(self):
@@ -95,7 +92,7 @@ class Toplogy:
         for i,_ in enumerate(devices):
             ip_interfaces.append(address.Assign(devices[i]))
 
-        ns.Ipv4GlobalRoutingHelper.PopulateRoutingTables()
+        # ns.Ipv4GlobalRoutingHelper.PopulateRoutingTables()
         return routers, devices, stack, ip_interfaces
 
 
@@ -119,9 +116,7 @@ class Toplogy:
         return ".".join(map(str, subnet_mask))
     
     def generate_animation_xml(self):
-
         positions = []
-
         angle_step = 360 / self.N_routers  
         angle = 0
         radius = 50  
@@ -129,14 +124,18 @@ class Toplogy:
         for i in range(self.N_routers):
             x = 50 + radius * math.cos(math.radians(angle))
             y = 50 + radius * math.sin(math.radians(angle))
-            positions.append([x, y]) 
+            positions.append([x, y])  
             angle += angle_step  
-        print(self.nodes)
-        print(type(self.nodes))
+
+        print("\n✅ Node Positions (x, y):")
+        print(positions)
+
         self.nodes, anim = create_xml(self.nodes, positions, self.animation_file)
 
-        print(f"📂 Animation XML file generated: {self.animation_file}")
+        # fix_xml(self.animation_file)
 
+        print(f"📂 Animation XML file generated: {self.animation_file}")
+        
     def summary(self):
         """Prints a summary of the network topology."""
         print("\n" + "=" * 50)
@@ -163,5 +162,5 @@ class Toplogy:
 # ========================== EXAMPLE USAGE ==========================
 t = Toplogy()
 
-t.generate_animation_xml()
 t.summary()
+t.generate_animation_xml()
