@@ -167,16 +167,16 @@ def main(argv):
     ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
     ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
 
-    animFile = "./animated-umbrella/udp_rip6.xml"  # Output XML file for NetAnim
-    anim = ns.AnimationInterface(animFile)
+    # animFile = "./animated-umbrella/udp_rip6.xml"  # Output XML file for NetAnim
+    # anim = ns.AnimationInterface(animFile)
 
-    # 🚀 Optional: Set node descriptions in NetAnim
-    anim.SetConstantPosition(all_nodes.Get(0), 0.0, 3.0)  # n0
-    anim.SetConstantPosition(all_nodes.Get(1), 6.0, 0.0)  # r0
-    anim.SetConstantPosition(all_nodes.Get(2), 6.0, 6.0)  # r1
-    anim.SetConstantPosition(all_nodes.Get(3), 12.0, 3.0)  # r2
-    anim.SetConstantPosition(all_nodes.Get(4), 18.0, 3.0)  # n1
-    anim.SetConstantPosition(all_nodes.Get(5), 18.0, 3.0)  # n1
+    # # 🚀 Optional: Set node descriptions in NetAnim
+    # anim.SetConstantPosition(all_nodes.Get(0), 0.0, 3.0)  # n0
+    # anim.SetConstantPosition(all_nodes.Get(1), 6.0, 0.0)  # r0
+    # anim.SetConstantPosition(all_nodes.Get(2), 6.0, 6.0)  # r1
+    # anim.SetConstantPosition(all_nodes.Get(3), 12.0, 3.0)  # r2
+    # anim.SetConstantPosition(all_nodes.Get(4), 18.0, 3.0)  # n1
+    # anim.SetConstantPosition(all_nodes.Get(5), 18.0, 3.0)  # n1
 
     print_time = ns.Seconds(10)
     end_time = ns.Seconds(300)  # Stop simulation at 25s
