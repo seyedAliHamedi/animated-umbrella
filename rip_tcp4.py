@@ -17,24 +17,24 @@ def set_interface_state(r, interface_index, state):
     interface_index - The interface to modify (-1 for all interfaces)
     state - Boolean (True = UP, False = DOWN)
     """
-    ipv6 = r.GetObject[ns.Ipv6]()  # Get the IPv6 stack
-    num_interfaces = ipv6.GetNInterfaces()  # Get total interfaces
+    ipv4 = r.GetObject[ns.Ipv4]()  # Get the IPv4 stack
+    num_interfaces = ipv4.GetNInterfaces()  # Get total interfaces
 
     if interface_index == -1:
         # Apply to all interfaces (except loopback, usually index 0)
         for i in range(1, num_interfaces):
-            ipv6.SetUp(i) if state else ipv6.SetDown(i)
-            ipv6.GetRoutingProtocol().NotifyInterfaceDown(
-                i) if not state else ipv6.GetRoutingProtocol().NotifyInterfaceUp(i)
+            ipv4.SetUp(i) if state else ipv4.SetDown(i)
+            ipv4.GetRoutingProtocol().NotifyInterfaceDown(
+                i) if not state else ipv4.GetRoutingProtocol().NotifyInterfaceUp(i)
         print(
             f"Router {r.GetId()} {'enabled' if state else 'disabled'} (all {num_interfaces-1} interfaces)")
     else:
         # Apply only to the specified interface
         if 0 < interface_index < num_interfaces:
-            ipv6.SetUp(interface_index) if state else ipv6.SetDown(
+            ipv4.SetUp(interface_index) if state else ipv4.SetDown(
                 interface_index)
-            ipv6.GetRoutingProtocol().NotifyInterfaceDown(
-                i) if not state else ipv6.GetRoutingProtocol().NotifyInterfaceUp(i)
+            ipv4.GetRoutingProtocol().NotifyInterfaceDown(
+                i) if not state else ipv4.GetRoutingProtocol().NotifyInterfaceUp(i)
             print(
                 f"Router {r.GetId()} {'enabled' if state else 'disabled'} (interface {interface_index})")
         else:
@@ -82,31 +82,15 @@ def main(argv):
     net6.Add(r3)
     net6.Add(n1)
 
-    # Install IPv6 Internet Stack
+    # Install IPv4 Internet Stack
     internetv6 = ns.InternetStackHelper()
-    ipv6RoutingHelper = ns.Ipv6ListRoutingHelper()
+    ipv4RoutingHelper = ns.Ipv4ListRoutingHelper()
 
-    # Create an instance of the RIPng routing protocol
-    ripngRouting = ns.RipNgHelper()
+    rip = ns.RipHelper()
+    ipv4RoutingHelper.Add(rip, 10)
 
-    # Assign RIPng to the routing helper
-    ipv6RoutingHelper.Add(ripngRouting, 10)
-
-    # Install the Internet stack
-    internetv6.SetRoutingHelper(ipv6RoutingHelper)
+    internetv6.SetRoutingHelper(ipv4RoutingHelper)
     internetv6.Install(all_nodes)
-
-    # Modify RIPng attributes AFTER installing it on nodes
-    for i in range(all_nodes.GetN()):
-        node = all_nodes.Get(i)
-        routing = node.GetObject(ns.Ipv6RoutingHelper)  # Get routing protocol
-        ripng = ns.DynamicCast[ns.RipNg](routing)  # Convert to RIPng
-
-        if ripng:
-            ripng.Set("PeriodicUpdateInterval", ns.TimeValue(
-                ns.Seconds(10)))  # Default is 30s
-            ripng.Set("RouteExpiryInterval", ns.TimeValue(
-                ns.Seconds(30)))  # Default is 180s
 
     # Create channels
     csma2 = ns.CsmaHelper()
@@ -118,6 +102,8 @@ def main(argv):
     csma.SetChannelAttribute(
         "DataRate", ns.DataRateValue(ns.DataRate(2000000)))
     csma.SetChannelAttribute("Delay", ns.TimeValue(ns.MilliSeconds(4)))
+    csma.SetQueue("ns3::DropTailQueue", "MaxSize",
+                  ns.QueueSizeValue(ns.QueueSize("10p")))
 
     d1 = csma.Install(net1)  # n0 - r0
     d2 = csma2.Install(net2)  # n0 - r1
@@ -126,70 +112,76 @@ def main(argv):
     d5 = csma2.Install(net5)  # r2 - r3
     d6 = csma.Install(net6)  # r3 - n1
 
-    # Assign IPv6 Addresses
+    # Assign IPv4 Addresses
     print("Addressing")
-    ipv6 = ns.Ipv6AddressHelper()
+    ipv4 = ns.Ipv4AddressHelper()
 
-    ipv6.SetBase(ns.Ipv6Address("2001:1::"), ns.Ipv6Prefix(64))
-    i1 = ipv6.Assign(d1)
+    ipv4.SetBase(ns.Ipv4Address("192.168.1.0"), ns.Ipv4Mask("255.255.255.0"))
+    i1 = ipv4.Assign(d1)
 
-    ipv6.SetBase(ns.Ipv6Address("2001:2::"), ns.Ipv6Prefix(64))
-    i2 = ipv6.Assign(d2)
+    ipv4.SetBase(ns.Ipv4Address("192.168.2.0"), ns.Ipv4Mask("255.255.255.0"))
+    i2 = ipv4.Assign(d2)
 
-    ipv6.SetBase(ns.Ipv6Address("2001:3::"), ns.Ipv6Prefix(64))
-    i3 = ipv6.Assign(d3)
+    ipv4.SetBase(ns.Ipv4Address("192.168.3.0"), ns.Ipv4Mask("255.255.255.0"))
+    i3 = ipv4.Assign(d3)
 
-    ipv6.SetBase(ns.Ipv6Address("2001:4::"), ns.Ipv6Prefix(64))
-    i4 = ipv6.Assign(d4)
+    ipv4.SetBase(ns.Ipv4Address("192.168.4.0"), ns.Ipv4Mask("255.255.255.0"))
+    i4 = ipv4.Assign(d4)
 
-    ipv6.SetBase(ns.Ipv6Address("2001:5::"), ns.Ipv6Prefix(64))
-    i5 = ipv6.Assign(d5)
+    ipv4.SetBase(ns.Ipv4Address("192.168.5.0"), ns.Ipv4Mask("255.255.255.0"))
+    i5 = ipv4.Assign(d5)
 
-    ipv6.SetBase(ns.Ipv6Address("2001:6::"), ns.Ipv6Prefix(64))
-    i6 = ipv6.Assign(d6)
+    ipv4.SetBase(ns.Ipv4Address("192.168.6.0"), ns.Ipv4Mask("255.255.255.0"))
+    i6 = ipv4.Assign(d6)
 
     # set_interface_state(r1, -1, False)
     # set_interface_state(r0, -1, False)
 
-    # Create UDP Server on n1
-    print("Setting up UDP Server")
-    udpServer = ns.UdpEchoServerHelper(9)  # Port 9
-    serverApps = udpServer.Install(n1)
+    # Create TCP Server on n1
+    print("Setting up TCP Server")
+    localAddress = ns.InetSocketAddress(
+        ns.Ipv4Address.GetAny(), 9).ConvertTo()
+    packetSinkHelper = ns.PacketSinkHelper("ns3::TcpSocketFactory",
+                                           localAddress)
+    print("mmd")
+    serverApps = packetSinkHelper.Install(n1)
     serverApps.Start(ns.Seconds(1.0))
     serverApps.Stop(ns.Seconds(300.0))
 
-    # Create UDP Client on n0
-    print("Setting up UDP Client")
-    udpClient = ns.UdpEchoClientHelper(i6.GetAddress(1, 1).ConvertTo(), 9)
-    udpClient.SetAttribute(
-        "MaxPackets", ns.UintegerValue(20000000))  # Send 20 packets
-    udpClient.SetAttribute("Interval", ns.TimeValue(
-        ns.Seconds(1.0)))  # 1-second interval
-    udpClient.SetAttribute(
-        "PacketSize", ns.UintegerValue(1024))  # 1024-byte packets
+    # Create TCP Client on n0
+    print("Setting up TCP Client")
+    onOffHelper = ns.OnOffHelper("ns3::TcpSocketFactory",
+                                 ns.Address(ns.InetSocketAddress(i6.GetAddress(1, 0), 9).ConvertTo()))
+    onOffHelper.SetAttribute("OnTime", ns.StringValue(
+        "ns3::ConstantRandomVariable[Constant=1]"))
+    onOffHelper.SetAttribute("OffTime", ns.StringValue(
+        "ns3::ConstantRandomVariable[Constant=0]"))
+    onOffHelper.SetAttribute(
+        "DataRate", ns.DataRateValue(ns.DataRate(5000000)))
+    onOffHelper.SetAttribute("PacketSize", ns.UintegerValue(1024))
 
-    clientApps = udpClient.Install(n0)
+    clientApps = onOffHelper.Install(n0)
     clientApps.Start(ns.Seconds(2.0))
     clientApps.Stop(ns.Seconds(300.0))
 
     print("Tracing")
     ascii = ns.AsciiTraceHelper()
-    csma.EnableAsciiAll(ascii.CreateFileStream("dual-router-udp.tr"))
-    csma.EnablePcapAll("dual-router-udp", True)
+    csma.EnableAsciiAll(ascii.CreateFileStream("tcp_rip4.tr"))
+    csma.EnablePcapAll("tcp_rip4", True)
 
-    ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
-    ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
+    # Enable logging for the TCP applications
+    ns.LogComponentEnable("PacketSink", ns.LOG_LEVEL_INFO)
+    ns.LogComponentEnable("OnOffApplication", ns.LOG_LEVEL_INFO)
 
-    animFile = "./animated-umbrella/rip_udp.xml"  # Output XML file for NetAnim
+    animFile = "./animated-umbrella/tcp_rip4.xml"  # Output XML file for NetAnim
     anim = ns.AnimationInterface(animFile)
 
-    # 🚀 Optional: Set node descriptions in NetAnim
     anim.SetConstantPosition(all_nodes.Get(0), 0.0, 3.0)  # n0
     anim.SetConstantPosition(all_nodes.Get(1), 6.0, 0.0)  # r0
     anim.SetConstantPosition(all_nodes.Get(2), 6.0, 6.0)  # r1
     anim.SetConstantPosition(all_nodes.Get(3), 12.0, 3.0)  # r2
     anim.SetConstantPosition(all_nodes.Get(4), 18.0, 3.0)  # n1
-    anim.SetConstantPosition(all_nodes.Get(5), 18.0, 3.0)  # n1
+    anim.SetConstantPosition(all_nodes.Get(5), 24.0, 3.0)  # n1
 
     print_time = ns.Seconds(10)
     end_time = ns.Seconds(300)  # Stop simulation at 25s
