@@ -14,15 +14,15 @@ import cppyy
 print("\n\n\n")
 # define end devices
 endDevices = ns.NodeContainer()
-endDevices.Create(4)  
+endDevices.Create(4)
 
 # define router
 routers = ns.NodeContainer()
-routers.Create(1) 
+routers.Create(1)
 router = routers.Get(0)
 
 # define p2p links
-link = ns.CsmaHelper()
+link = ns.PointToPointHelper()
 link.SetDeviceAttribute("DataRate", ns.StringValue("5Mbps"))
 link.SetChannelAttribute("Delay", ns.StringValue("2ms"))
 
@@ -45,32 +45,31 @@ interfaces = address.Assign(devices)
 
 
 # ns3::Address& ip, uint16_t port
-port = 9 
-server=endDevices.Get(3)
+port = 9
+server = endDevices.Get(3)
 server_ip = interfaces.GetAddress(3).ConvertTo()
 
 
 # create udp server
-udpServer = ns.UdpEchoServerHelper(port)  
-serverApp = udpServer.Install(server)  
+udpServer = ns.UdpEchoServerHelper(port)
+serverApp = udpServer.Install(server)
 serverApp.Start(ns.Seconds(1.0))
 serverApp.Stop(ns.Seconds(10.0))
 
 # create udp client
-udpClient = ns.UdpEchoClientHelper(server_ip, port)  
+udpClient = ns.UdpEchoClientHelper(server_ip, port)
 udpClient.SetAttribute("MaxPackets", ns.UintegerValue(5))
 udpClient.SetAttribute("Interval", ns.TimeValue(ns.Seconds(1.0)))
 udpClient.SetAttribute("PacketSize", ns.UintegerValue(512))
 
 # install udp client
-clientApp = udpClient.Install(endDevices.Get(0))  
+clientApp = udpClient.Install(endDevices.Get(0))
 clientApp.Start(ns.Seconds(2.0))
 clientApp.Stop(ns.Seconds(10.0))
 
-clientApp2 = udpClient.Install(endDevices.Get(2))  
+clientApp2 = udpClient.Install(endDevices.Get(2))
 clientApp2.Start(ns.Seconds(2.0))
 clientApp2.Stop(ns.Seconds(10.0))
-
 
 
 # initalize flow monitor
@@ -80,8 +79,6 @@ monitor = flowmonHelper.InstallAll()
 
 # ? wireshark
 # link.EnablePcapAll("star_topology")
-
-
 
 
 # ? stop simulator
@@ -99,12 +96,17 @@ for flow_id, flowStats in monitor.GetFlowStats():
     proto = "TCP" if flowClass.protocol == 6 else "UDP"  # Extract protocol
 
     print(f"📊 Flow {flow_id}: {proto}")
-    print(f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
-    print(f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
+    print(
+        f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
+    print(
+        f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
     print(f"   Lost Packets: {flowStats.lostPackets}")
-    print(f"   Throughput: {flowStats.rxBytes * 8 / 10**6} Mbps")  # Convert bytes to Mbps
-    print(f"   Mean Delay: {flowStats.delaySum.GetSeconds() / flowStats.rxPackets} sec")
-    print(f"   Mean Jitter: {flowStats.jitterSum.GetSeconds() / flowStats.rxPackets} sec")
-    
+    # Convert bytes to Mbps
+    print(f"   Throughput: {flowStats.rxBytes * 8 / 10**6} Mbps")
+    print(
+        f"   Mean Delay: {flowStats.delaySum.GetSeconds() / flowStats.rxPackets} sec")
+    print(
+        f"   Mean Jitter: {flowStats.jitterSum.GetSeconds() / flowStats.rxPackets} sec")
+
 flowmonHelper.SerializeToXmlFile("flow-monitor-results.xml", True, True)
 ns.Simulator.Destroy()
