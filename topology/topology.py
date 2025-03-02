@@ -31,7 +31,7 @@ sample_links_type=['csma', 'p2p', 'p2p', 'csma', 'csma', 'p2p', 'csma', 'p2p', '
 sample_links_rate=['5Mbps', '5Mbps', '1Mbps', '10Mbps', '5Mbps', '5Mbps', '10Mbps', '1Mbps', '5Mbps', '5Mbps', '5Mbps', '1Mbps', '1Mbps', '5Mbps', '5Mbps']
 sample_links_delay = ['5ms', '10ms', '10ms', '10ms', '5ms', '1ms', '5ms', '10ms', '1ms', '10ms', '1ms', '5ms', '10ms', '1ms', '5ms']
 class Topology:
-    def __init__(self,adj_matrix=sample_adj_matrix,links_type=sample_links_type,links_rate=sample_links_rate,links_delay=sample_links_delay,base_network="192.168.1.0/24",animation_file ="./visual/topology/top1.xml"):
+    def __init__(self,adj_matrix,links_type=sample_links_type,links_rate=sample_links_rate,links_delay=sample_links_delay,base_network="192.166.1.0/24",animation_file ="./visual/topology/top1.xml"):
         self.adj_matrix=adj_matrix
         self.N_routers=len(self.adj_matrix)
         self.N_links = sum(sum(row) for row in self.adj_matrix) // 2 
@@ -40,7 +40,6 @@ class Topology:
         self.links_delays=links_delay
         self.base_networks = base_network
         self.animation_file = animation_file
-        print(self.N_links)
         self.nodes, self.devices, self.interfaces, self.ip_interfaces = self.initialize()
 
     def initialize(self):
@@ -92,7 +91,6 @@ class Topology:
         for i,_ in enumerate(devices):
             ip_interfaces.append(address.Assign(devices[i]))
 
-        # ns.Ipv4GlobalRoutingHelper.PopulateRoutingTables()
         return routers, devices, stack, ip_interfaces
 
 
@@ -160,7 +158,10 @@ class Topology:
         
 
 # ========================== EXAMPLE USAGE ==========================
-t = Topology()
+def main():
+    t = Topology()
 
-t.summary()
-t.generate_animation_xml()
+    t.summary()
+    t.generate_animation_xml()
+
+# main()
