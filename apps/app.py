@@ -12,12 +12,16 @@ sample_links_type = ['csma', 'p2p', 'p2p', 'p2p', 'csma']
 sample_links_rate = ['5Mbps', '5Mbps', '1Mbps', '1Mbps', '5Mbps']
 sample_links_delay = ['5ms', '10ms', '10ms', '1ms', '5ms']
 
+
+ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
+ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
+
 class App:
     def __init__(self, topology, n_servers=2, n_clients=3, 
                  links_type=sample_links_type, links_rate=sample_links_rate, 
                  links_delay=sample_links_delay, app_type="udp_echo",
                  app_max_packets=100, app_interval=1, app_packet_size=1024, 
-                 app_duration=15, app_port=9):
+                 app_duration=150, app_port=9):
         self.topology = topology
         self.n_servers = n_servers
         self.n_clients = n_clients
@@ -126,16 +130,16 @@ class App:
         for i in range(self.topology.N_routers):
             all_nodes.Add(self.topology.nodes.Get(i))
             
-        # internet = ns.InternetStackHelper()
-        # ipv4RoutingHelper = ns.Ipv4ListRoutingHelper()
-        # print("8")
+        internet = ns.InternetStackHelper()
+        ipv4RoutingHelper = ns.Ipv4ListRoutingHelper()
+        print("8")
 
-        # rip = ns.RipHelper()
-        # ipv4RoutingHelper.Add(rip, 10)
-        # print("9")
+        rip = ns.RipHelper()
+        ipv4RoutingHelper.Add(rip, 10)
+        print("9")
 
-        # internet.SetRoutingHelper(ipv4RoutingHelper)
-        # internet.Install(all_nodes)
+        internet.SetRoutingHelper(ipv4RoutingHelper)
+        internet.Install(all_nodes)
         print("10")
 
 
@@ -147,7 +151,7 @@ class App:
             server = self.servers_ip[i % self.n_servers]
             self.setup_client(client,server) 
             
-            
+    
 
     def setup_server(self,server):
         if self.app_type == "udp_echo":
@@ -181,13 +185,7 @@ class App:
 
 
 # ========================== EXAMPLE USAGE ==========================
-structured_adj_matrix = [
-    [0, 1, 1, 0],  # Node 0
-    [1, 0, 0, 1],  # Node 1
-    [1, 0, 0, 1],  # Node 2
-    [0, 1, 1, 0],  # Node 3
-]
-t = Topology(adj_matrix=structured_adj_matrix,links_type=['p2p'],animation_file="./visual/topology/top2.xml")
+t = Topology()
 t.generate_animation_xml()
-app = App(t, n_clients=1, n_servers=1, app_type="udp_echo")
+app = App(t, n_clients=3, n_servers=2, app_type="udp_echo")
 app.run(100)
