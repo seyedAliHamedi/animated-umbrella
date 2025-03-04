@@ -13,8 +13,8 @@ sample_links_rate = ['5Mbps', '5Mbps', '1Mbps', '1Mbps', '5Mbps']
 sample_links_delay = ['5ms', '10ms', '10ms', '1ms', '5ms']
 
 
-ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
-ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
+# ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
+# ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
 
 class App:
     def __init__(self, topology, n_servers=2, n_clients=3, 
@@ -63,7 +63,7 @@ class App:
         server_gateways = random.sample(remaining_gateways, self.n_servers)
 
         print("clients gateways ",client_gateways)
-        print("wervers gateways ",server_gateways)
+        print("servers gateways ",server_gateways)
 
 
         links_types = self._distribute_values(self.links_type, self.n_clients + self.n_servers)
@@ -141,7 +141,6 @@ class App:
             server_app = udp_echo_server.Install(server)
             server_app.Start(ns.Seconds(10.0))
             server_app.Stop(ns.Seconds(10.0 + self.app_duration))
-            print("udp echo installed on server")
             
             
             
@@ -156,13 +155,38 @@ class App:
         client_app.Start(ns.Seconds(10.0))
         client_app.Stop(ns.Seconds(10.0 + self.app_duration))
 
-        print("udp echo installed on client")
 
     def _distribute_values(self, values, count):
         chunk_size = math.ceil(count / len(values))
         return [val for val in values for _ in range(chunk_size)][:count]
 
     def run(self,duration):
+        
+        mobility = ns.MobilityHelper()
+        mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
+        mobility.Install(self.topology.nodes)
+        mobility.Install(self.clients)
+        mobility.Install(self.servers)
+        animFile = "./visual/apps/udp4.xml"  
+        anim = ns.AnimationInterface(animFile)
+        angle_step = 360 / self.topology.N_routers  
+        angle = 0
+        radius = 30  
+
+        for i in range(self.topology.N_routers):
+            x = 100 + radius * math.cos(math.radians(angle))
+            y = 50 + radius * math.sin(math.radians(angle))
+            
+            anim.SetConstantPosition(self.topology.nodes.Get(i),x,y,0)
+            angle += angle_step  
+
+        
+        for i in range(self.n_clients):
+            anim.SetConstantPosition(self.clients.Get(i),0,0+i*20,0)
+        for i in range(self.n_servers):
+            anim.SetConstantPosition(self.servers.Get(i),200,0+i*20,0)
+
+        
         ns.Simulator.Stop(ns.Seconds(duration))
         ns.Simulator.Run()
         ns.Simulator.Destroy()
@@ -170,6 +194,18 @@ class App:
 
 
 # ========================== EXAMPLE USAGE ==========================
-t = Topology()
-app = App(t, n_clients=3, n_servers=2, app_type="udp_echo")
+
+n =16
+adj_matrix =[]
+for i in range(n):
+    row = []
+    for j in range(n):
+        if i==j:
+            row.append(0)    
+        else:
+            row.append(1)    
+    adj_matrix.append(row)
+        
+t = Topology(adj_matrix=adj_matrix)
+app = App(t, n_clients=5, n_servers=4, app_type="udp_echo")
 app.run(100)
