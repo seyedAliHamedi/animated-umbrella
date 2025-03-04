@@ -36,7 +36,6 @@ class App:
         self.app_port = app_port
 
         self.clients, self.servers,self.clients_ip,self.servers_ip = self.initialize_client_server()
-        self.routing()
         self.install_app()
 
     def initialize_client_server(self):
@@ -46,6 +45,17 @@ class App:
         servers_ip=[]
         clients.Create(self.n_clients)
         servers.Create(self.n_servers)
+        
+        stack = ns.InternetStackHelper()
+        ipv4RoutingHelper = ns.Ipv4ListRoutingHelper()
+
+        rip = ns.RipHelper()
+        
+        ipv4RoutingHelper.Add(rip, 10)
+        
+        stack.SetRoutingHelper(ipv4RoutingHelper)
+        stack.Install(clients)
+        stack.Install(servers)
 
         available_gateways = list(range(self.topology.N_routers))
         client_gateways = random.sample(available_gateways, self.n_clients)
@@ -61,7 +71,7 @@ class App:
         link_delays = self._distribute_values(self.links_delays, self.n_clients + self.n_servers)
 
         address = ns.Ipv4AddressHelper()
-        stack = ns.InternetStackHelper()
+        
         
 
         for i, gateway_idx in enumerate(client_gateways):
@@ -78,12 +88,11 @@ class App:
                 link.SetChannelAttribute("Delay", ns.StringValue(link_delays[i]))
             
             node_pair = ns.NodeContainer()
-            node_pair.Add(gateway)
             node_pair.Add(client)
+            node_pair.Add(gateway)
             
             device_pair = link.Install(node_pair)
             
-            stack.Install(client)
             
             address.SetBase(ns.Ipv4Address(f"192.167.{1+i}.0"), ns.Ipv4Mask("255.255.255.0"))
             ip_interface = address.Assign(device_pair)
@@ -102,47 +111,20 @@ class App:
                 link.SetChannelAttribute("Delay", ns.StringValue(link_delays[i+self.n_clients]))
             
             node_pair = ns.NodeContainer()
-            node_pair.Add(gateway)
             node_pair.Add(server)
+            node_pair.Add(gateway)
             
             device_pair = link.Install(node_pair)
 
-            stack.Install(server)
             
             address.SetBase(ns.Ipv4Address(f"192.169.{1+i}.0"), ns.Ipv4Mask("255.255.255.0"))
             ip_interface = address.Assign(device_pair)
             servers_ip.append(ip_interface)
-            
         
 
         return clients, servers,clients_ip,servers_ip
 
         
-
-    def routing(self):
-        all_nodes = ns.NodeContainer()
-        for i in range(self.n_clients):
-                all_nodes.Add(self.clients.Get(i))
-
-        for i in range(self.n_servers):
-            all_nodes.Add(self.servers.Get(i))
-    
-        for i in range(self.topology.N_routers):
-            all_nodes.Add(self.topology.nodes.Get(i))
-            
-        internet = ns.InternetStackHelper()
-        ipv4RoutingHelper = ns.Ipv4ListRoutingHelper()
-        print("8")
-
-        rip = ns.RipHelper()
-        ipv4RoutingHelper.Add(rip, 10)
-        print("9")
-
-        internet.SetRoutingHelper(ipv4RoutingHelper)
-        internet.Install(all_nodes)
-        print("10")
-
-
     def install_app(self):
         for i in range(self.n_servers):
             self.setup_server(self.servers.Get(i))
@@ -157,19 +139,22 @@ class App:
         if self.app_type == "udp_echo":
             udp_echo_server = ns.UdpEchoServerHelper(self.app_port)
             server_app = udp_echo_server.Install(server)
-            server_app.Start(ns.Seconds(3.0))
-            server_app.Stop(ns.Seconds(3.0 + self.app_duration))
+            server_app.Start(ns.Seconds(10.0))
+            server_app.Stop(ns.Seconds(10.0 + self.app_duration))
             print("udp echo installed on server")
+            
+            
+            
     def setup_client(self, client, server):
-        server_ip = server.GetAddress(1, 0).ConvertTo()
+        server_ip = server.GetAddress(0, 0).ConvertTo()
         udp_echo_client = ns.UdpEchoClientHelper(server_ip, self.app_port)
         udp_echo_client.SetAttribute("MaxPackets", ns.UintegerValue(self.app_max_packets))
         udp_echo_client.SetAttribute("Interval", ns.TimeValue(ns.Seconds(self.app_interval)))
         udp_echo_client.SetAttribute("PacketSize", ns.UintegerValue(self.app_packet_size))
 
         client_app = udp_echo_client.Install(client)
-        client_app.Start(ns.Seconds(3.0))
-        client_app.Stop(ns.Seconds(3.0 + self.app_duration))
+        client_app.Start(ns.Seconds(10.0))
+        client_app.Stop(ns.Seconds(10.0 + self.app_duration))
 
         print("udp echo installed on client")
 
@@ -186,6 +171,5 @@ class App:
 
 # ========================== EXAMPLE USAGE ==========================
 t = Topology()
-t.generate_animation_xml()
 app = App(t, n_clients=3, n_servers=2, app_type="udp_echo")
 app.run(100)

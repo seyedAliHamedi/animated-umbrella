@@ -56,8 +56,9 @@ class Topology:
 
         x=0
         for i in range(self.N_routers):
-            for j in range(i, self.N_routers):  
+            for j in range(i, self.N_routers):
                 if self.adj_matrix[i][j] == 1:
+                    print("link betwwen ",i,j)  
                     if links_types[x] == "p2p":
                         link = ns.PointToPointHelper()
                         link.SetDeviceAttribute("DataRate", ns.StringValue(links_rate[x]))
@@ -76,8 +77,16 @@ class Topology:
                     
                     x = x+1
 
-        stack = ns.InternetStackHelper()
-        stack.Install(routers)
+        internet = ns.InternetStackHelper()
+        ipv4RoutingHelper = ns.Ipv4ListRoutingHelper()
+
+        rip = ns.RipHelper()
+
+        ipv4RoutingHelper.Add(rip, 10)
+
+        internet.SetRoutingHelper(ipv4RoutingHelper)
+        internet.Install(routers)
+
 
         address = ns.Ipv4AddressHelper()
         
@@ -90,8 +99,9 @@ class Topology:
         ip_interfaces = []
         for i,_ in enumerate(devices):
             ip_interfaces.append(address.Assign(devices[i]))
+            
 
-        return routers, devices, stack, ip_interfaces
+        return routers, devices, internet, ip_interfaces
 
 
 
@@ -130,8 +140,10 @@ class Topology:
 
         self.nodes, anim = create_xml(self.nodes, positions, self.animation_file)
 
-        # fix_xml(self.animation_file)
 
+        # ns.Simulator.Stop(ns.Seconds(10))
+        # ns.Simulator.Run()
+        # ns.Simulator.Destroy()
         print(f"📂 Animation XML file generated: {self.animation_file}")
         
     def summary(self):
@@ -160,8 +172,8 @@ class Topology:
 # ========================== EXAMPLE USAGE ==========================
 def main():
     t = Topology()
-
     t.summary()
     t.generate_animation_xml()
+
 
 # main()
