@@ -3,6 +3,7 @@ from ns import ns
 import sys
 import os
 import math
+import random
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -30,16 +31,21 @@ sample_adj_matrix = [
 sample_links_type=['csma', 'p2p']
 sample_links_rate=['5Mbps', '10Mbps', '1Mbps']
 sample_links_delay = ['5ms', '10ms', '10ms',]
+sample_links_queue = ['5000','10000']
+sample_links_errors = [0,0.1,0]
 class Topology:
-    def __init__(self,adj_matrix=sample_adj_matrix,links_type=sample_links_type,links_rate=sample_links_rate,links_delay=sample_links_delay,base_network="192.166.1.0/24",animation_file ="./visual/topology/top1.xml"):
+    def __init__(self,adj_matrix=sample_adj_matrix,links_type=sample_links_type,links_rate=sample_links_rate,links_delay=sample_links_delay,links_queue=sample_links_queue,links_errors=sample_links_errors,base_network="192.166.1.0/24",animation_file ="./visual/topology/top1.xml"):
         self.adj_matrix=adj_matrix
         self.N_routers=len(self.adj_matrix)
         self.N_links = sum(sum(row) for row in self.adj_matrix) // 2 
         self.links_type=links_type
         self.links_rate=links_rate
         self.links_delays=links_delay
+        self.links_queue = links_queue
+        self.links_errors = links_errors
         self.base_networks = base_network
         self.animation_file = animation_file
+  
         self.nodes, self.devices, self.interfaces, self.ip_interfaces = self.initialize()
 
     def initialize(self):
@@ -53,6 +59,9 @@ class Topology:
         links_types = self._distribute_values(self.links_type, self.N_links)
         links_rate = self._distribute_values(self.links_rate, self.N_links)
         link_delays = self._distribute_values(self.links_delays, self.N_links)
+        links_queue = self._distribute_values(self.links_queue, self.N_links)
+        links_errors = self._distribute_values(self.links_errors, self.N_links)
+
 
         x=0
         for i in range(self.N_routers):
@@ -62,17 +71,30 @@ class Topology:
                         link = ns.PointToPointHelper()
                         link.SetDeviceAttribute("DataRate", ns.StringValue(links_rate[x]))
                         link.SetChannelAttribute("Delay", ns.StringValue(link_delays[x]))
+                        link.SetQueue("ns3::DropTailQueue", "MaxSize",ns.QueueSizeValue(ns.QueueSize(f"{links_queue[i]}p")))
                     elif links_types[x] == "csma":
                         link = ns.CsmaHelper()
                         link.SetChannelAttribute("DataRate",ns.DataRateValue(ns.DataRate(links_rate[x])))
                         link.SetChannelAttribute("Delay", ns.StringValue(link_delays[x]))
+                        link.SetQueue("ns3::DropTailQueue", "MaxSize",ns.QueueSizeValue(ns.QueueSize(f"{links_queue[i]}p")))
+                
+                       
+
+                        
 
                     node_pair = ns.NodeContainer()
                     node_pair.Add(routers.Get(i))
                     node_pair.Add(routers.Get(j))
                     dev_pair = link.Install(node_pair)  
                     devices.append(dev_pair)
-                    links.append(link)
+                    
+                    error_model = ns.CreateObject[ns.RateErrorModel]()
+                    error_model.SetRate(links_errors[i])
+                    error_model.SetUnit(ns.RateErrorModel.ERROR_UNIT_PACKET)
+                    dev_pair.Get(1).SetAttribute("ReceiveErrorModel",
+                                            ns.PointerValue(error_model))
+                    dev_pair.Get(0).SetAttribute("ReceiveErrorModel",
+                                            ns.PointerValue(error_model))
                     
                     x = x+1
 
@@ -106,9 +128,7 @@ class Topology:
 
     # ========== HELPERS ==========
     def _distribute_values(self, values, count):
-        """Evenly distributes values across a given count"""
-        chunk_size = math.ceil(count / len(values))
-        return [val for val in values for _ in range(chunk_size)][:count]
+        return [random.choice(values) for _ in range(count)]
 
     def _calculate_subnet_mask(self, mask_bits):
         """Generates a subnet mask based on CIDR notation"""

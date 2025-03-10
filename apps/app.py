@@ -11,7 +11,6 @@ from topology.topology import Topology
 sample_links_type = ['csma', 'p2p', 'p2p', 'p2p', 'csma']
 sample_links_rate = ['5Mbps', '5Mbps', '1Mbps', '1Mbps', '5Mbps']
 sample_links_delay = ['5ms', '10ms', '10ms', '1ms', '5ms']
-sample_links_queues = ['5000','100000']
 
 
 ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
@@ -21,7 +20,7 @@ ns.LogComponentEnable("OnOffApplication", ns.LOG_LEVEL_INFO)
 class App:
     def __init__(self, topology, n_servers=2, n_clients=3, 
                  links_type=sample_links_type, links_rate=sample_links_rate, 
-                 links_delay=sample_links_delay,links_queue=sample_links_queues, app_type="udp_echo",
+                 links_delay=sample_links_delay, app_type="udp_echo",
                  app_max_packets=100, app_interval=1, app_packet_size=1024, 
                  app_duration=150, app_port=9,animFile='./visual/apps/tcp.xml'):
         self.topology = topology
@@ -31,7 +30,6 @@ class App:
         self.links_type = links_type
         self.links_rate = links_rate
         self.links_delays = links_delay
-        self.links_queue = links_queue
         self.app_max_packets = app_max_packets
         self.app_interval = app_interval
         self.app_packet_size = app_packet_size
@@ -73,7 +71,6 @@ class App:
         links_types = self._distribute_values(self.links_type, self.n_clients + self.n_servers)
         links_rate = self._distribute_values(self.links_rate, self.n_clients + self.n_servers)
         link_delays = self._distribute_values(self.links_delays, self.n_clients + self.n_servers)
-        links_queue = self._distribute_values(self.links_queue, self.n_clients + self.n_servers)
 
         address = ns.Ipv4AddressHelper()
         
@@ -87,14 +84,11 @@ class App:
                 link = ns.PointToPointHelper()
                 link.SetDeviceAttribute("DataRate", ns.StringValue(links_rate[i]))
                 link.SetChannelAttribute("Delay", ns.StringValue(link_delays[i]))
-                link.SetQueue("ns3::DropTailQueue", "MaxSize",
-                  ns.QueueSizeValue(ns.QueueSize(f"{links_queue[i]}p")))
             elif links_types[i] == "csma":
                 link = ns.CsmaHelper()
                 link.SetChannelAttribute("DataRate", ns.DataRateValue(ns.DataRate(links_rate[i])))
                 link.SetChannelAttribute("Delay", ns.StringValue(link_delays[i]))
-                link.SetQueue("ns3::DropTailQueue", "MaxSize",
-                  ns.QueueSizeValue(ns.QueueSize(f"{links_queue[i]}p")))
+             
             
             node_pair = ns.NodeContainer()
             node_pair.Add(client)
