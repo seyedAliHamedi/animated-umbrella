@@ -91,24 +91,25 @@ def run_cpp_file(cpp_file_path):
 # Regular expression to parse each line
 def create_csv(input_file):
     # Regular expression to parse each line
-    log_pattern = re.compile(r"\[Node (\d+)\] Packet: (\S+),\s*(TX|RX):\s*(UDP|TCP),\s*Port:\s*(\d+),\s*Time:\s*([0-9.]+),\s*Size:\s*(\d+)")
+    log_pattern = re.compile(r"\[Node (\d+)\] Packet: (\S+),\s*(TX|RX):\s*(UDP|TCP),\s*Port:\s*(\d+),\s*Time:\s*([0-9.]+),\s*Size:\s*(\d+),\s*Offset=\s*(\d+)")
     
     # Define output file name based on input file
     output_file = os.path.splitext(input_file)[0] + ".csv"
 
     # Open input file and parse contents
     data = []
-    with open(input_file, "r") as file:
+    with open(input_file, "r+") as file:
         for line in file:
             match = log_pattern.match(line.strip())
             if match:
-                node, packet , direction, protocol, port, time, size = match.groups()
-                data.append([node,packet, direction, protocol, port, time, size])
+                node, packet , direction, protocol, port, time, size, offset = match.groups()
+                data.append([node,packet, direction, protocol, port, time, size, offset])
+
 
     # Write to CSV
     with open(output_file, "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(["Node","Packet", "Direction", "Protocol", "Port", "Time", "Size"])  # CSV Header
+        writer.writerow(["Node","Packet", "Direction", "Protocol", "Port", "Time", "Size" , "Offset"])  # CSV Header
         writer.writerows(data)
 
     print(f"CSV file '{output_file}' has been created successfully.")
@@ -133,6 +134,7 @@ def generate_node_files(num_nodes, output_dir="animated-umbrella/cpps"):
 #include "ns3/net-device.h"
 #include "ns3/node.h"
 #include "ns3/tag.h"
+#include "ns3/ipv4-header.h"
 #include <vector>
 #include <fstream>
 #include <string>
@@ -147,71 +149,138 @@ struct PacketInfo{i} {{
     uint16_t destPort;
     double time;
     uint32_t size;
-}}; 
+    uint16_t offset;
+}};
 
 std::vector<PacketInfo{i}> node{i}_transmittedPackets;
 std::vector<PacketInfo{i}> node{i}_receivedPackets;
 std::ofstream node{i}_packetLogFile("animated-umbrella/cpps/packets_log.txt", std::ios::out | std::ios::app);
 
 // Callback for received packets
-void node{i}_RxCallback(Ptr<const Packet> packet) {{
+void node{i}_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfaceIndex) {{
+    Ipv4Header ipHeader;
     UdpHeader udpHeader;
     TcpHeader tcpHeader;
+
     std::string packetType = "Unknown";
     uint16_t destPort = 0;
-    
+
     Ptr<Packet> copy = packet->Copy();
-    if (copy->PeekHeader(udpHeader)) {{
-        destPort = udpHeader.GetDestinationPort();
-        packetType = "UDP";
-    }} else if (copy->PeekHeader(tcpHeader)) {{
-        destPort = tcpHeader.GetDestinationPort();
-        packetType = "TCP";
+    uint16_t identification = ipHeader.GetIdentification();
+    uint16_t offset         = ipHeader.GetFragmentOffset(); // in 8-byte blocks
+    bool moreFragments      = ipHeader.IsDontFragment();
+    
+    // Try to see if this is an IPv4 packet
+    if (copy->PeekHeader(ipHeader)) {{
+        // Remove the IP header so the next bytes align with L4
+
+
+        if (copy->RemoveHeader(ipHeader)) {{
+            uint8_t protocol = ipHeader.GetProtocol(); // 6 = TCP, 17 = UDP, etc.
+            if (protocol == 6) {{ // TCP
+                if (copy->PeekHeader(tcpHeader)) {{
+                    destPort = tcpHeader.GetDestinationPort();
+                    packetType = "TCP";
+                }}
+            }}
+            else if (protocol == 17) {{ // UDP
+                if (copy->PeekHeader(udpHeader)) {{
+                    destPort = udpHeader.GetDestinationPort();
+                    packetType = "UDP";
+                }}
+            }}
+
+        }}
     }}
-    
+
     double time = Simulator::Now().GetSeconds();
-    
+
     // Store packet info
-    PacketInfo{i} pktInfo = {{ packet->GetUid(), packetType, destPort, time, packet->GetSize() }};
+    PacketInfo{i} pktInfo = {{ packet->GetUid(), packetType, destPort, time, packet->GetSize(),offset }};
     node{i}_receivedPackets.push_back(pktInfo);
-    
+
     // Log the packet to the file
     if (node{i}_packetLogFile.is_open()) {{
-        node{i}_packetLogFile << "[Node " << node{i}_src << "] Packet: " << packet->GetUid() << ", RX: " << packetType
-                           << ", Port: " << destPort
-                           << ", Time: " << time
-                           << ", Size: " << packet->GetSize() << std::endl;
+        node{i}_packetLogFile << "[Node " << node{i}_src << "] Packet: " << packet->GetUid()
+                              << ", RX: " << packetType
+                              << ", Port: " << destPort
+                              << ", Time: " << time
+                              << ", Size: " << packet->GetSize()
+                              << ", Offset=" << offset
+                              << std::endl;
     }}
+
+        std::cout << "Received Packet: " << packet
+                  << ", Type: " << packetType
+                  << ", Dest Port: " << destPort
+                  << ", Time: " << time
+                  << ", Size: " << packet->GetSize()
+                  << ", IP-ID=" << identification
+                  << ", FragOffset=" << offset
+                  << ", MoreFrag=" << (moreFragments ? 1 : 0)
+                  << std::endl;
 }}
 
-void node{i}_TxCallback(Ptr<const Packet> packet) {{
+// Callback for transmitted packets
+void node{i}_TxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfaceIndex) {{
+    Ipv4Header ipHeader;
     UdpHeader udpHeader;
     TcpHeader tcpHeader;
+
     std::string packetType = "Unknown";
     uint16_t destPort = 0;
-    
+
     Ptr<Packet> copy = packet->Copy();
-    if (copy->PeekHeader(udpHeader)) {{
-        destPort = udpHeader.GetDestinationPort();
-        packetType = "UDP";
-    }} else if (copy->PeekHeader(tcpHeader)) {{
-        destPort = tcpHeader.GetDestinationPort();
-        packetType = "TCP";
+    uint16_t identification = ipHeader.GetIdentification();
+    uint16_t offset         = ipHeader.GetFragmentOffset(); // in 8-byte blocks
+    bool moreFragments      = ipHeader.IsDontFragment();
+
+    // Same IPv4-first approach
+    if (copy->PeekHeader(ipHeader)) {{
+        if (copy->RemoveHeader(ipHeader)) {{
+            uint8_t protocol = ipHeader.GetProtocol();
+            if (protocol == 6) {{ // TCP
+                if (copy->PeekHeader(tcpHeader)) {{
+                    destPort = tcpHeader.GetDestinationPort();
+                    packetType = "TCP";
+                }}
+            }}
+            else if (protocol == 17) {{ // UDP
+                if (copy->PeekHeader(udpHeader)) {{
+                    destPort = udpHeader.GetDestinationPort();
+                    packetType = "UDP";
+                }}
+            }}
+        }}
     }}
-    
+
     double time = Simulator::Now().GetSeconds();
-    
+
     // Store packet info
-    PacketInfo{i} pktInfo = {{ packet->GetUid(), packetType, destPort, time, packet->GetSize() }};
+    PacketInfo{i} pktInfo = {{ packet->GetUid(), packetType, destPort, time, packet->GetSize(),offset }};
     node{i}_transmittedPackets.push_back(pktInfo);
-    
+
     // Log the packet to the file
     if (node{i}_packetLogFile.is_open()) {{
-        node{i}_packetLogFile << "[Node " << node{i}_src << "] Packet: " << packet->GetUid() << ", TX: " << packetType
-                           << ", Port: " << destPort
-                           << ", Time: " << time
-                           << ", Size: " << packet->GetSize() << std::endl;
+        node{i}_packetLogFile << "[Node " << node{i}_src << "] Packet: "
+                              << packet->GetUid()
+                              << ", TX: " << packetType
+                              << ", Port: " << destPort
+                              << ", Time: " << time
+                              << ", Size: " << packet->GetSize()
+                              << ", Offset=" << offset
+                              << std::endl;
     }}
+
+     std::cout << "Transmitted Packet: " << packet
+               << ", Type: " << packetType
+               << ", Dest Port: " << destPort
+               << ", Time: " << time
+               << ", Size: " << packet->GetSize()
+                << ", IP-ID=" << identification
+                << ", FragOffset=" << offset
+                << ", MoreFrag=" << (moreFragments ? 1 : 0)
+                << std::endl;
 }}
 
 // Ensure the file closes properly at the end of the simulation
@@ -222,14 +291,13 @@ void node{i}_ClosePacketLog() {{
 }}
 
 // Node-specific exported functions without C linkage
-Callback<void, Ptr<const Packet>> node{i}_CreateRxCallback() {{
+Callback<void, Ptr<const Packet>, Ptr<Ipv4>, uint32_t> node{i}_CreateRxCallback() {{
     return MakeCallback(&node{i}_RxCallback);
 }}
 
-Callback<void, Ptr<const Packet>> node{i}_CreateTxCallback() {{
+Callback<void, Ptr<const Packet>, Ptr<Ipv4>, uint32_t> node{i}_CreateTxCallback() {{
     return MakeCallback(&node{i}_TxCallback);
 }}
-
 
 // Data access functions
 std::vector<PacketInfo{i}> node{i}_GetTransmittedPackets() {{
@@ -239,6 +307,7 @@ std::vector<PacketInfo{i}> node{i}_GetTransmittedPackets() {{
 std::vector<PacketInfo{i}> node{i}_GetReceivedPackets() {{
     return node{i}_receivedPackets;
 }}
+
 '''
         
         # Write the code to the file

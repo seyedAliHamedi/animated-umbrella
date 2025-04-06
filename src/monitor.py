@@ -2,6 +2,8 @@ from ns import ns
 import os
 import math
 
+from utils import generate_node_files,run_cpp_file,setup_packet_tracing_for_router,create_csv
+
 class Monitor:
     
     def __init__(self, topology=None, app=None):
@@ -10,6 +12,7 @@ class Monitor:
         self.flow_monitor = None
         self.flow_helper = None
         self.anim = None
+        self.trace_modules=[]
         
     def setup_animation(self, anim_file="./src/monitor/xml/animation.xml", enable_packet_metadata=True):
         print("\n--------------------------- Setting up animation ---------------------------")
@@ -121,6 +124,27 @@ class Monitor:
         print("FlowMonitor setup completed.")
         return self.flow_monitor
         
+    def setup_packet_log(self):    
+        
+        generate_node_files(self.topology.nodes.GetN())
+
+        trace_modules = []
+
+        for i in range(self.topology.nodes.GetN()):
+            trace_modules.append(run_cpp_file(f"./src/monitor/cpps/node{i}.cpp"))
+
+
+        for i in range(self.topology.nodes.GetN()):
+            setup_packet_tracing_for_router(self.topology.nodes.Get(i), trace_modules)
+            
+        self.trace_modules = trace_modules
+
+    def get_packet_logs(self):
+        for i in range(self.topology.nodes.GetN()):
+            close_func = getattr(self.trace_modules[i], f"node{i}_ClosePacketLog")
+            close_func()
+        create_csv("./src/monitor/logs/packets_log.txt")
+    
     def position_nodes(self, anim=None):
         if anim is None:
             anim = self.anim
@@ -188,7 +212,6 @@ class Monitor:
         return node_ips
          
 
-
     def create_csv_summary(self, flow_stats, output_file="./src/monitor/logs/flow_summary.csv"):
         if not flow_stats:
             print("No flow statistics to write to CSV.")
@@ -219,99 +242,6 @@ class Monitor:
             import traceback
             traceback.print_exc()
 
-    def get_node_types(self):
-        node_types = {}
-        
-        if self.topology and hasattr(self.topology, 'nodes'):
-            for i in range(self.topology.nodes.GetN()):
-                node = self.topology.nodes.Get(i)
-                node_types[node.GetId()] = "router"
-        
-        if self.app and hasattr(self.app, 'clients'):
-            for i in range(self.app.clients.GetN()):
-                node = self.app.clients.Get(i)
-                node_types[node.GetId()] = "client"
-        
-        if self.app and hasattr(self.app, 'servers'):
-            for i in range(self.app.servers.GetN()):
-                node = self.app.servers.Get(i)
-                node_types[node.GetId()] = "server"
-        
-        return node_types
-    
-    def analyze_application_performance(self, app_port=9):
-        print("\n--------------------------- Analyzing application performance ---------------------------")
-        
-        app_flows = self.collect_flow_stats(app_port)
-        
-        if not app_flows:
-            print("No application flows found for analysis.")
-            return None
-        
-        node_types = self.get_node_types()
-        
-        node_ips = self.get_node_ips_by_id()
-        
-        ip_to_node = {}
-        for node_id, ips in node_ips.items():
-            for ip in ips:
-                ip_to_node[ip] = node_id
-        
-        metrics = {
-            'client_to_server': [],
-            'server_to_client': [],
-            'avg_delay_ms': 0,
-            'avg_jitter_ms': 0,
-            'avg_loss_ratio': 0,
-            'total_tx_packets': 0,
-            'total_rx_packets': 0,
-            'total_lost_packets': 0
-        }
-        
-        for flow in app_flows:
-            source_ip = flow['source']
-            dest_ip = flow['destination']
-            
-            source_node_id = ip_to_node.get(source_ip)
-            dest_node_id = ip_to_node.get(dest_ip)
-            
-            source_type = node_types.get(source_node_id, "unknown")
-            dest_type = node_types.get(dest_node_id, "unknown")
-            
-            if source_type == "client" and dest_type == "server":
-                metrics['client_to_server'].append(flow)
-            elif source_type == "server" and dest_type == "client":
-                metrics['server_to_client'].append(flow)
-            
-            metrics['total_tx_packets'] += flow['tx_packets']
-            metrics['total_rx_packets'] += flow['rx_packets']
-            metrics['total_lost_packets'] += flow['lost_packets']
-        
-        if app_flows:
-            delay_flows = [f for f in app_flows if f['rx_packets'] > 0]
-            if delay_flows:
-                metrics['avg_delay_ms'] = sum(f['delay_ms'] for f in delay_flows) / len(delay_flows)
-            
-            jitter_flows = [f for f in app_flows if f['rx_packets'] > 1]
-            if jitter_flows:
-                metrics['avg_jitter_ms'] = sum(f['jitter_ms'] for f in jitter_flows) / len(jitter_flows)
-            
-            if metrics['total_tx_packets'] > 0:
-                metrics['avg_loss_ratio'] = metrics['total_lost_packets'] / metrics['total_tx_packets']
-        
-        print(f"Application Performance Summary (Port {app_port}):")
-        print(f"  Total Flows: {len(app_flows)}")
-        print(f"  Client->Server Flows: {len(metrics['client_to_server'])}")
-        print(f"  Server->Client Flows: {len(metrics['server_to_client'])}")
-        print(f"  Total Packets Sent: {metrics['total_tx_packets']}")
-        print(f"  Total Packets Received: {metrics['total_rx_packets']}")
-        print(f"  Total Packets Lost: {metrics['total_lost_packets']}")
-        print(f"  Average Packet Loss: {metrics['avg_loss_ratio']:.2%}")
-        print(f"  Average Delay: {metrics['avg_delay_ms']:.2f} ms")
-        print(f"  Average Jitter: {metrics['avg_jitter_ms']:.2f} ms")
-        
-        return metrics
-          
 
     def collect_flow_stats(self, stats_file = "./src/monitor/xml/flow-stats.xml",app_port=None,  filter_noise=True):
         print("\n--------------------------- Collecting flow statistics ---------------------------")

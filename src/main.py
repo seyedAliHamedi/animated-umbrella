@@ -33,6 +33,7 @@ def main():
         
     anim = app.monitor.setup_animation(app.animFile)
     app.monitor.setup_pcap_capture()
+    app.monitor.setup_packet_log()
     flowmonitor = app.monitor.setup_flow_monitor()
     
     app.monitor.position_nodes(anim)
@@ -46,7 +47,7 @@ def main():
         node_ips = app.monitor.get_node_ips_by_id()
         
         app.monitor.collect_flow_stats(app_port=app.app_port, filter_noise=True)
-        # app.monitor.analyze_application_performance(app_port=app.app_port)
+        app.monitor.get_packet_logs()
         
         ns.Simulator.Destroy()
         
