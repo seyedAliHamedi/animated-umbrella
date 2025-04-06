@@ -1,8 +1,9 @@
 from ns import ns
 import cppyy
 from src.topology import Topology
+from src.topology import Topology
 import os
-from utils import run_cpp_file, create_csv, generate_node_files
+from utils2 import run_cpp_file, create_csv, generate_node_files
 
 
 sikim = {}
@@ -55,9 +56,33 @@ def setup_packet_tracing_for_router(router, trace_modules):
     # Connect the IP-layer "Rx" and "Tx" trace sources:
     ipv4.TraceConnectWithoutContext("Rx", rx_callback)
     ipv4.TraceConnectWithoutContext("Tx", tx_callback)
+    print(f"Setting up IP-layer packet tracing for router {node_id}")
+
+    # Get the Ipv4 object from this node
+    ipv4 = router.GetObject[ns.Ipv4]()
+    if ipv4 is None:
+        print(f"No Ipv4 object found on node {node_id}, skipping IP-layer hookup.")
+        return
+
+    # Assuming your module is at index 0 in trace_modules,
+    # or adapt if you have per-interface modules.
+    module = trace_modules[node_id]
+
+    # Build the C++ callbacks for this node
+    rx_callback_func = getattr(module, f"node{node_id}_CreateRxCallback")
+    tx_callback_func = getattr(module, f"node{node_id}_CreateTxCallback")
+
+    rx_callback = rx_callback_func()
+    tx_callback = tx_callback_func()
+
+    # Connect the IP-layer "Rx" and "Tx" trace sources:
+    ipv4.TraceConnectWithoutContext("Rx", rx_callback)
+    ipv4.TraceConnectWithoutContext("Tx", tx_callback)
 
 
 print("Create nodes")
+all_nodes = ns.NodeContainer()
+all_nodes.Create(6) 
 all_nodes = ns.NodeContainer()
 all_nodes.Create(6) 
 
@@ -67,9 +92,16 @@ r1 = all_nodes.Get(2)
 r2 = all_nodes.Get(3)
 r3 = all_nodes.Get(4)
 n1 = all_nodes.Get(5)
+n0 = all_nodes.Get(0)
+r0 = all_nodes.Get(1)
+r1 = all_nodes.Get(2)
+r2 = all_nodes.Get(3)
+r3 = all_nodes.Get(4)
+n1 = all_nodes.Get(5)
 
 net1 = ns.NodeContainer()
 net1.Add(n0)
+net1.Add(r0)
 net1.Add(r0)
 
 net2 = ns.NodeContainer()
@@ -94,6 +126,13 @@ net6.Add(n1)
 
 # Install IPv4 Internet Stack with RIP routing protocol
 internet = ns.InternetStackHelper()
+ipv4RoutingHelper = ns.Ipv4ListRoutingHelper()
+
+rip = ns.RipHelper()
+
+ipv4RoutingHelper.Add(rip, 10)
+
+internet.SetRoutingHelper(ipv4RoutingHelper)
 ipv4RoutingHelper = ns.Ipv4ListRoutingHelper()
 
 rip = ns.RipHelper()
@@ -152,6 +191,7 @@ d6 = csma.Install(net6)  # r3 - n1
 
 print("Addressing")
 ipv4 = ns.Ipv4AddressHelper()
+
 
 ipv4.SetBase(ns.Ipv4Address("192.168.1.0"), ns.Ipv4Mask("255.255.255.0"))
 i1 = ipv4.Assign(d1)
@@ -224,6 +264,7 @@ serverApps.Stop(ns.Seconds(30.0))
 
 print("Setting up UDP Client")
 udpClient = ns.UdpEchoClientHelper(i6.GetAddress(1, 0).ConvertTo(), 9)
+udpClient = ns.UdpEchoClientHelper(i6.GetAddress(1, 0).ConvertTo(), 9)
 udpClient.SetAttribute("MaxPackets", ns.UintegerValue(500))
 udpClient.SetAttribute("Interval", ns.TimeValue(ns.Seconds(0.1)))
 udpClient.SetAttribute("PacketSize", ns.UintegerValue(1024))
@@ -233,12 +274,6 @@ clientApps.Start(ns.Seconds(2.0))
 clientApps.Stop(ns.Seconds(30.0))
 
 ip_list = get_node_ips_by_id(all_nodes)
-# sikim[all_nodes.Get(1)]={
-#     "ips":ip_list[1],
-#     "packets":[
-#         {id:5,size:200,port:0,time:103},
-#     ]
-# }
 
 generate_node_files(all_nodes.GetN())
 
@@ -253,6 +288,11 @@ for i in range(all_nodes.GetN()):
 
 # print("mmd2")
 
+
+# print("Tracing")
+# ascii = ns.AsciiTraceHelper()
+# csma.EnableAsciiAll(ascii.CreateFileStream("udp_rip2.tr"))
+# csma.EnablePcapAll("udp_rip2", True)
 
 # print("Tracing")
 # ascii = ns.AsciiTraceHelper()

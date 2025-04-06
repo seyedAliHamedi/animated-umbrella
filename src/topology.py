@@ -1,12 +1,10 @@
 from ns import ns
-
 import os
 import sys
-import math
+
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.utils import *
-
 
 class Topology:
     def __init__(self,adj_matrix=sample_data['topology_adj_matrix'],links_type=sample_data['topology_links_type'],links_rate=sample_data['topology_links_rate'],links_delay=sample_data['topology_links_delay'],links_queue=sample_data['topology_links_queue'],links_errors=sample_data['topology_links_errors'],base_network=sample_data['topology_base_network'],xml_file=sample_data['topology_xml_file']):
@@ -28,7 +26,6 @@ class Topology:
     def initialize(self):
         routers = ns.NodeContainer()
         routers.Create(self.N_routers)
-
 
         devices = []
 
@@ -100,32 +97,4 @@ class Topology:
 
 
 
-    def generate_animation_xml(self):
-        positions = []
-        angle_step = 360 / self.N_routers  
-        angle = 0
-        radius = 50  
-
-        for i in range(self.N_routers):
-            x = 50 + radius * math.cos(math.radians(angle))
-            y = 50 + radius * math.sin(math.radians(angle))
-            positions.append([x, y])  
-            angle += angle_step  
-
-
-        self.nodes, anim = create_xml(self.nodes, positions, self.xml_file)
-
-
-        # ns.Simulator.Stop(ns.Seconds(10))
-        # ns.Simulator.Run()
-        # ns.Simulator.Destroy()
-        print(" Topology XML Genrated")
-        
-        
-# ========================== EXAMPLE USAGE ==========================
-def main():
-    t = Topology()
-    t.generate_animation_xml()
-    
-# main()
-
+  
