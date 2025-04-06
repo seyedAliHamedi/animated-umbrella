@@ -3,8 +3,7 @@ import os
 import sys
 
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src.utils import *
+from sim.utils import *
 
 class Topology:
     def __init__(self,adj_matrix=sample_data['topology_adj_matrix'],links_type=sample_data['topology_links_type'],links_rate=sample_data['topology_links_rate'],links_delay=sample_data['topology_links_delay'],links_queue=sample_data['topology_links_queue'],links_errors=sample_data['topology_links_errors'],base_network=sample_data['topology_base_network'],xml_file=sample_data['topology_xml_file']):

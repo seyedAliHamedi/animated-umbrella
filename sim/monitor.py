@@ -2,7 +2,7 @@ from ns import ns
 import os
 import math
 
-from utils import generate_node_files,run_cpp_file,setup_packet_tracing_for_router,create_csv
+from sim.utils import generate_node_files,run_cpp_file,setup_packet_tracing_for_router,create_csv
 
 class Monitor:
     
@@ -14,13 +14,13 @@ class Monitor:
         self.anim = None
         self.trace_modules=[]
         
-    def setup_animation(self, anim_file="./src/monitor/xml/animation.xml", enable_packet_metadata=True):
+    def setup_animation(self, anim_file="./sim/monitor/xml/animation.xml", enable_packet_metadata=True):
         print("\n--------------------------- Setting up animation ---------------------------")
         self.anim = ns.AnimationInterface(anim_file)
         if enable_packet_metadata:
             self.anim.EnablePacketMetadata(True)
         
-        self.anim.EnableIpv4RouteTracking("./src/monitor/xml/routes.xml", ns.Seconds(0), ns.Seconds(5), ns.Seconds(5))
+        self.anim.EnableIpv4RouteTracking("./sim/monitor/xml/routes.xml", ns.Seconds(0), ns.Seconds(5), ns.Seconds(5))
         
         self.anim.EnableIpv4L3ProtocolCounters(ns.Seconds(0), ns.Seconds(10), ns.Seconds(10))
         
@@ -32,7 +32,7 @@ class Monitor:
         print("- Routing tables, IP counters, and queue information enabled for NetAnim")
         return self.anim
    
-    def setup_pcap_capture(self, prefix="./src/monitor/pcap/capture", per_node=True, per_device=False):
+    def setup_pcap_capture(self, prefix="./sim/monitor/pcap/capture", per_node=True, per_device=False):
         print("\n--------------------------- Setting up PCAP capture ---------------------------")
         
         created_files = []
@@ -131,7 +131,7 @@ class Monitor:
         trace_modules = []
 
         for i in range(self.topology.nodes.GetN()):
-            trace_modules.append(run_cpp_file(f"./src/monitor/cpps/node{i}.cpp"))
+            trace_modules.append(run_cpp_file(f"./sim/monitor/cpps/node{i}.cpp"))
 
 
         for i in range(self.topology.nodes.GetN()):
@@ -143,7 +143,7 @@ class Monitor:
         for i in range(self.topology.nodes.GetN()):
             close_func = getattr(self.trace_modules[i], f"node{i}_ClosePacketLog")
             close_func()
-        create_csv("./src/monitor/logs/packets_log.txt")
+        create_csv("./sim/monitor/logs/packets_log.txt")
     
     def position_nodes(self, anim=None):
         if anim is None:
@@ -212,7 +212,7 @@ class Monitor:
         return node_ips
          
 
-    def create_csv_summary(self, flow_stats, output_file="./src/monitor/logs/flow_summary.csv"):
+    def create_csv_summary(self, flow_stats, output_file="./sim/monitor/logs/flow_summary.csv"):
         if not flow_stats:
             print("No flow statistics to write to CSV.")
             return
@@ -243,7 +243,7 @@ class Monitor:
             traceback.print_exc()
 
 
-    def collect_flow_stats(self, stats_file = "./src/monitor/xml/flow-stats.xml",app_port=None,  filter_noise=True):
+    def collect_flow_stats(self, stats_file = "./sim/monitor/xml/flow-stats.xml",app_port=None,  filter_noise=True):
         print("\n--------------------------- Collecting flow statistics ---------------------------")
         
         self.flow_monitor.CheckForLostPackets()

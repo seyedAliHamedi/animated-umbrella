@@ -1,7 +1,5 @@
 from ns import ns
-import cppyy
-from src.topology import Topology
-import os
+from topology import Topology
 from utils2 import run_cpp_file, create_csv, generate_node_files
 
 

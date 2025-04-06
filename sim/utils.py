@@ -33,7 +33,7 @@ sample_data = {
     "topology_links_queue" :['5000','10000'],
     "topology_links_errors" : [0,0.1,0],
     "topology_base_network" : "192.166.1.0/24",
-    "topology_xml_file" : "./src/monitor/xml/topology.xml",
+    "topology_xml_file" : "./sim/monitor/xml/topology.xml",
     
     
     "app_n_servers": 4,
@@ -48,18 +48,11 @@ sample_data = {
     "app_port": 9,
     "tcp_app_data_rate":500000,
     
-    "app_animation_file": "./src/monitor/xml/app.xml",
+    "app_animation_file": "./sim/monitor/xml/app.xml",
     
     "app_duration": 100,
     "app_start_time":10,
-    
-    
 }
-
-
-
-
-
 
 def distribute_values(values, count):
     return [random.choice(values) for _ in range(count)]
@@ -151,7 +144,7 @@ def get_all_ipv6_addresses(node):
 
 
 
-def generate_node_files(num_nodes, output_dir="./src/monitor/cpps"):
+def generate_node_files(num_nodes, output_dir="./sim/monitor/cpps"):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
@@ -189,7 +182,7 @@ struct PacketInfo{i} {{
 
 std::vector<PacketInfo{i}> node{i}_transmittedPackets;
 std::vector<PacketInfo{i}> node{i}_receivedPackets;
-std::ofstream node{i}_packetLogFile("./src/monitor/logs/packets_log.txt", std::ios::out | std::ios::app);
+std::ofstream node{i}_packetLogFile("./sim/monitor/logs/packets_log.txt", std::ios::out | std::ios::app);
 
 // Callback for received packets
 void node{i}_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfaceIndex) {{

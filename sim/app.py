@@ -5,7 +5,7 @@ import random
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils import *
+from sim.utils import *
 
 
 
