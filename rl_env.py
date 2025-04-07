@@ -8,10 +8,12 @@ from sim.monitor import Monitor
 
 class NetworkEnv:
     
-    def __init__(self, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2):
+    def __init__(self,topology_base_network, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2,max_steps=20,each_step_duration=5,):
         self.simulation_duration = simulation_duration
         self.current_step = 0
-        self.max_steps = 20
+        self.max_steps = max_steps
+        self.each_step_duration = each_step_duration
+        self.topology_base_network=topology_base_network
         
         self.min_throughput = min_throughput
         self.max_latency = max_latency
@@ -20,10 +22,10 @@ class NetworkEnv:
         self.router_energy_cost = router_energy_cost
         self.link_energy_cost = link_energy_cost
         
-        ns.Simulator.Destroy()
         self.setup_environment()
     
     def setup_environment(self):
+        
         self.topology = Topology()
         self.app = App(self.topology)
         self.monitor = Monitor(
@@ -38,7 +40,7 @@ class NetworkEnv:
     
     def reset(self):
         print("reset environment")
-        
+        ns.Simulator.Destroy()
         default_state = {
             'router_status': [True] * self.topology.N_routers,
             'link_status': [True] * self.topology.N_links,
@@ -47,7 +49,6 @@ class NetworkEnv:
             'packet_loss': [1.0] *  self.topology.N_routers
         }
         
-        ns.Simulator.Destroy()
         self.setup_environment()
         
         self.current_step = 0
@@ -55,7 +56,7 @@ class NetworkEnv:
     
     def step(self, action):
         self.apply_actions(action)
-        self.run_simulation(50)
+        self.run_simulation(self.each_step_duration)
         metrics = self.collect_metrics()
         reward = self.calculate_reward(metrics)
         

@@ -1,15 +1,8 @@
-from ns import ns
-from rl_env import NetworkEnv
-import traceback
+# main.py
+import subprocess
 
-def main():
-    env = NetworkEnv(simulation_duration=1000)  
-    action = {} 
-    next_state, reward, done, info = env.step(action)
-    print(f"Step successful, reward: {reward}")
+for epoch in range(1, 6):
+    subprocess.run(["python", "single.py", str(epoch)])
+    print(f"Completed Epoch {epoch}")
 
-    print("Test completed successfully!")
-        
-        
-if __name__ == "__main__":
-    main()
+print("All epochs completed")
