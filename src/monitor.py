@@ -1,26 +1,32 @@
 from ns import ns
 import os
 import math
-
-from utils import generate_node_files,run_cpp_file,setup_packet_tracing_for_router,create_csv
+import json
+from utils import generate_node_files, run_cpp_file, setup_packet_tracing_for_router, create_csv, get_routes, get_ip_to_node
 
 class Monitor:
     
     def __init__(self, topology=None, app=None):
         self.topology = topology
         self.app = app
+        self.all_nodes = ns.NodeContainer()
+        self.all_nodes.Add(app.clients)
+        self.all_nodes.Add(topology.nodes)
+        self.all_nodes.Add(app.servers)
+        
         self.flow_monitor = None
         self.flow_helper = None
         self.anim = None
+        self.node_ips = {}
         self.trace_modules=[]
         
-    def setup_animation(self, anim_file="./src/monitor/xml/animation.xml", enable_packet_metadata=True):
+    def setup_animation(self, anim_file="./animated-umbrella/src/monitor/xml/animation.xml", enable_packet_metadata=True):
         print("\n--------------------------- Setting up animation ---------------------------")
         self.anim = ns.AnimationInterface(anim_file)
         if enable_packet_metadata:
             self.anim.EnablePacketMetadata(True)
         
-        self.anim.EnableIpv4RouteTracking("./src/monitor/xml/routes.xml", ns.Seconds(0), ns.Seconds(5), ns.Seconds(5))
+        self.anim.EnableIpv4RouteTracking("./animated-umbrella/src/monitor/xml/routes.xml", ns.Seconds(0), ns.Seconds(5), ns.Seconds(5))
         
         self.anim.EnableIpv4L3ProtocolCounters(ns.Seconds(0), ns.Seconds(10), ns.Seconds(10))
         
@@ -32,7 +38,7 @@ class Monitor:
         print("- Routing tables, IP counters, and queue information enabled for NetAnim")
         return self.anim
    
-    def setup_pcap_capture(self, prefix="./src/monitor/pcap/capture", per_node=True, per_device=False):
+    def setup_pcap_capture(self, prefix="./animated-umbrella/src/monitor/pcap/capture", per_node=True, per_device=False):
         print("\n--------------------------- Setting up PCAP capture ---------------------------")
         
         created_files = []
@@ -131,7 +137,7 @@ class Monitor:
         trace_modules = []
 
         for i in range(self.topology.nodes.GetN()):
-            trace_modules.append(run_cpp_file(f"./src/monitor/cpps/node{i}.cpp"))
+            trace_modules.append(run_cpp_file(f"./animated-umbrella/src/monitor/cpps/node{i}.cpp"))
 
 
         for i in range(self.topology.nodes.GetN()):
@@ -139,11 +145,33 @@ class Monitor:
             
         self.trace_modules = trace_modules
 
+
+    def setup_tracert(self):
+        print("\n--------------------------- Setting up trace router ---------------------------")
+        
+        for i in range(self.app.n_clients):
+                server_ip = self.app.servers_ip[i % self.app.n_servers]
+                client = self.all_nodes.Get(i)
+                tracer = ns.V4TraceRouteHelper(server_ip.GetAddress(0,0))
+                app = tracer.Install(client)
+                app.Start(ns.Seconds(10.0 + i +1 )) #different start/stop times
+                app.Stop(ns.Seconds(13.0 + i))
+
+  
+
+        # Traceroute from n1 → n0
+        # tracer_n1_to_n0 = ns.V4TraceRouteHelper(dest_n0_ip)
+        # app_n1_to_n0 = tracer_n1_to_n0.Install(n1)
+        # app_n1_to_n0.Start(ns.Seconds(2.0))
+        # app_n1_to_n0.Stop(ns.Seconds(4.0))
+
+        print("Tracert setup completed.")
+
     def get_packet_logs(self):
         for i in range(self.topology.nodes.GetN()):
             close_func = getattr(self.trace_modules[i], f"node{i}_ClosePacketLog")
             close_func()
-        create_csv("./src/monitor/logs/packets_log.txt")
+        create_csv("./animated-umbrella/src/monitor/logs/packets_log.txt")
     
     def position_nodes(self, anim=None):
         if anim is None:
@@ -172,18 +200,21 @@ class Monitor:
     def get_node_ips_by_id(self):
         print("\n--------------------------- Getting node IPs ---------------------------")
         
-        node_ips = {}
+        self.node_ips = {}
         
         try:
             all_nodes = []
-            if self.topology and hasattr(self.topology, 'nodes'):
-                for i in range(self.topology.nodes.GetN()):
-                    all_nodes.append(self.topology.nodes.Get(i))
-            
+
             if self.app and hasattr(self.app, 'clients'):
                 for i in range(self.app.clients.GetN()):
                     all_nodes.append(self.app.clients.Get(i))
             
+
+            if self.topology and hasattr(self.topology, 'nodes'):
+                for i in range(self.topology.nodes.GetN()):
+                    all_nodes.append(self.topology.nodes.Get(i))
+            
+
             if self.app and hasattr(self.app, 'servers'):
                 for i in range(self.app.servers.GetN()):
                     all_nodes.append(self.app.servers.Get(i))
@@ -201,18 +232,35 @@ class Monitor:
                             ip_list.append(ip_addr)
                     
                     if ip_list:
-                        node_ips[node_id] = ip_list
+                        self.node_ips[node_id] = ip_list
             
-            for node_id, ips in node_ips.items():
+            for node_id, ips in self.node_ips.items():
                 print(f"Node {node_id}: {', '.join(ips)}")
         
         except Exception as e:
             print(f"Error getting node IPs: {e}")
-        
-        return node_ips
-         
 
-    def create_csv_summary(self, flow_stats, output_file="./src/monitor/logs/flow_summary.csv"):
+        with open('animated-umbrella/src/monitor/logs/ip_mapping.json', 'w') as json_file:
+            json.dump(get_ip_to_node(self.node_ips), json_file, indent=4)
+        
+        return self.node_ips
+
+
+    def get_all_routes(self, log_file="animated-umbrella/src/logs/mytrace.log"):
+        all_routes = []
+        client_ids = []
+        for i in range(self.app.n_clients):
+            client_ip = self.app.clients_ip[i]
+            client_ids.append(str(client_ip.GetAddress(0)))
+        print(client_ids)
+        all_routes = get_routes(client_ids)
+
+        return all_routes
+
+
+
+
+    def create_csv_summary(self, flow_stats, output_file="./animated-umbrella/src/monitor/logs/flow_summary.csv"):
         if not flow_stats:
             print("No flow statistics to write to CSV.")
             return
@@ -243,7 +291,7 @@ class Monitor:
             traceback.print_exc()
 
 
-    def collect_flow_stats(self, stats_file = "./src/monitor/xml/flow-stats.xml",app_port=None,  filter_noise=True):
+    def collect_flow_stats(self, stats_file = "./animated-umbrella/src/monitor/xml/flow-stats.xml",app_port=None,  filter_noise=True):
         print("\n--------------------------- Collecting flow statistics ---------------------------")
         
         self.flow_monitor.CheckForLostPackets()

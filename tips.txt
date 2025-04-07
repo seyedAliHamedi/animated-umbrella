@@ -27,3 +27,6 @@ you define a start and stop time for each
 
 -------------------- 
 ??flowClass has ["sourceAddress", "destinationAddress", "protocol", "sourcePort", "destinationPort"] ??
+
+------------------
+./ns3 run animated-umbrella/src/main.py 2> animated-umbrella/mytrace.log 

@@ -40,6 +40,7 @@ class Topology:
         for i in range(self.N_routers):
             for j in range(i, self.N_routers):
                 if self.adj_matrix[i][j] == 1:
+                    print(x)
                     if links_types[x] == "p2p":
                         link = ns.PointToPointHelper()
                         link.SetDeviceAttribute("DataRate", ns.StringValue(links_rate[x]))

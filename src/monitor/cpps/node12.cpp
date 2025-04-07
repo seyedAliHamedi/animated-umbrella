@@ -10,6 +10,7 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include <sstream> 
 
 using namespace ns3;
 
@@ -26,13 +27,15 @@ struct PacketInfo12 {
 
 std::vector<PacketInfo12> node12_transmittedPackets;
 std::vector<PacketInfo12> node12_receivedPackets;
-std::ofstream node12_packetLogFile("./src/monitor/logs/packets_log.txt", std::ios::out | std::ios::app);
+std::ofstream node12_packetLogFile("./animated-umbrella/src/monitor/logs/packets_log.txt", std::ios::out | std::ios::app);
 
 // Callback for received packets
 void node12_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfaceIndex) {
     Ipv4Header ipHeader;
     UdpHeader udpHeader;
     TcpHeader tcpHeader;
+    std::string destIP;
+    std::string srcIP;
 
     std::string packetType = "Unknown";
     uint16_t destPort = 0;
@@ -48,6 +51,17 @@ void node12_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfa
 
 
         if (copy->RemoveHeader(ipHeader)) {
+
+            Ipv4Address srcAddr = ipHeader.GetSource();
+            std::ostringstream ossSrc;
+            srcAddr.Print(ossSrc);
+            srcIP = ossSrc.str();
+
+            Ipv4Address destAddr = ipHeader.GetDestination();
+            std::ostringstream ossDst;
+            destAddr.Print(ossDst);
+            destIP = ossDst.str();
+
             uint8_t protocol = ipHeader.GetProtocol(); // 6 = TCP, 17 = UDP, etc.
             if (protocol == 6) { // TCP
                 if (copy->PeekHeader(tcpHeader)) {
@@ -79,18 +93,20 @@ void node12_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfa
                               << ", Time: " << time
                               << ", Size: " << packet->GetSize()
                               << ", Offset=" << offset
+                              << ", src IP: " << srcIP
+                              << ", dest IP: " << destIP
                               << std::endl;
     }
 
-        std::cout << "Received Packet: " << packet
-                  << ", Type: " << packetType
-                  << ", Dest Port: " << destPort
-                  << ", Time: " << time
-                  << ", Size: " << packet->GetSize()
-                  << ", IP-ID=" << identification
-                  << ", FragOffset=" << offset
-                  << ", MoreFrag=" << (moreFragments ? 1 : 0)
-                  << std::endl;
+      //  std::cout << "Received Packet: " << packet
+      //            << ", Type: " << packetType
+      //            << ", Dest Port: " << destPort
+      //            << ", Time: " << time
+      //            << ", Size: " << packet->GetSize()
+      //            << ", IP-ID=" << identification
+      //            << ", FragOffset=" << offset
+      //            << ", MoreFrag=" << (moreFragments ? 1 : 0)
+      //            << std::endl;
 }
 
 // Callback for transmitted packets
@@ -98,6 +114,8 @@ void node12_TxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfa
     Ipv4Header ipHeader;
     UdpHeader udpHeader;
     TcpHeader tcpHeader;
+    std::string destIP;
+    std::string srcIP;
 
     std::string packetType = "Unknown";
     uint16_t destPort = 0;
@@ -110,7 +128,19 @@ void node12_TxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfa
     // Same IPv4-first approach
     if (copy->PeekHeader(ipHeader)) {
         if (copy->RemoveHeader(ipHeader)) {
+        
+            Ipv4Address srcAddr = ipHeader.GetSource();
+            std::ostringstream ossSrc;
+            srcAddr.Print(ossSrc);
+            srcIP = ossSrc.str();
+
+            Ipv4Address destAddr = ipHeader.GetDestination();
+            std::ostringstream ossDst;
+            destAddr.Print(ossDst);
+            destIP = ossDst.str();
+            
             uint8_t protocol = ipHeader.GetProtocol();
+
             if (protocol == 6) { // TCP
                 if (copy->PeekHeader(tcpHeader)) {
                     destPort = tcpHeader.GetDestinationPort();
@@ -141,18 +171,20 @@ void node12_TxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfa
                               << ", Time: " << time
                               << ", Size: " << packet->GetSize()
                               << ", Offset=" << offset
+                              << ", src IP: " << srcIP
+                              << ", dest IP: " << destIP
                               << std::endl;
     }
 
-     std::cout << "Transmitted Packet: " << packet
-               << ", Type: " << packetType
-               << ", Dest Port: " << destPort
-               << ", Time: " << time
-               << ", Size: " << packet->GetSize()
-                << ", IP-ID=" << identification
-                << ", FragOffset=" << offset
-                << ", MoreFrag=" << (moreFragments ? 1 : 0)
-                << std::endl;
+   //  std::cout << "Transmitted Packet: " << packet
+          //     << ", Type: " << packetType
+             //  << ", Dest Port: " << destPort
+//<< ", Time: " << time
+               //<< ", Size: " << packet->GetSize()
+              //  << ", IP-ID=" << identification
+            //    << ", FragOffset=" << offset
+            //    << ", MoreFrag=" << (moreFragments ? 1 : 0)
+           //     << std::endl;
 }
 
 // Ensure the file closes properly at the end of the simulation

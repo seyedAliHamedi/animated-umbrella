@@ -5,6 +5,8 @@ import os
 import csv
 import cppyy
 import random
+import json
+
 
 
 
@@ -33,7 +35,7 @@ sample_data = {
     "topology_links_queue" :['5000','10000'],
     "topology_links_errors" : [0,0.1,0],
     "topology_base_network" : "192.166.1.0/24",
-    "topology_xml_file" : "./src/monitor/xml/topology.xml",
+    "topology_xml_file" : "./animated-umbrella/src/monitor/xml/topology.xml",
     
     
     "app_n_servers": 4,
@@ -48,7 +50,7 @@ sample_data = {
     "app_port": 9,
     "tcp_app_data_rate":500000,
     
-    "app_animation_file": "./src/monitor/xml/app.xml",
+    "app_animation_file": "./animated-umbrella/src/monitor/xml/app.xml",
     
     "app_duration": 100,
     "app_start_time":10,
@@ -74,13 +76,6 @@ def calculate_subnet_mask(mask_bits):
             subnet_mask[j] = 256 - 2 ** (8 - mask_bits)
             mask_bits = 0
     return ".".join(map(str, subnet_mask))
-
-
-
-
-
-
-
 
 
 def fix_xml(animFile="./animated-umbrella/rip_udp.xml"):
@@ -115,22 +110,8 @@ def create_xml(all_nodes, positions, animFile):
     return all_nodes, anim
 
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
+    
 def get_all_ipv6_addresses(node):
         """ Retrieves all IPv6 addresses assigned to a node's interfaces. """
         ipv6 = node.GetObject[ns.Ipv6]()
@@ -151,7 +132,7 @@ def get_all_ipv6_addresses(node):
 
 
 
-def generate_node_files(num_nodes, output_dir="./src/monitor/cpps"):
+def generate_node_files(num_nodes, output_dir="./animated-umbrella/src/monitor/cpps"):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
@@ -173,6 +154,7 @@ def generate_node_files(num_nodes, output_dir="./src/monitor/cpps"):
 #include <vector>
 #include <fstream>
 #include <string>
+#include <sstream> 
 
 using namespace ns3;
 
@@ -189,13 +171,15 @@ struct PacketInfo{i} {{
 
 std::vector<PacketInfo{i}> node{i}_transmittedPackets;
 std::vector<PacketInfo{i}> node{i}_receivedPackets;
-std::ofstream node{i}_packetLogFile("./src/monitor/logs/packets_log.txt", std::ios::out | std::ios::app);
+std::ofstream node{i}_packetLogFile("./animated-umbrella/src/monitor/logs/packets_log.txt", std::ios::out | std::ios::app);
 
 // Callback for received packets
 void node{i}_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interfaceIndex) {{
     Ipv4Header ipHeader;
     UdpHeader udpHeader;
     TcpHeader tcpHeader;
+    std::string destIP;
+    std::string srcIP;
 
     std::string packetType = "Unknown";
     uint16_t destPort = 0;
@@ -211,6 +195,17 @@ void node{i}_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interf
 
 
         if (copy->RemoveHeader(ipHeader)) {{
+
+            Ipv4Address srcAddr = ipHeader.GetSource();
+            std::ostringstream ossSrc;
+            srcAddr.Print(ossSrc);
+            srcIP = ossSrc.str();
+
+            Ipv4Address destAddr = ipHeader.GetDestination();
+            std::ostringstream ossDst;
+            destAddr.Print(ossDst);
+            destIP = ossDst.str();
+
             uint8_t protocol = ipHeader.GetProtocol(); // 6 = TCP, 17 = UDP, etc.
             if (protocol == 6) {{ // TCP
                 if (copy->PeekHeader(tcpHeader)) {{
@@ -242,18 +237,20 @@ void node{i}_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interf
                               << ", Time: " << time
                               << ", Size: " << packet->GetSize()
                               << ", Offset=" << offset
+                              << ", src IP: " << srcIP
+                              << ", dest IP: " << destIP
                               << std::endl;
     }}
 
-        std::cout << "Received Packet: " << packet
-                  << ", Type: " << packetType
-                  << ", Dest Port: " << destPort
-                  << ", Time: " << time
-                  << ", Size: " << packet->GetSize()
-                  << ", IP-ID=" << identification
-                  << ", FragOffset=" << offset
-                  << ", MoreFrag=" << (moreFragments ? 1 : 0)
-                  << std::endl;
+      //  std::cout << "Received Packet: " << packet
+      //            << ", Type: " << packetType
+      //            << ", Dest Port: " << destPort
+      //            << ", Time: " << time
+      //            << ", Size: " << packet->GetSize()
+      //            << ", IP-ID=" << identification
+      //            << ", FragOffset=" << offset
+      //            << ", MoreFrag=" << (moreFragments ? 1 : 0)
+      //            << std::endl;
 }}
 
 // Callback for transmitted packets
@@ -261,6 +258,8 @@ void node{i}_TxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interf
     Ipv4Header ipHeader;
     UdpHeader udpHeader;
     TcpHeader tcpHeader;
+    std::string destIP;
+    std::string srcIP;
 
     std::string packetType = "Unknown";
     uint16_t destPort = 0;
@@ -273,7 +272,19 @@ void node{i}_TxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interf
     // Same IPv4-first approach
     if (copy->PeekHeader(ipHeader)) {{
         if (copy->RemoveHeader(ipHeader)) {{
+        
+            Ipv4Address srcAddr = ipHeader.GetSource();
+            std::ostringstream ossSrc;
+            srcAddr.Print(ossSrc);
+            srcIP = ossSrc.str();
+
+            Ipv4Address destAddr = ipHeader.GetDestination();
+            std::ostringstream ossDst;
+            destAddr.Print(ossDst);
+            destIP = ossDst.str();
+            
             uint8_t protocol = ipHeader.GetProtocol();
+
             if (protocol == 6) {{ // TCP
                 if (copy->PeekHeader(tcpHeader)) {{
                     destPort = tcpHeader.GetDestinationPort();
@@ -304,18 +315,20 @@ void node{i}_TxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interf
                               << ", Time: " << time
                               << ", Size: " << packet->GetSize()
                               << ", Offset=" << offset
+                              << ", src IP: " << srcIP
+                              << ", dest IP: " << destIP
                               << std::endl;
     }}
 
-     std::cout << "Transmitted Packet: " << packet
-               << ", Type: " << packetType
-               << ", Dest Port: " << destPort
-               << ", Time: " << time
-               << ", Size: " << packet->GetSize()
-                << ", IP-ID=" << identification
-                << ", FragOffset=" << offset
-                << ", MoreFrag=" << (moreFragments ? 1 : 0)
-                << std::endl;
+   //  std::cout << "Transmitted Packet: " << packet
+          //     << ", Type: " << packetType
+             //  << ", Dest Port: " << destPort
+//<< ", Time: " << time
+               //<< ", Size: " << packet->GetSize()
+              //  << ", IP-ID=" << identification
+            //    << ", FragOffset=" << offset
+            //    << ", MoreFrag=" << (moreFragments ? 1 : 0)
+           //     << std::endl;
 }}
 
 // Ensure the file closes properly at the end of the simulation
@@ -405,11 +418,13 @@ def setup_packet_tracing_for_router(router, trace_modules):
     ipv4.TraceConnectWithoutContext("Tx", tx_callback)
 
 
-
 def create_csv(input_file):
     # Regular expression to parse each line
-    log_pattern = re.compile(r"\[Node (\d+)\] Packet: (\S+),\s*(TX|RX):\s*(UDP|TCP),\s*Port:\s*(\d+),\s*Time:\s*([0-9.]+),\s*Size:\s*(\d+),\s*Offset=\s*(\d+)")
-    
+    log_pattern = re.compile(
+        r"\[Node (\d+)\] Packet: (\S+),\s*(TX|RX):\s*(UDP|TCP),\s*Port:\s*(\d+),"
+        r"\s*Time:\s*([0-9.]+),\s*Size:\s*(\d+),\s*Offset=\s*(\d+),"
+        r"\s*src IP:\s*([\d\.]+),\s*dest IP:\s*([\d\.]+)"
+    )
     # Define output file name based on input file
     output_file = os.path.splitext(input_file)[0] + ".csv"
 
@@ -419,16 +434,93 @@ def create_csv(input_file):
         for line in file:
             match = log_pattern.match(line.strip())
             if match:
-                node, packet , direction, protocol, port, time, size, offset = match.groups()
-                data.append([node,packet, direction, protocol, port, time, size, offset])
+                node, packet , direction, protocol, port, time, size, offset, src_ip, dest_ip = match.groups()
+                data.append([node,packet, direction, protocol, port, time, size, offset, src_ip, dest_ip])
 
 
     # Write to CSV
     with open(output_file, "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(["Node","Packet", "Direction", "Protocol", "Port", "Time", "Size" , "Offset"])  # CSV Header
+        writer.writerow(["Node","Packet", "Direction", "Protocol", "Port", "Time", "Size" , "Offset","src IP","dest IP"])
         writer.writerows(data)
 
     print(f"CSV file '{output_file}' has been created successfully.")
 
+
+
+def get_ip_to_node(ip_list):
+    ip_to_node = {ip: node_id for node_id, ips in ip_list.items() for ip in ips}
+    return ip_to_node
+
+
+def parse_traceroute_blocks(log_file):
+    blocks = []
+    current_block = {"dest": None, "hops": []}
+    traceroute_header_pattern = re.compile(r"Traceroute to ([\d\.]+)")
+
+    with open(log_file, "r") as file:
+        for line in file:
+            line = line.strip()
+
+            if line.startswith("Traceroute to"):
+                if current_block["dest"]:
+                    blocks.append(current_block)
+                match = traceroute_header_pattern.match(line)
+                current_block = {"dest": match.group(1), "hops": []}
+                continue
+
+            if line.startswith("Trace Complete"):
+                if current_block["dest"]:
+                    blocks.append(current_block)
+                    current_block = {"dest": None, "hops": []}
+                continue
+
+            hop_match = re.match(r"\d+\s+([\d\.]+)", line)
+            if hop_match:
+                ip = hop_match.group(1)
+                if ip != "*" and ip not in current_block["hops"]:
+                    current_block["hops"].append(ip)
+
+    return blocks
+
+
+def convert_all_to_node_paths(blocks, ip_mapping_path, src_ip_list):
+    with open(ip_mapping_path, "r") as f:
+        ip_to_node = json.load(f)
+
+    if len(src_ip_list) != len(blocks):
+        raise ValueError("Length of src_ip_list must match number of traceroute blocks.")
+
+    route_dict = {}
+
+    for i, block in enumerate(blocks):
+        src_ip = src_ip_list[i]
+        dest_ip = block["dest"]
+        hop_ips = block["hops"]
+
+        # Move destination IP to the end
+        if dest_ip in hop_ips:
+            hop_ips.remove(dest_ip)
+        hop_ips.append(dest_ip)
+
+        src_node = ip_to_node.get(src_ip)
+        if src_node is None:
+            print(f"⚠️ Source IP {src_ip} not found in mapping, skipping.")
+            continue
+
+        node_path = [src_node]
+        for ip in hop_ips:
+            node = ip_to_node.get(ip)
+            if node is not None and node != node_path[-1]:
+                node_path.append(node)
+
+        route_dict[(src_ip, dest_ip)] = node_path
+
+    return route_dict
+
+
+def get_routes(src_ips,ip_map_path='animated-umbrella/src/monitor/logs/ip_mapping.json',log_path='animated-umbrella/mytrace.log'):        
+    blocks = parse_traceroute_blocks(log_path)
+    routes = convert_all_to_node_paths(blocks, ip_map_path, src_ips)
+    return routes
 
