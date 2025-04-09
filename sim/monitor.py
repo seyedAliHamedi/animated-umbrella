@@ -1,8 +1,12 @@
 from ns import ns
-import os
+
 import math
 import json
-from utils import generate_node_files, run_cpp_file, setup_packet_tracing_for_router, create_csv, get_routes, get_ip_to_node
+from utils import *
+
+    
+import xml.etree.ElementTree as ET
+from pathlib import Path
 
 
 class Monitor:
@@ -18,7 +22,8 @@ class Monitor:
         self.flow_monitor = None
         self.flow_helper = None
         self.anim = None
-        self.node_ips = {}
+        self.ip_to_node={}
+        self.node_to_ip={}
         self.trace_modules=[]
         
     def setup_animation(self, anim_file="./sim/monitor/xml/animation.xml", enable_packet_metadata=True):
@@ -27,7 +32,7 @@ class Monitor:
         if enable_packet_metadata:
             self.anim.EnablePacketMetadata(True)
         
-        self.anim.EnableIpv4RouteTracking("./sim/monitor/xml/routes.xml", ns.Seconds(0), ns.Seconds(5), ns.Seconds(5))
+        self.anim.EnableIpv4RouteTracking("./sim/monitor/xml/routes.xml", ns.Seconds(10), ns.Seconds(20))
         
         self.anim.EnableIpv4L3ProtocolCounters(ns.Seconds(0), ns.Seconds(10), ns.Seconds(10))
         
@@ -35,9 +40,11 @@ class Monitor:
         
         self.anim.SetMaxPktsPerTraceFile(1000000)
         
-        print(f"Enhanced animation setup complete. Output file: {anim_file}")
+        print(f"Enhanced animation setup complete. Output file")
         print("- Routing tables, IP counters, and queue information enabled for NetAnim")
         return self.anim
+   
+   
    
     def setup_pcap_capture(self, prefix="./sim/monitor/pcap/capture", per_node=True, per_device=False):
         print("\n--------------------------- Setting up PCAP capture ---------------------------")
@@ -118,7 +125,7 @@ class Monitor:
                     elif "CsmaNetDevice" in device_type:
                         csma_helper.EnablePcap(filename, device, True, True)
         
-        print(f"PCAP capture enabled. Files will be created in {prefix}/")
+        print(f"PCAP capture enabled.")
         return created_files 
 
     def setup_flow_monitor(self):
@@ -132,7 +139,7 @@ class Monitor:
         return self.flow_monitor
         
     def setup_packet_log(self):    
-        
+        print("\n--------------------------- Setting up packet logs ---------------------------")
         generate_node_files(self.topology.nodes.GetN())
 
         trace_modules = []
@@ -145,28 +152,7 @@ class Monitor:
             setup_packet_tracing_for_router(self.topology.nodes.Get(i), trace_modules)
             
         self.trace_modules = trace_modules
-
-
-    def setup_tracert(self):
-        print("\n--------------------------- Setting up trace router ---------------------------")
-        
-        for i in range(self.app.n_clients):
-                server_ip = self.app.servers_ip[i % self.app.n_servers]
-                client = self.all_nodes.Get(i)
-                tracer = ns.V4TraceRouteHelper(server_ip.GetAddress(0,0))
-                app = tracer.Install(client)
-                app.Start(ns.Seconds(10.0 + i +1 )) #different start/stop times
-                app.Stop(ns.Seconds(13.0 + i))
-
-  
-
-        # Traceroute from n1 → n0
-        # tracer_n1_to_n0 = ns.V4TraceRouteHelper(dest_n0_ip)
-        # app_n1_to_n0 = tracer_n1_to_n0.Install(n1)
-        # app_n1_to_n0.Start(ns.Seconds(2.0))
-        # app_n1_to_n0.Stop(ns.Seconds(4.0))
-
-        print("Tracert setup completed.")
+        print("Packet log setup Completed")
 
     def get_packet_logs(self):
         for i in range(self.topology.nodes.GetN()):
@@ -201,50 +187,93 @@ class Monitor:
     def get_node_ips_by_id(self):
         print("\n--------------------------- Getting node IPs ---------------------------")
         
-        self.node_ips = {}
+        node_ips = {}
         
-        try:
-            all_nodes = []
+        all_nodes = []
 
-            if self.app and hasattr(self.app, 'clients'):
-                for i in range(self.app.clients.GetN()):
-                    all_nodes.append(self.app.clients.Get(i))
-            
+        if self.app and hasattr(self.app, 'clients'):
+            for i in range(self.app.clients.GetN()):
+                all_nodes.append(self.app.clients.Get(i))
+        
 
-            if self.topology and hasattr(self.topology, 'nodes'):
-                for i in range(self.topology.nodes.GetN()):
-                    all_nodes.append(self.topology.nodes.Get(i))
-            
+        if self.topology and hasattr(self.topology, 'nodes'):
+            for i in range(self.topology.nodes.GetN()):
+                all_nodes.append(self.topology.nodes.Get(i))
+        
 
-            if self.app and hasattr(self.app, 'servers'):
-                for i in range(self.app.servers.GetN()):
-                    all_nodes.append(self.app.servers.Get(i))
+        if self.app and hasattr(self.app, 'servers'):
+            for i in range(self.app.servers.GetN()):
+                all_nodes.append(self.app.servers.Get(i))
+        
+        for node in all_nodes:
+            node_id = node.GetId()
+            ipv4 = node.GetObject[ns.Ipv4]()
             
-            for node in all_nodes:
-                node_id = node.GetId()
-                ipv4 = node.GetObject[ns.Ipv4]()
-                
-                if ipv4:
-                    ip_list = []
-                    for j in range(ipv4.GetNInterfaces()):
-                        ip_addr = str(ipv4.GetAddress(j, 0).GetLocal())
-                        
-                        if ip_addr != "127.0.0.1": 
-                            ip_list.append(ip_addr)
+            if ipv4:
+                ip_list = []
+                for j in range(ipv4.GetNInterfaces()):
+                    ip_addr = str(ipv4.GetAddress(j, 0).GetLocal())
                     
-                    if ip_list:
-                        self.node_ips[node_id] = ip_list
-            
-            for node_id, ips in self.node_ips.items():
-                print(f"Node {node_id}: {', '.join(ips)}")
+                    if ip_addr != "127.0.0.1": 
+                        ip_list.append(ip_addr)
+                
+                if ip_list:
+                    node_ips[node_id] = ip_list
         
-        except Exception as e:
-            print(f"Error getting node IPs: {e}")
+        for node_id, ips in node_ips.items():
+            print(f"Node {node_id}: {', '.join(ips)}")
+        self.ip_to_node = get_ip_to_node(node_ips)
+        self.node_to_ip = node_ips
+        
 
-        with open('sim/monitor/logs/ip_mapping.jsonn', 'w') as json_file:
-            json.dump(get_ip_to_node(self.node_ips), json_file, indent=4)
+
+
+    def setup_tracert(self):
+            
+        for i in range(self.app.n_clients):
+            server_ip = self.app.servers_ip[i % self.app.n_servers]
+            client = self.app.clients.Get(i)
+            
+            tracer = ns.V4TraceRouteHelper(server_ip.GetAddress(0, 0))
+            
+            app = tracer.Install(client)
+            
+            app.Start(ns.Seconds(self.app.app_start_time + 1.0 + i))
+            
+            app.Stop(ns.Seconds(self.app.app_start_time + 4.0 + i))
+            print(f"Set up trace route from Client {i} to Server {i % self.app.n_servers}")
+
+        print("Tracert setup completed.")
+
+    def trace_routes(self):
+        print("\n--------------------------- Tracing routes from clients to servers ---------------------------")
         
-        return self.node_ips
+        
+        routing_tables = parse_routes_manually("./sim/monitor/xml/routes.xml")
+        print(routing_tables)
+        for i in range(self.app.n_clients):
+            client_node = self.app.clients.Get(i)
+            client_id = client_node.GetId()
+            
+            server_idx = i % self.app.n_servers
+            server_node = self.app.servers.Get(server_idx)
+            server_id = server_node.GetId()
+            
+            client_ip = self.node_to_ip[client_id][0]
+            server_ip = self.node_to_ip[server_id][0]
+            
+            print(f"\nRoute from Client {i} (Node {client_id}, IP {client_ip}) to Server {server_idx} (Node {server_id}, IP {server_ip}):")
+            
+            path = find_path(client_id, server_ip, routing_tables, self.ip_to_node)
+            
+            if path:
+                print(f"  {' → '.join(str(node) for node in path)}")
+            else:
+                print(f"  No path found")
+        
+        print("Routing trace completed.")
+
+
 
 
     def get_all_routes(self, log_file="mytrace.log"):
@@ -253,11 +282,10 @@ class Monitor:
         for i in range(self.app.n_clients):
             client_ip = self.app.clients_ip[i]
             client_ids.append(str(client_ip.GetAddress(0)))
+            
         print(client_ids)
         all_routes = get_routes(client_ids)
-
         return all_routes
-
 
 
 
@@ -291,7 +319,6 @@ class Monitor:
             import traceback
             traceback.print_exc()
 
-
     def collect_flow_stats(self, stats_file = "./sim/monitor/xml/flow-stats.xml",app_port=None,  filter_noise=True):
         print("\n--------------------------- Collecting flow statistics ---------------------------")
         
@@ -307,17 +334,11 @@ class Monitor:
                 continue
                         
             print(f"📊 Flow {flow_id}: ")
-            print(
-                f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
-            print(
-                f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
+            print(f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
+            print(f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
             print(f"   Lost Packets: {flowStats.txPackets - flowStats.rxPackets}")
-        # 
-            # print(
-            #     f"   Throughput: {(flowStats.rxBytes/(flowStats.rxPackets*udp_app_interval)) } Bps")
-            print(
-                f"   Mean Delay: {flowStats.delaySum.GetSeconds()} sec")
-            print(
-                f"   Mean Jitter: {flowStats.jitterSum.GetSeconds()} sec")
+            print(f"   Throughput: {(flowStats.rxBytes/(flowStats.rxPackets*self.app.app_interval)) } Bps")
+            print(f"   Mean Delay: {flowStats.delaySum.GetSeconds()} sec")
+            print(f"   Mean Jitter: {flowStats.jitterSum.GetSeconds()} sec")
                 
             

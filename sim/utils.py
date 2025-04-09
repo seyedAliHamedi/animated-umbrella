@@ -8,36 +8,34 @@ import random
 import json
 
 
-
-
-
 sample_data = {
-    "topology_adj_matrix" : [
-    [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1],
-    [0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1],
-    [1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1],
-    [0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1],
-    [0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0],
-    [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0],
-    [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1],
-    [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0],
-    [0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1],
-    [0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1],
-    [1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1],
-    [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0],
-    [1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0],
-    [1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0]
+
+    "topology_adj_matrix": [
+        [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1],
+        [0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1],
+        [1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1],
+        [0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1],
+        [0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0],
+        [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1],
+        [0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0],
+        [0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1],
+        [1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1],
+        [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0],
+        [1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0],
+        [1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0]
     ],
-    "topology_links_type":['csma', 'p2p'],
-    "topology_links_rate":['5Mbps', '10Mbps', '1Mbps'],
-    "topology_links_delay" :['5ms', '10ms', '10ms',],
-    "topology_links_queue" :['5000','10000'],
-    "topology_links_errors" : [0,0.1,0],
-    "topology_base_network" : "192.166.1.0/24",
-    "topology_xml_file" : "./sim/monitor/xml/topology.xml",
-    
-    
+    "topology_links_type": ['csma', 'p2p'],
+    "topology_links_rate": ['5Mbps', '10Mbps', '1Mbps'],
+    "topology_links_delay": ['5ms', '10ms', '10ms',],
+    "topology_links_queue": ['5000', '10000'],
+    "topology_links_errors": [0, 0.1, 0],
+    "topology_base_network": "192.166.1.0/24",
+    "topology_xml_file": "./sim/monitor/xml/topology.xml",
+
+
     "app_n_servers": 4,
     "app_n_clients": 5,
     "app_links_type": ['csma', 'p2p'],
@@ -48,16 +46,18 @@ sample_data = {
     "app_interval": 1,
     "app_packet_size": 1024,
     "app_port": 9,
-    "tcp_app_data_rate":500000,
-    
+    "tcp_app_data_rate": 500000,
+
     "app_animation_file": "./sim/monitor/xml/app.xml",
-    
+
     "app_duration": 100,
-    "app_start_time":10,
+    "app_start_time": 10,
 }
+
 
 def distribute_values(values, count):
     return [random.choice(values) for _ in range(count)]
+
 
 def calculate_subnet_mask(mask_bits):
     subnet_mask = [0, 0, 0, 0]
@@ -73,12 +73,13 @@ def calculate_subnet_mask(mask_bits):
 
 def fix_xml(animFile="./animated-umbrella/rip_udp.xml"):
     print("\n ------------------------- fixing XML --------------------------")
-    with open(animFile,"r") as file:
+    with open(animFile, "r") as file:
         data = file.read()
-    data = data.replace("&amp;#10","&#10")
-    with open(animFile,"w") as file:
+    data = data.replace("&amp;#10", "&#10")
+    with open(animFile, "w") as file:
         file.write(data)
     print("XML Fixed")
+
 
 def create_xml(all_nodes, positions, animFile):
     print("\n ------------------------- creating XML --------------------------")
@@ -95,45 +96,23 @@ def create_xml(all_nodes, positions, animFile):
 
     anim = ns.AnimationInterface(animFile)
 
-    for i in range(all_nodes.GetN()):  
-        node = all_nodes.Get(i)   
-        anim.SetConstantPosition(node, positions[i][0], positions[i][1],0)
+    for i in range(all_nodes.GetN()):
+        node = all_nodes.Get(i)
+        anim.SetConstantPosition(node, positions[i][0], positions[i][1], 0)
 
     print("XML Created")
     return all_nodes, anim
 
 
-
-    
-def get_all_ipv6_addresses(node):
-        """ Retrieves all IPv6 addresses assigned to a node's interfaces. """
-        ipv6 = node.GetObject[ns.Ipv6]()
-        if ipv6 is None:
-            return ["No IPv6"]
-
-        num_interfaces = ipv6.GetNInterfaces()
-        addresses = []
-
-        for i in range(1,num_interfaces):
-            for j in range(ipv6.GetNAddresses(i)):
-                addr = ipv6.GetAddress(i, j).GetAddress()    
-                if not addr.IsLinkLocal():  # Ignore link-local addresses
-                    addresses.append(f"{addr.ConvertTo()} (iface {i})\n")
-
-        return addresses
-
-
-
-
 def generate_node_files(num_nodes, output_dir="./sim/monitor/cpps"):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Generate node files with unique function names
     for i in range(num_nodes):
         out_name = f"node{i}.cpp"
         out_path = os.path.join(output_dir, out_name)
-        
+
         # Generate code with node-specific function names
         code = f'''#include "ns3/callback.h"
 #include "ns3/packet.h"
@@ -234,6 +213,8 @@ void node{i}_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interf
                               << ", dest IP: " << destIP
                               << std::endl;
     }}
+    
+    
 
       //  std::cout << "Received Packet: " << packet
       //            << ", Type: " << packetType
@@ -243,7 +224,7 @@ void node{i}_RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4,uint32_t interf
       //            << ", IP-ID=" << identification
       //            << ", FragOffset=" << offset
       //            << ", MoreFrag=" << (moreFragments ? 1 : 0)
-      //            << std::endl;
+      //           << std::endl;
 }}
 
 // Callback for transmitted packets
@@ -350,99 +331,68 @@ std::vector<PacketInfo{i}> node{i}_GetReceivedPackets() {{
 }}
 
 '''
-        
+
         # Write the code to the file
         with open(out_path, 'w') as f:
             f.write(code)
-            
+
     print(f"Generated {num_nodes} node files in {output_dir}")
 
 
-
 def run_cpp_file(cpp_file_path):
-    """
-    Read a C++ file and execute it using cppyy
-    
-    Args:
-        cpp_file_path: Path to the C++ file
-        
-    Returns:
-        Any results from the execution
-    """
-    # Check if file exists
-    if not os.path.exists(cpp_file_path):
-        raise FileNotFoundError(f"File not found: {cpp_file_path}")
-    
-    # Read the C++ file
     with open(cpp_file_path, 'r') as file:
         cpp_code = file.read()
-    
-    # Load the C++ code
-    cppyy.cppdef(cpp_code)
-    
-    # Return the loaded namespace
-    return cppyy.gbl
 
+    cppyy.cppdef(cpp_code)
+
+    return cppyy.gbl
 
 
 def setup_packet_tracing_for_router(router, trace_modules):
     node_id = router.GetId()
-    print(f"Setting up IP-layer packet tracing for router {node_id}")
 
-    # Get the Ipv4 object from this node
     ipv4 = router.GetObject[ns.Ipv4]()
-    if ipv4 is None:
-        print(f"No Ipv4 object found on node {node_id}, skipping IP-layer hookup.")
-        return
-
-    # Assuming your module is at index 0 in trace_modules,
-    # or adapt if you have per-interface modules.
     module = trace_modules[node_id]
 
-    # Build the C++ callbacks for this node
     rx_callback_func = getattr(module, f"node{node_id}_CreateRxCallback")
     tx_callback_func = getattr(module, f"node{node_id}_CreateTxCallback")
 
     rx_callback = rx_callback_func()
     tx_callback = tx_callback_func()
 
-    # Connect the IP-layer "Rx" and "Tx" trace sources:
     ipv4.TraceConnectWithoutContext("Rx", rx_callback)
     ipv4.TraceConnectWithoutContext("Tx", tx_callback)
 
 
 def create_csv(input_file):
-    # Regular expression to parse each line
     log_pattern = re.compile(
         r"\[Node (\d+)\] Packet: (\S+),\s*(TX|RX):\s*(UDP|TCP),\s*Port:\s*(\d+),"
         r"\s*Time:\s*([0-9.]+),\s*Size:\s*(\d+),\s*Offset=\s*(\d+),"
         r"\s*src IP:\s*([\d\.]+),\s*dest IP:\s*([\d\.]+)"
     )
-    # Define output file name based on input file
     output_file = os.path.splitext(input_file)[0] + ".csv"
 
-    # Open input file and parse contents
     data = []
     with open(input_file, "r+") as file:
         for line in file:
             match = log_pattern.match(line.strip())
             if match:
-                node, packet , direction, protocol, port, time, size, offset, src_ip, dest_ip = match.groups()
-                data.append([node,packet, direction, protocol, port, time, size, offset, src_ip, dest_ip])
+                node, packet, direction, protocol, port, time, size, offset, src_ip, dest_ip = match.groups()
+                data.append([node, packet, direction, protocol,
+                            port, time, size, offset, src_ip, dest_ip])
 
-
-    # Write to CSV
     with open(output_file, "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(["Node","Packet", "Direction", "Protocol", "Port", "Time", "Size" , "Offset","src IP","dest IP"])
+        writer.writerow(["Node", "Packet", "Direction", "Protocol",
+                        "Port", "Time", "Size", "Offset", "src IP", "dest IP"])
         writer.writerows(data)
 
-    print(f"CSV file '{output_file}' has been created successfully.")
-
+    print(f"CSV summery file has been created successfully.")
 
 
 def get_ip_to_node(ip_list):
-    ip_to_node = {ip: node_id for node_id, ips in ip_list.items() for ip in ips}
+    ip_to_node = {ip: node_id for node_id, ips in ip_list.items()
+                  for ip in ips}
     return ip_to_node
 
 
@@ -481,9 +431,6 @@ def convert_all_to_node_paths(blocks, ip_mapping_path, src_ip_list):
     with open(ip_mapping_path, "r") as f:
         ip_to_node = json.load(f)
 
-    if len(src_ip_list) != len(blocks):
-        raise ValueError("Length of src_ip_list must match number of traceroute blocks.")
-
     route_dict = {}
 
     for i, block in enumerate(blocks):
@@ -512,8 +459,116 @@ def convert_all_to_node_paths(blocks, ip_mapping_path, src_ip_list):
     return route_dict
 
 
-def get_routes(src_ips,ip_map_path='animated-umbrella/src/monitor/logs/ip_mapping.json',log_path='animated-umbrella/mytrace.log'):        
+def get_routes(src_ips, ip_map_path='animated-umbrella/src/monitor/logs/ip_mapping.json', log_path='animated-umbrella/mytrace.log'):
     blocks = parse_traceroute_blocks(log_path)
     routes = convert_all_to_node_paths(blocks, ip_map_path, src_ips)
     return routes
 
+
+def find_path(start_node, dest_ip, routing_tables, ip_to_node):
+    # Extract the network portion of the destination IP
+    dest_parts = dest_ip.split('.')
+    dest_net = f"{dest_parts[0]}.{dest_parts[1]}.{dest_parts[2]}.0"
+
+    path = [start_node]
+    current_node = start_node
+    visited = set([current_node])
+    max_hops = 30
+
+    while max_hops > 0:
+        # Check if we have routing information for the current node
+        if current_node not in routing_tables:
+            print(f"  No routing table for node {current_node}")
+            return None
+
+        # Check if we have a route to the destination network
+        if dest_net not in routing_tables[current_node]:
+            print(f"  No route from node {current_node} to {dest_net}")
+            return None
+
+        # Get the next hop IP
+        next_hop = routing_tables[current_node][dest_net]
+
+        # Check if we've reached the destination's network (direct delivery)
+        if next_hop == '0.0.0.0' or next_hop == dest_ip:
+            dest_node = ip_to_node.get(dest_ip)
+            if dest_node:
+                path.append(int(dest_node))
+            return path
+
+        # Find the node ID corresponding to the next hop IP
+        next_node = None
+        for ip, node in ip_to_node.items():
+            if ip == next_hop:
+                next_node = int(node)
+                break
+
+        if next_node is None:
+            print(f"  Unknown node for IP {next_hop}")
+            return None
+
+        if next_node in visited:
+            print(f"  Loop detected at {current_node} → {next_node}")
+            return None
+
+        path.append(next_node)
+        visited.add(next_node)
+        current_node = next_node
+
+        # Check if we've reached the destination
+        node_ips = [ip for ip, node in ip_to_node.items() if int(node)
+                    == next_node]
+        for ip in node_ips:
+            if ip.startswith(dest_parts[0] + '.' + dest_parts[1] + '.' + dest_parts[2]):
+                # We're in the same network as the destination
+                dest_node = ip_to_node.get(dest_ip)
+                if dest_node:
+                    path.append(int(dest_node))
+                return path
+
+        max_hops -= 1
+
+    print("  Maximum hop count exceeded")
+    return None
+
+
+def parse_routes_manually(file_path):
+    """Parse the routes XML file manually with careful handling of the format."""
+    routing_tables = {}
+    # Read the file as text
+    with open(file_path, 'r') as f:
+        xml_content = f.read()
+
+    # Process each <rt> tag manually with a more precise pattern
+    import re
+
+    # Split the file by <rt> tags to process each one individually
+    rt_blocks = xml_content.split('<rt ')
+
+    for block in rt_blocks[1:]:  # Skip the first split which is the header
+        # Extract the attributes and content
+        match = re.match(
+            r't="(\d+)" id="(\d+)" info="(.*?)" />', block, re.DOTALL)
+        if match:
+            time, node_id, info = match.groups()
+            node_id = int(node_id)
+            time = int(time)
+
+            if time == 10:  # Only use the t=5 routing tables
+                if node_id not in routing_tables:
+                    routing_tables[node_id] = {}
+
+                # Process each line in the routing table
+                for line in info.split('\n'):
+                    line = line.strip()
+                    if line and not line.startswith('Node:') and not line.startswith('Destination'):
+                        parts = line.split()
+                        if len(parts) >= 3:
+                            dest_net = parts[0]
+                            gateway = parts[1]
+
+                            if gateway != '0.0.0.0' and gateway != 'Genmask':
+                                routing_tables[node_id][dest_net] = gateway
+
+    print(f"Found routing data for {len(routing_tables)} nodes")
+    return routing_tables
