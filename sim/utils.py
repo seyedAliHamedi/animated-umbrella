@@ -364,30 +364,54 @@ def setup_packet_tracing_for_router(router, trace_modules):
     ipv4.TraceConnectWithoutContext("Tx", tx_callback)
 
 
-def create_csv(input_file):
+def create_csv(input_file, routing_paths=None):
     log_pattern = re.compile(
         r"\[Node (\d+)\] Packet: (\S+),\s*(TX|RX):\s*(UDP|TCP),\s*Port:\s*(\d+),"
         r"\s*Time:\s*([0-9.]+),\s*Size:\s*(\d+),\s*Offset=\s*(\d+),"
         r"\s*src IP:\s*([\d\.]+),\s*dest IP:\s*([\d\.]+)"
     )
-    output_file = os.path.splitext(input_file)[0] + ".csv"
 
+    output_file = os.path.splitext(input_file)[0] + ".csv"
     data = []
+
+    paths_map = {}
+    if routing_paths:
+        for path_info in routing_paths:
+            src_ip = path_info["src_ip"]
+            dest_ip = path_info["dest_ip"]
+            path = path_info["path"]
+            paths_map[(src_ip, dest_ip)] = path
+
     with open(input_file, "r+") as file:
         for line in file:
             match = log_pattern.match(line.strip())
             if match:
                 node, packet, direction, protocol, port, time, size, offset, src_ip, dest_ip = match.groups()
-                data.append([node, packet, direction, protocol,
-                            port, time, size, offset, src_ip, dest_ip])
+                node = int(node)
+
+                prev_hop = "Null"
+                next_hop = "Null"
+
+                try:
+                    path = paths_map.get((src_ip, dest_ip), [])
+
+                    node_index = path.index(node)
+
+                    prev_hop = path[node_index - 1]
+                    next_hop = path[node_index + 1]
+                except:
+                    pass
+
+                data.append([node, packet, direction, protocol, port, time,
+                            size, offset, src_ip, dest_ip, prev_hop, next_hop])
 
     with open(output_file, "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(["Node", "Packet", "Direction", "Protocol",
-                        "Port", "Time", "Size", "Offset", "src IP", "dest IP"])
+        writer.writerow(["Node", "Packet", "Direction", "Protocol", "Port",
+                        "Time", "Size", "Offset", "src IP", "dest IP", "prev_hop", "next_hop"])
         writer.writerows(data)
 
-    print(f"CSV summery file has been created successfully.")
+    print(f"CSV summary file has been created successfully with path information.")
 
 
 def get_ip_to_node(ip_list):
@@ -457,12 +481,6 @@ def convert_all_to_node_paths(blocks, ip_mapping_path, src_ip_list):
         route_dict[(src_ip, dest_ip)] = node_path
 
     return route_dict
-
-
-def get_routes(src_ips, ip_map_path='animated-umbrella/src/monitor/logs/ip_mapping.json', log_path='animated-umbrella/mytrace.log'):
-    blocks = parse_traceroute_blocks(log_path)
-    routes = convert_all_to_node_paths(blocks, ip_map_path, src_ips)
-    return routes
 
 
 def find_path(start_node, dest_ip, routing_tables, ip_to_node):

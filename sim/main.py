@@ -1,21 +1,22 @@
+from app import App
+from topology import Topology
 from ns import ns
 
 import os
 from monitor import Monitor
 
-# ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
-# ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
+ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
+ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
 # ns.LogComponentEnable("PacketSink", ns.LOG_LEVEL_INFO)
 # ns.LogComponentEnable("OnOffApplication", ns.LOG_LEVEL_INFO)
 
 
-from topology import Topology
-from app import App
-
-
 def main():
-    if os.path.exists('animated-umbrella/src/monitor/logs/packets_log.txt'):
-        os.remove('animated-umbrella/src/monitor/logs/packets_log.txt')
+
+    for root, dirs, files in os.walk("./sim/monitor"):
+        for file in files:
+            file_path = os.path.join(root, file)
+            os.remove(file_path)
 
     duration = 100
     a = []
@@ -24,7 +25,7 @@ def main():
         for j in range(15):
             row.append(1 if i != j else 0)
         a.append(row)
-    print(a)
+
     print("\n========================== INITIALIZING TOPOLOGY ==========================")
     topology = Topology(adj_matrix=a, links_delay=['1ms'], links_type=['p2p'])
 
@@ -59,19 +60,14 @@ def main():
     app.monitor.collect_flow_stats(app_port=app.app_port, filter_noise=True)
     app.monitor.get_packet_logs()
 
-    # routes = app.monitor.get_all_routes()
-    # with open('animated-umbrella/src/monitor/logs/routes.json', 'w') as json_file:
-    #     str_routes = {f"{src}->{dst}": path for (src, dst), path in routes.items()}
-    #     json.dump(str_routes, json_file, indent=4)
-
     ns.Simulator.Destroy()
 
     print("\n--------------------------- Simulation Complete ---------------------------")
     print(f"Animation file created at: {app.animFile}")
-    print("Flow statistics saved in: ./src/monitor/xml/flow-stats.xml")
-    print("CSV summary saved in: ./src/monitor/logs/flow_summary.csv")
-    print("PCAP files saved in: ./src/monitor/pcap/")
-    print("Run NetAnim to visualize the simulation (load XML files from ./src/monitor/xml/)")
+    print("Flow statistics saved in: ./sim/monitor/xml/flow-stats.xml")
+    print("CSV summary saved in: ./sim/monitor/logs/flow_summary.csv")
+    print("PCAP files saved in: ./sim/monitor/pcap/")
+    print("Run NetAnim to visualize the simulation (load XML files from ./sim/monitor/xml/)")
     print("------------------------------------------------------------------")
 
 
