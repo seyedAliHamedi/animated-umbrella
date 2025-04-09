@@ -391,6 +391,7 @@ def create_csv(input_file, routing_paths=None):
 
                 prev_hop = "Null"
                 next_hop = "Null"
+                total_hops = 0
 
                 try:
                     path = paths_map.get((src_ip, dest_ip), [])
@@ -399,16 +400,29 @@ def create_csv(input_file, routing_paths=None):
 
                     prev_hop = path[node_index - 1]
                     next_hop = path[node_index + 1]
+                    if node_index-1 == 0:
+                        if port == "9":
+                            prev_hop = "Client"
+                        if port == "49153":
+                            prev_hop = "Server"
+
+                    if node_index + 1 == len(path) - 1:
+                        if port == "9":
+                            next_hop = "Server"
+                        if port == "49153":
+                            next_hop = "Client"
+
+                    total_hops = len(path)-2
                 except:
                     pass
 
                 data.append([node, packet, direction, protocol, port, time,
-                            size, offset, src_ip, dest_ip, prev_hop, next_hop])
+                            size, offset, src_ip, dest_ip, prev_hop, next_hop, total_hops])
 
     with open(output_file, "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(["Node", "Packet", "Direction", "Protocol", "Port",
-                        "Time", "Size", "Offset", "src IP", "dest IP", "prev_hop", "next_hop"])
+                        "Time", "Size", "Offset", "src IP", "dest IP", "prev_hop", "next_hop", "total_hops"])
         writer.writerows(data)
 
     print(f"CSV summary file has been created successfully with path information.")

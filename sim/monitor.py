@@ -2,7 +2,7 @@ from ns import ns
 
 import math
 import json
-from utils import *
+from sim.utils import *
 
 
 import xml.etree.ElementTree as ET
@@ -14,10 +14,6 @@ class Monitor:
     def __init__(self, topology=None, app=None):
         self.topology = topology
         self.app = app
-        self.all_nodes = ns.NodeContainer()
-        self.all_nodes.Add(app.clients)
-        self.all_nodes.Add(topology.nodes)
-        self.all_nodes.Add(app.servers)
 
         self.flow_monitor = None
         self.flow_helper = None
@@ -194,7 +190,9 @@ class Monitor:
             close_func = getattr(
                 self.trace_modules[i], f"node{i}_ClosePacketLog")
             close_func()
-
+        print("&"*60)
+        print(routing_paths)
+        print("&"*60)
         # Create the CSV with path information
         create_csv("./sim/monitor/logs/packets_log.txt", routing_paths)
 
