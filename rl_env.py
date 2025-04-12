@@ -11,11 +11,11 @@ from sim.monitor import Monitor
 
 class NetworkEnv:
 
-    def __init__(self, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2, max_steps=20, each_step_duration=5):
+    def __init__(self, adj_matrix, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2):
+
+        self.adj_matrix = adj_matrix
         self.simulation_duration = simulation_duration
         self.current_step = 0
-        self.max_steps = max_steps
-        self.each_step_duration = each_step_duration
 
         self.min_throughput = min_throughput
         self.max_latency = max_latency
@@ -28,7 +28,7 @@ class NetworkEnv:
 
     def setup_environment(self):
 
-        self.topology = Topology()
+        self.topology = Topology(adj_matrix=self.adj_matrix)
         self.app = App(self.topology)
         self.app.monitor = Monitor(
             self.topology.nodes,
@@ -43,9 +43,6 @@ class NetworkEnv:
         self.app.monitor.setup_flow_monitor()
         self.app.monitor.position_nodes(anim)
 
-        self.active_routers = [True] * self.topology.N_routers
-        self.active_links = [True] * self.topology.N_links
-
     def reset(self):
         print("reset environment")
         ns.Simulator.Destroy()
@@ -55,7 +52,7 @@ class NetworkEnv:
             'link_status': [True] * self.topology.N_links,
             'throughput': [0.0] * self.topology.N_routers,
             'latency': [float('inf')] * self.topology.N_routers,
-            'packet_loss': [1.0] * self.topology.N_routers
+            'packet_loss': [1.0] * self.topology.N_routers,
         }
 
         self.setup_environment()
@@ -66,21 +63,26 @@ class NetworkEnv:
     def step(self, action):
         self.apply_actions(action)
         self.run_simulation(self.each_step_duration)
+
         metrics = self.collect_metrics()
         print(metrics)
         print("^" * 200)
         reward = self.calculate_reward(metrics)
 
         self.current_step += 1
-        done = self.current_step >= self.max_steps
+        return metrics, reward
 
-        energy = self.calculate_energy()
-        info = {
-            'metrics': metrics,
-            'energy': energy
-        }
-
-        return metrics, reward, done, info
+    def apply_actions(self, action):
+        metrics = self.collect_metrics()
+        output = logit = [0.1, 0.2, 0.3]
+        actions = [1 if o > 0.75 else 0 for o in output]
+        for index, action in enumerate(actions):
+            if action:
+                self.adj_matrix[index] = [
+                    0] * len(self.adj_matrix[index])  # ROW
+                for row in self.adj_matrix:
+                    row[index] = 0  # columns
+        self.reset()
 
     def get_state(self):
 
@@ -100,118 +102,93 @@ class NetworkEnv:
         self.app.monitor.get_packet_logs()
         print("Simulation completed")
 
-    def apply_actions(self, action):
-        if 'router_actions' in action and action['router_actions']:
-            print(f"Applying router actions: {action['router_actions']}")
-            for router_idx in action['router_actions']:
-                if 0 <= router_idx < self.topology.N_routers:
-                    self.active_routers[router_idx] = not self.active_routers[router_idx]
-                    try:
-                        router = self.topology.nodes.Get(router_idx)
-                        state = self.active_routers[router_idx]
-                        self.set_interface_state(router, -1, state)
-                    except Exception as e:
-                        print(f"Error toggling router {router_idx}: {e}")
+    # def set_interface_state(self, r, interface_index, state):
+    #     """
+    #     Set the state of router interfaces.
 
-        if 'interface_actions' in action and action['interface_actions']:
-            print(
-                f"Applying interface actions: {len(action['interface_actions'])} actions")
-            for router_idx, interface_idx, state in action['interface_actions']:
-                if 0 <= router_idx < self.topology.N_routers:
-                    try:
-                        router = self.topology.nodes.Get(router_idx)
-                        self.set_interface_state(router, interface_idx, state)
-                    except Exception as e:
-                        print(
-                            f"Error setting interface state for router {router_idx}, interface {interface_idx}: {e}")
+    #     Parameters:
+    #     r - The router node
+    #     interface_index - The interface to modify (-1 for all interfaces)
+    #     state - Boolean (True = UP, False = DOWN)
+    #     """
+    #     try:
+    #         # Get IPv4 stack safely
+    #         ipv4 = None
+    #         try:
+    #             ipv4 = r.GetObject[ns.Ipv4]()
+    #         except Exception as e:
+    #             print(f"Failed to get IPv4 object: {e}")
+    #             return
 
-    def set_interface_state(self, r, interface_index, state):
-        """
-        Set the state of router interfaces.
+    #         if ipv4 is None:
+    #             print(f"Warning: No IPv4 stack on router {r.GetId()}")
+    #             return
 
-        Parameters:
-        r - The router node
-        interface_index - The interface to modify (-1 for all interfaces)
-        state - Boolean (True = UP, False = DOWN)
-        """
-        try:
-            # Get IPv4 stack safely
-            ipv4 = None
-            try:
-                ipv4 = r.GetObject[ns.Ipv4]()
-            except Exception as e:
-                print(f"Failed to get IPv4 object: {e}")
-                return
+    #         num_interfaces = ipv4.GetNInterfaces()  # Get total interfaces
 
-            if ipv4 is None:
-                print(f"Warning: No IPv4 stack on router {r.GetId()}")
-                return
+    #         if interface_index == -1:
+    #             # Apply to all interfaces (except loopback, usually index 0)
+    #             for i in range(1, num_interfaces):
+    #                 try:
+    #                     if state:
+    #                         ipv4.SetUp(i)
+    #                     else:
+    #                         ipv4.SetDown(i)
 
-            num_interfaces = ipv4.GetNInterfaces()  # Get total interfaces
+    #                     # Get routing protocol safely
+    #                     routing_protocol = None
+    #                     try:
+    #                         routing_protocol = ipv4.GetRoutingProtocol()
+    #                     except Exception as e:
+    #                         print(f"Failed to get routing protocol: {e}")
+    #                         continue
 
-            if interface_index == -1:
-                # Apply to all interfaces (except loopback, usually index 0)
-                for i in range(1, num_interfaces):
-                    try:
-                        if state:
-                            ipv4.SetUp(i)
-                        else:
-                            ipv4.SetDown(i)
+    #                     if routing_protocol:
+    #                         if not state:
+    #                             routing_protocol.NotifyInterfaceDown(i)
+    #                         else:
+    #                             routing_protocol.NotifyInterfaceUp(i)
+    #                 except Exception as e:
+    #                     print(f"Error setting interface {i} state: {e}")
 
-                        # Get routing protocol safely
-                        routing_protocol = None
-                        try:
-                            routing_protocol = ipv4.GetRoutingProtocol()
-                        except Exception as e:
-                            print(f"Failed to get routing protocol: {e}")
-                            continue
+    #             print(
+    #                 f"Router {r.GetId()} {'enabled' if state else 'disabled'} (all {num_interfaces-1} interfaces)")
+    #         else:
+    #             # Apply only to the specified interface
+    #             if 0 < interface_index < num_interfaces:
+    #                 try:
+    #                     if state:
+    #                         ipv4.SetUp(interface_index)
+    #                     else:
+    #                         ipv4.SetDown(interface_index)
 
-                        if routing_protocol:
-                            if not state:
-                                routing_protocol.NotifyInterfaceDown(i)
-                            else:
-                                routing_protocol.NotifyInterfaceUp(i)
-                    except Exception as e:
-                        print(f"Error setting interface {i} state: {e}")
+    #                     # Get routing protocol safely
+    #                     routing_protocol = None
+    #                     try:
+    #                         routing_protocol = ipv4.GetRoutingProtocol()
+    #                     except Exception as e:
+    #                         print(f"Failed to get routing protocol: {e}")
+    #                         return
 
-                print(
-                    f"Router {r.GetId()} {'enabled' if state else 'disabled'} (all {num_interfaces-1} interfaces)")
-            else:
-                # Apply only to the specified interface
-                if 0 < interface_index < num_interfaces:
-                    try:
-                        if state:
-                            ipv4.SetUp(interface_index)
-                        else:
-                            ipv4.SetDown(interface_index)
+    #                     if routing_protocol:
+    #                         if not state:
+    #                             routing_protocol.NotifyInterfaceDown(
+    #                                 interface_index)
+    #                         else:
+    #                             routing_protocol.NotifyInterfaceUp(
+    #                                 interface_index)
+    #                 except Exception as e:
+    #                     print(
+    #                         f"Error setting interface {interface_index} state: {e}")
 
-                        # Get routing protocol safely
-                        routing_protocol = None
-                        try:
-                            routing_protocol = ipv4.GetRoutingProtocol()
-                        except Exception as e:
-                            print(f"Failed to get routing protocol: {e}")
-                            return
-
-                        if routing_protocol:
-                            if not state:
-                                routing_protocol.NotifyInterfaceDown(
-                                    interface_index)
-                            else:
-                                routing_protocol.NotifyInterfaceUp(
-                                    interface_index)
-                    except Exception as e:
-                        print(
-                            f"Error setting interface {interface_index} state: {e}")
-
-                    print(
-                        f"Router {r.GetId()} {'enabled' if state else 'disabled'} (interface {interface_index})")
-                else:
-                    print(
-                        f"Invalid interface index {interface_index} for router {r.GetId()}")
-        except Exception as e:
-            print(f"Error in set_interface_state: {e}")
-            traceback.print_exc()
+    #                 print(
+    #                     f"Router {r.GetId()} {'enabled' if state else 'disabled'} (interface {interface_index})")
+    #             else:
+    #                 print(
+    #                     f"Invalid interface index {interface_index} for router {r.GetId()}")
+    #     except Exception as e:
+    #         print(f"Error in set_interface_state: {e}")
+    #         traceback.print_exc()
 
     def calculate_reward(self, metrics):
         return -5
