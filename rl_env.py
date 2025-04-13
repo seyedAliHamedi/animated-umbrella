@@ -51,46 +51,15 @@ class NetworkEnv:
     def reset(self):
         print("reset environment")
         ns.Simulator.Destroy()
-        print("mmd")
-        default_state = {
-            'router_status': [True] * self.topology.N_routers,
-            'link_status': [True] * self.topology.N_links,
-            'throughput': [0.0] * self.topology.N_routers,
-            'latency': [float('inf')] * self.topology.N_routers,
-            'packet_loss': [1.0] * self.topology.N_routers,
-        }
-
         self.setup_environment()
 
-        self.current_step = 0
-        return default_state
-
-    def step(self, action):
+    def step(self):
         self.run_simulation(self.simulation_duration)
-        # self.apply_actions(action)
 
         metrics = self.collect_metrics()
         reward = self.calculate_reward(metrics)
 
-        self.current_step += 1
         return metrics, reward
-
-    def apply_actions(self, action):
-        metrics = self.collect_metrics()
-        output = logit = [0.1, 0.2, 0.3]
-        actions = [1 if o > 0.75 else 0 for o in output]
-        for index, action in enumerate(actions):
-            if action:
-                self.adj_matrix[index] = [
-                    0] * len(self.adj_matrix[index])  # ROW
-                for row in self.adj_matrix:
-                    row[index] = 0  # columns
-        # self.reset()
-
-    def get_state(self):
-
-        metrics = self.collect_metrics()
-        return metrics
 
     def run_simulation(self, duration):
         print(f"Running simulation for {duration} seconds...")

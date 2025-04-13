@@ -1,41 +1,40 @@
-# main.py
-import subprocess
-import json
 import os
+import torch
+import subprocess
 
-adj_matrix = []
-n = 16
-for i in range(n):
-    row = []
-    for j in range(n):
-        row.append(0 if i == j else 1)
-    adj_matrix.append(row)
-
-
-def changeAdj(action):
-    return action
+from utils import *
+import middle
+from agent import Agent
+os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 
 
-output_file = "adj_matrix.json"
-agent = 0
-for epoch in range(1, 2):
-    # Save current adj_matrix to file before running
-    with open(output_file, "w") as f:
-        json.dump(adj_matrix, f)
-    metric = middle.metric
-    action = agent(metric)
-    adj_matrix = changeAdj(action)
-    subprocess.run(["python", "single.py", str(
-        epoch), output_file])  # pass adj
-    reward = middle.reward
-    loss = 0
-    loss.backprop()
+n = 15
+adj_matrix = middle.data['adj_matrix'] = fc_graph(n)
+middle.save_data()
+agent = Agent(num_node_features=24, hidden_channels1=64,
+              hidden_channels2=32)
 
-    # Read back the updated matrix (overwrite behavior)
-    with open(output_file, "r") as f:
-        adj_matrix = json.load(f)
+for epoch in range(10):
+
+    subprocess.run(["python", "single.py", str(epoch)])
+    middle.load_data()
+    metric = middle.data['metrics']
+    print('/'*80)
+    print(metric)
+    print('/'*80)
+    actions, logits = agent.get_action(metric, adj_matrix)
+    adj_matrix = changeAdj(actions, adj_matrix)
+    middle.data['adj_matrix'] = adj_matrix
+    middle.save_data()
+    reward = middle.data['reward']
+    loss = -torch.sum(torch.log10(logits) * reward)
+    agent.optimizer.zero_grad()
+
+    loss.backward()
+    agent.optimizer.step()
+
     print("-"*20)
+    print(f"LOSS : {loss}")
     print(f"Updated Adjacency Matrix: {adj_matrix}")
-    # print(f"Completed Epoch {epoch}, updated matrix loaded")
 
 print("All epochs completed")
