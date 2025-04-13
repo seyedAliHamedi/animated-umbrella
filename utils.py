@@ -8,10 +8,11 @@ def fc_graph(n):
     return adj_matrix
 
 
-def changeAdj(actions, adj_matrix):
+def changeAdj(actions, original_adj_matrix):
+    new_adj = [row.copy() for row in original_adj_matrix]
     for index, action in enumerate(actions):
         if action:
-            adj_matrix[index] = [0]*len(adj_matrix[index])
-            for row in adj_matrix:
+            new_adj[index] = [0] * len(new_adj[index])
+            for row in new_adj:
                 row[index] = 0
-    return adj_matrix
+    return new_adj

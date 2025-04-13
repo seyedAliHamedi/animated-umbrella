@@ -9,7 +9,6 @@ import torch.nn.functional as F
 
 import torch.optim as optim
 
-
 from torch_geometric.nn import GCNConv
 
 
@@ -34,7 +33,6 @@ class Agent(nn.Module):
         x = self.lin1(x)
         x = F.relu(x)
         x = self.lin2(x)
-
         return x
 
     def dict_to_data(self, adj_matrix, node_features_dict):
@@ -44,14 +42,19 @@ class Agent(nn.Module):
                 if adj_matrix[i][j] > 0:
                     edge_index.append([i, j])
 
+        # Check if no edge is found in the adjacency matrix.
+        num_nodes = len(node_features_dict)
+        if len(edge_index) == 0:
+            # If no edges are present, add self-loops for all nodes.
+            edge_index = [[i, i] for i in range(num_nodes)]
+            print("No edges found. Added self-loops for all nodes.")
+
         edge_index = torch.tensor(
             edge_index, dtype=torch.long).t().contiguous()
 
         feature_list = []
-
-        for node_id in range(len(node_features_dict)):
+        for node_id in range(num_nodes):
             node_data = node_features_dict[str(node_id)]
-
             features = [
                 1.0 if node_data['is_active'] else 0.0,
                 node_data['avg_power_per_operation'],
@@ -78,7 +81,6 @@ class Agent(nn.Module):
                 1.0 if node_data['graph_metrics']['is_articulation_point']['original'] else 0.0,
                 1.0 if node_data['graph_metrics']['is_articulation_point']['current'] else 0.0
             ]
-
             feature_list.append(features)
 
         features_array = np.array(feature_list)
@@ -87,14 +89,15 @@ class Agent(nn.Module):
         x = torch.tensor(normalized_features, dtype=torch.float)
 
         data = Data(x=x, edge_index=edge_index)
-
         return data
 
     def get_action(self, metrics, adj_matrix):
         data = self.dict_to_data(adj_matrix, metrics)
-        logits = self(data)
-        actions = F.sigmoid(logits).view(-1)
-        actions_binary = (actions >= 0.5).float()
-        print("sigmoid", actions)
-        print("agnet actions ", actions_binary)
-        return actions_binary, logits
+        logits = self(data)  # Shape: (num_nodes, 1)
+        # Compute probabilities using sigmoid.
+        p = torch.sigmoid(logits).view(-1)
+        # Sample stochastically from the Bernoulli distribution.
+        actions = torch.bernoulli(p)
+        print("Sigmoid probabilities:", p)
+        print("Sampled actions:", actions)
+        return actions, p, logits
