@@ -28,7 +28,12 @@ class NetworkEnv:
 
     def setup_environment(self):
 
-        self.topology = Topology(adj_matrix=self.adj_matrix)
+        self.topology = Topology(
+            adj_matrix=self.adj_matrix, base_network="192.168.1.0/24")
+
+        self.active_links = [1] * self.topology.N_links
+        self.active_routers = [1] * self.topology.N_routers
+
         self.app = App(self.topology)
         self.app.monitor = Monitor(
             self.topology.nodes,
@@ -46,7 +51,7 @@ class NetworkEnv:
     def reset(self):
         print("reset environment")
         ns.Simulator.Destroy()
-
+        print("mmd")
         default_state = {
             'router_status': [True] * self.topology.N_routers,
             'link_status': [True] * self.topology.N_links,
@@ -61,12 +66,10 @@ class NetworkEnv:
         return default_state
 
     def step(self, action):
-        self.apply_actions(action)
-        self.run_simulation(self.each_step_duration)
+        self.run_simulation(self.simulation_duration)
+        # self.apply_actions(action)
 
         metrics = self.collect_metrics()
-        print(metrics)
-        print("^" * 200)
         reward = self.calculate_reward(metrics)
 
         self.current_step += 1
@@ -82,7 +85,7 @@ class NetworkEnv:
                     0] * len(self.adj_matrix[index])  # ROW
                 for row in self.adj_matrix:
                     row[index] = 0  # columns
-        self.reset()
+        # self.reset()
 
     def get_state(self):
 
