@@ -129,7 +129,7 @@ class Monitor:
         return created_files
 
     def setup_flow_monitor(self):
-        print("\n--------------------------- Setting up flow monitor ---------------------------")
+        # print("\n--------------------------- Setting up flow monitor ---------------------------")
 
         self.flow_helper = ns.FlowMonitorHelper()
 
@@ -139,7 +139,7 @@ class Monitor:
         return self.flow_monitor
 
     def setup_packet_log(self):
-        print("\n--------------------------- Setting up packet logs ---------------------------")
+        # print("\n--------------------------- Setting up packet logs ---------------------------")
         generate_node_files(self.topology.nodes.GetN())
 
         trace_modules = []
@@ -190,9 +190,9 @@ class Monitor:
             close_func = getattr(
                 self.trace_modules[i], f"node{i}_ClosePacketLog")
             close_func()
-        print("&"*60)
-        print(routing_paths)
-        print("&"*60)
+        # print("&"*60)
+        # print(routing_paths)
+        # print("&"*60)
         # Create the CSV with path information
         create_csv("./sim/monitor/logs/packets_log.txt", routing_paths)
 
@@ -223,7 +223,7 @@ class Monitor:
                         self.app.servers.Get(i), 200, 0+i*20, 0)
 
     def get_node_ips_by_id(self):
-        print("\n--------------------------- Getting node IPs ---------------------------")
+        # print("\n--------------------------- Getting node IPs ---------------------------")
 
         node_ips = {}
 
@@ -256,8 +256,8 @@ class Monitor:
                 if ip_list:
                     node_ips[node_id] = ip_list
 
-        for node_id, ips in node_ips.items():
-            print(f"Node {node_id}: {', '.join(ips)}")
+        # for node_id, ips in node_ips.items():
+        #     print(f"Node {node_id}: {', '.join(ips)}")
         self.ip_to_node = get_ip_to_node(node_ips)
         self.node_to_ip = node_ips
 
@@ -304,7 +304,10 @@ class Monitor:
             if path:
                 print(f"  {' → '.join(str(node) for node in path)}")
             else:
-                print(f"  No path found")
+                self.app.client_info[client_id]["failed"] = self.app.client_info[client_id]["max_packets"]
+
+                print(
+                    f"  No path found: {self.app.client_info[client_id]['failed']}")
 
         print("Routing trace completed.")
 
@@ -339,7 +342,7 @@ class Monitor:
             traceback.print_exc()
 
     def collect_flow_stats(self, stats_file="./sim/monitor/xml/flow-stats.xml", app_port=None,  filter_noise=True):
-        print("\n--------------------------- Collecting flow statistics ---------------------------")
+        # print("\n--------------------------- Collecting flow statistics ---------------------------")
 
         self.flow_monitor.CheckForLostPackets()
         self.flow_monitor.SerializeToXmlFile(stats_file, True, True)
@@ -351,14 +354,14 @@ class Monitor:
             if filter_noise and flowStats.rxPackets < 3:
                 continue
 
-            print(f"📊 Flow {flow_id}: ")
-            print(
-                f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
-            print(
-                f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
-            print(
-                f"   Lost Packets: {flowStats.txPackets - flowStats.rxPackets}")
-            print(
-                f"   Throughput: {(flowStats.rxBytes/(flowStats.rxPackets*self.app.app_interval))} Bps")
-            print(f"   Mean Delay: {flowStats.delaySum.GetSeconds()} sec")
-            print(f"   Mean Jitter: {flowStats.jitterSum.GetSeconds()} sec")
+            # print(f"📊 Flow {flow_id}: ")
+            # print(
+            #     f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
+            # print(
+            #     f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
+            # print(
+            #     f"   Lost Packets: {flowStats.txPackets - flowStats.rxPackets}")
+            # print(
+            #     f"   Throughput: {(flowStats.rxBytes/(flowStats.rxPackets*self.app.app_interval))} Bps")
+            # print(f"   Mean Delay: {flowStats.delaySum.GetSeconds()} sec")
+            # print(f"   Mean Jitter: {flowStats.jitterSum.GetSeconds()} sec")

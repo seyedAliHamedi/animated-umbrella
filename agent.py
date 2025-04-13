@@ -21,7 +21,7 @@ class Agent(nn.Module):
         self.lin1 = nn.Linear(hidden_channels2, 64)
         self.lin2 = nn.Linear(64, 1)
 
-        self.optimizer = optim.Adam(self.parameters(), lr=0.0001)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.001)
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
@@ -94,7 +94,7 @@ class Agent(nn.Module):
         data = self.dict_to_data(adj_matrix, metrics)
         logits = self(data)
         actions = F.sigmoid(logits).view(-1)
-        actions_binary = (actions >= 0.9).float()
+        actions_binary = (actions >= 0.5).float()
         print("sigmoid", actions)
         print("agnet actions ", actions_binary)
         return actions_binary, logits

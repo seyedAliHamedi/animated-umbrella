@@ -49,6 +49,11 @@ sample_data = {
     "tcp_app_data_rate": 500000,
 
     "app_animation_file": "./sim/monitor/xml/app.xml",
+    "q_list": {"q1": {"max_packets": [200, 400], "packet_size": [100, 1000], "score_th": 0.7},
+               "q2": {"max_packets": [200, 400], "packet_size": [100, 1000], "score_th": 0.7},
+               "q3": {"max_packets": [200, 400], "packet_size": [100, 1000], "score_th": 0.7},
+               "q4": {"max_packets": [200, 400], "packet_size": [100, 1000], "score_th": 0.7}
+               },
 
     "app_duration": 100,
     "app_start_time": 10,

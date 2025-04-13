@@ -31,6 +31,7 @@ class App:
         self.app_port = app_port
         self.animFile = animFile
         self.monitor = None
+        self.client_info = {}
 
         self.clients, self.servers, self.clients_ip, self.servers_ip = self.initialize_client_server()
         self.install_app()
@@ -150,16 +151,33 @@ class App:
         server_app.Stop(ns.Seconds(self.app_start_time + self.app_duration))
 
     def setup_client(self, client, server):
+        q_type = random.choice(list(sample_data["q_list"].keys()))
+        q_config = sample_data["q_list"][q_type]
+        max_packets = random.randint(*q_config["max_packets"])
+        min_size, max_size = q_config["packet_size"]
+        start = min_size + (8 - min_size %
+                            8) if min_size % 8 != 0 else min_size
+        end = max_size - (max_size % 8)
+        packet_size = random.randrange(start, end + 1, 8)
+        self.client_info[client.GetId()] = {
+            "q_type": q_type,
+            "max_packets": max_packets,
+            "packet_size": packet_size,
+            "failed": 0
+        }
+        print(
+            f"q_type: {client.GetId()}, max_packets: {max_packets}, packet_size: {packet_size}")
+
         server_ip = server.GetAddress(0, 0).ConvertTo()
 
         if self.app_type == "udp_echo":
             echo_client = ns.UdpEchoClientHelper(server_ip, self.app_port)
             echo_client.SetAttribute(
-                "MaxPackets", ns.UintegerValue(self.app_max_packets))
+                "MaxPackets", ns.UintegerValue(max_packets))
             echo_client.SetAttribute(
                 "Interval", ns.TimeValue(ns.Seconds(self.app_interval)))
             echo_client.SetAttribute(
-                "PacketSize", ns.UintegerValue(self.app_packet_size))
+                "PacketSize", ns.UintegerValue(packet_size))
         elif self.app_type == "tcp_echo":
             echo_client = ns.OnOffHelper("ns3::TcpSocketFactory",
                                          ns.Address(ns.InetSocketAddress(server.GetAddress(0, 0), self.app_port).ConvertTo()))

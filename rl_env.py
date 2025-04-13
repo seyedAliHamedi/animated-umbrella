@@ -34,7 +34,9 @@ class NetworkEnv:
         self.active_links = [1] * self.topology.N_links
         self.active_routers = [1] * self.topology.N_routers
 
-        self.app = App(self.topology)
+        self.app = App(self.topology, app_interval=1,
+                       app_duration=200)
+
         self.app.monitor = Monitor(
             self.topology.nodes,
             self.app
@@ -43,10 +45,10 @@ class NetworkEnv:
         self.app.monitor = Monitor(self.app.topology, self.app)
 
         anim = self.app.monitor.setup_animation(self.app.animFile)
-        self.app.monitor.setup_pcap_capture()
+        # self.app.monitor.setup_pcap_capture()
         self.app.monitor.setup_packet_log()
         self.app.monitor.setup_flow_monitor()
-        self.app.monitor.position_nodes(anim)
+        # self.app.monitor.position_nodes(anim)
 
     def reset(self):
         print("reset environment")
@@ -62,7 +64,7 @@ class NetworkEnv:
         return metrics, reward
 
     def run_simulation(self, duration):
-        print(f"Running simulation for {duration} seconds...")
+        # print(f"Running simulation for {duration} seconds...")
         ns.Simulator.Stop(ns.Seconds(duration))
         ns.Simulator.Run()
 
@@ -72,7 +74,7 @@ class NetworkEnv:
         self.app.monitor.collect_flow_stats(
             app_port=self.app.app_port, filter_noise=True)
         self.app.monitor.get_packet_logs()
-        print("Simulation completed")
+        # print("Simulation completed")
 
     # def set_interface_state(self, r, interface_index, state):
     #     """
@@ -163,7 +165,20 @@ class NetworkEnv:
     #         traceback.print_exc()
 
     def calculate_reward(self, metrics):
-        return -5
+        print("MEOW:")
+        print()
+        r = 0
+        n_total = sum(info["max_packets"]
+                      for info in self.app.client_info.values())
+        n_failed = sum(info["failed"]
+                       for info in self.app.client_info.values())
+        if n_failed > 0:
+            r = -100 * (n_failed / n_total)
+
+        else:
+            # r = - sum(self.active_routers) / len(self.active_routers)
+            r = 1 + len(self.active_routers) - sum(self.active_routers)
+        return r
 
     def calculate_energy(self):
         return 5
@@ -279,7 +294,10 @@ class NetworkEnv:
             ["Packet", "Port", "total_hops"]).size().reset_index(name="count")
 
         packet_summary["status"] = packet_summary.apply(
-            lambda row: "OK" if row["count"] % (2 * row['total_hops']) == 0 else "LOST", axis=1
+            lambda row: "LOST" if row["total_hops"] == 0 else (
+                "OK" if row["count"] % (2 * row["total_hops"]) == 0 else "LOST"
+            ),
+            axis=1
         )
         df = df.merge(
             packet_summary[['Packet', 'Port', 'total_hops', 'status']],
