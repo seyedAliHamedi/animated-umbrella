@@ -333,19 +333,20 @@ class Monitor:
             client_ip = self.node_to_ip[client_id][0]
             server_ip = self.node_to_ip[server_id][0]
 
-            print(
-                f"\nRoute from Client {i} (Node {client_id}, IP {client_ip}) to Server {server_idx} (Node {server_id}, IP {server_ip}):")
+            # print(
+            # f"\nRoute from Client {i} (Node {client_id}, IP {client_ip}) to Server {server_idx} (Node {server_id}, IP {server_ip}):")
 
             path = find_path(client_id, server_ip,
                              routing_tables, self.ip_to_node)
 
             if path:
-                print(f"  {' → '.join(str(node) for node in path)}")
+                # print(f"  {' → '.join(str(node) for node in path)}")
+                pass
             else:
                 self.app.client_info[client_id]["failed"] = self.app.client_info[client_id]["max_packets"]
-
-                print(
-                    f"  No path found: {self.app.client_info[client_id]['failed']}")
+#
+            # print(
+            # f"  No path found: {self.app.client_info[client_id]['failed']}")
 
     def collect_flow_stats(self, stats_file=sample_data['flow_stats_file'], app_port=None,  filter_noise=True, log=False):
         if log:

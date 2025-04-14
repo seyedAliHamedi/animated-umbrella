@@ -30,8 +30,24 @@ class NetworkEnv:
 
         self.topology = Topology(adj_matrix=self.adj_matrix)
 
-        self.active_links = [1] * self.topology.N_links
-        self.active_routers = [1] * self.topology.N_routers
+        self.active_routers = []
+        for i in range(self.topology.N_routers):
+            flag = False
+            for j in range(self.topology.N_routers):
+                if self.adj_matrix[i][j] == 1:
+                    flag = True
+                    break
+
+            self.active_routers.append(1 if flag else 0)
+
+        self.active_links = []
+
+        for i in range(self.topology.N_routers):
+            for j in range(i+1, self.topology.N_routers):
+                if self.adj_matrix[i][j] == 1:
+                    self.active_links.append(1)
+                else:
+                    self.active_links.append(0)
 
         self.app = App(self.topology, app_interval=1,
                        app_duration=self.simulation_duration)
@@ -170,18 +186,15 @@ class NetworkEnv:
     #         traceback.print_exc()
 
     def calculate_reward(self, metrics):
-        print("MEOW:")
-        print()
         r = 0
         n_total = sum(info["max_packets"]
                       for info in self.app.client_info.values())
         n_failed = sum(info["failed"]
                        for info in self.app.client_info.values())
+
         if n_failed > 0:
             r = -100 * (n_failed / n_total)
-
         else:
-            # r = - sum(self.active_routers) / len(self.active_routers)
             r = 1 + len(self.active_routers) - sum(self.active_routers)
         return r
 
