@@ -9,7 +9,7 @@ import json
 
 
 sample_data = {
-
+    "cpp_code_f": "",
     "topology_adj_matrix": [
         [0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1],
         [0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1],
@@ -57,6 +57,13 @@ sample_data = {
 
     "app_duration": 100,
     "app_start_time": 10,
+
+
+
+    "xml_animation_file": "./sim/monitor/xml/animation.xml",
+    "routing_table_file": "./sim/monitor/xml/routes.xml",
+    "pcap_files_prefix": "./sim/monitor/pcap/capture",
+    "flow_stats_file": "./sim/monitor/xml/flow-stats.xml",
 }
 
 
@@ -430,8 +437,6 @@ def create_csv(input_file, routing_paths=None):
                         "Time", "Size", "Offset", "src IP", "dest IP", "prev_hop", "next_hop", "total_hops"])
         writer.writerows(data)
 
-    print(f"CSV summary file has been created successfully with path information.")
-
 
 def get_ip_to_node(ip_list):
     ip_to_node = {ip: node_id for node_id, ips in ip_list.items()
@@ -609,3 +614,170 @@ def parse_routes_manually(file_path):
 
     print(f"Found routing data for {len(routing_tables)} nodes")
     return routing_tables
+
+    # Define a C++ module that stores data in memory and provides access methods
+sample_data['cpp_code_f'] = '''
+    #include "ns3/callback.h"
+    #include "ns3/packet.h"
+    #include "ns3/ipv4-header.h"
+    #include "ns3/udp-header.h"
+    #include "ns3/tcp-header.h"
+    #include "ns3/simulator.h"
+    #include <vector>
+    #include <map>
+    #include <string>
+    #include <sstream>
+    
+    using namespace ns3;
+    
+    // Single packet info structure
+    struct PacketInfo {
+        uint32_t nodeId;
+        uint64_t uid;
+        std::string type;
+        uint16_t destPort;
+        double time;
+        uint32_t size;
+        uint16_t offset;
+        std::string srcIP;
+        std::string destIP;
+        std::string direction;
+    };
+    
+    // Global vector to store all packets - using a single container is more efficient
+    std::vector<PacketInfo> allPackets;
+    
+    // Process packet and store in memory
+    void ProcessPacket(Ptr<const Packet> packet, Ptr<Ipv4> ipv4, uint32_t interfaceIndex, 
+                      uint32_t nodeId, bool isRx) {
+        Ipv4Header ipHeader;
+        UdpHeader udpHeader;
+        TcpHeader tcpHeader;
+        std::string destIP = "";
+        std::string srcIP = "";
+        std::string packetType = "Unknown";
+        uint16_t destPort = 0;
+        
+        Ptr<Packet> copy = packet->Copy();
+        uint16_t offset = 0;
+        
+        if (copy->PeekHeader(ipHeader)) {
+            if (copy->RemoveHeader(ipHeader)) {
+                Ipv4Address srcAddr = ipHeader.GetSource();
+                std::ostringstream ossSrc;
+                srcAddr.Print(ossSrc);
+                srcIP = ossSrc.str();
+                
+                Ipv4Address destAddr = ipHeader.GetDestination();
+                std::ostringstream ossDst;
+                destAddr.Print(ossDst);
+                destIP = ossDst.str();
+                
+                offset = ipHeader.GetFragmentOffset();
+                uint8_t protocol = ipHeader.GetProtocol();
+                
+                if (protocol == 6) { // TCP
+                    if (copy->PeekHeader(tcpHeader)) {
+                        destPort = tcpHeader.GetDestinationPort();
+                        packetType = "TCP";
+                    }
+                }
+                else if (protocol == 17) { // UDP
+                    if (copy->PeekHeader(udpHeader)) {
+                        destPort = udpHeader.GetDestinationPort();
+                        packetType = "UDP";
+                    }
+                }
+            }
+        }
+        
+        double time = Simulator::Now().GetSeconds();
+        
+        // Create packet info
+        PacketInfo pktInfo = {
+            nodeId, 
+            packet->GetUid(), 
+            packetType, 
+            destPort, 
+            time, 
+            packet->GetSize(),
+            offset,
+            srcIP,
+            destIP,
+            isRx ? "RX" : "TX"
+        };
+        
+        // Store in global container
+        allPackets.push_back(pktInfo);
+    }
+    
+    // Callbacks
+    void RxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4, uint32_t interfaceIndex) {
+        uint32_t nodeId = ipv4->GetObject<Node>()->GetId();
+        ProcessPacket(packet, ipv4, interfaceIndex, nodeId, true);
+    }
+    
+    void TxCallback(Ptr<const Packet> packet, Ptr<Ipv4> ipv4, uint32_t interfaceIndex) {
+        uint32_t nodeId = ipv4->GetObject<Node>()->GetId();
+        ProcessPacket(packet, ipv4, interfaceIndex, nodeId, false);
+    }
+    
+    // Get packet data - direct access
+    size_t GetPacketCount() {
+        return allPackets.size();
+    }
+    
+    uint32_t GetPacketNodeId(size_t index) {
+        return allPackets[index].nodeId;
+    }
+    
+    uint64_t GetPacketUid(size_t index) {
+        return allPackets[index].uid;
+    }
+    
+    std::string GetPacketType(size_t index) {
+        return allPackets[index].type;
+    }
+    
+    uint16_t GetPacketPort(size_t index) {
+        return allPackets[index].destPort;
+    }
+    
+    double GetPacketTime(size_t index) {
+        return allPackets[index].time;
+    }
+    
+    uint32_t GetPacketSize(size_t index) {
+        return allPackets[index].size;
+    }
+    
+    uint16_t GetPacketOffset(size_t index) {
+        return allPackets[index].offset;
+    }
+    
+    std::string GetPacketSrcIp(size_t index) {
+        return allPackets[index].srcIP;
+    }
+    
+    std::string GetPacketDestIp(size_t index) {
+        return allPackets[index].destIP;
+    }
+    
+    std::string GetPacketDirection(size_t index) {
+        return allPackets[index].direction;
+    }
+    
+    // Clear data when done
+    void ClearPacketData() {
+        allPackets.clear();
+    }
+    
+    // Create callbacks
+    Callback<void, Ptr<const Packet>, Ptr<Ipv4>, uint32_t> CreateRxCallback() {
+        return MakeCallback(&RxCallback);
+    }
+    
+    Callback<void, Ptr<const Packet>, Ptr<Ipv4>, uint32_t> CreateTxCallback() {
+        return MakeCallback(&TxCallback);
+    }
+    '''

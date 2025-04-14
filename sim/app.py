@@ -165,8 +165,7 @@ class App:
             "packet_size": packet_size,
             "failed": 0
         }
-        print(
-            f"q_type: {client.GetId()}, max_packets: {max_packets}, packet_size: {packet_size}")
+        # print(f"q_type: {client.GetId()}, max_packets: {max_packets}, packet_size: {packet_size}")
 
         server_ip = server.GetAddress(0, 0).ConvertTo()
 

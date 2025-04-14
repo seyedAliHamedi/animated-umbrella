@@ -1,12 +1,14 @@
 from ns import ns
 
 import math
-import json
+import cppyy
+import csv
 from sim.utils import *
 
 
 import xml.etree.ElementTree as ET
 from pathlib import Path
+cpp_code_loaded = False
 
 
 class Monitor:
@@ -23,15 +25,13 @@ class Monitor:
         self.routing_tables = None
         self.trace_modules = []
 
-    def setup_animation(self, anim_file="./sim/monitor/xml/animation.xml", enable_packet_metadata=True):
-        print(
-            "\n--------------------------- Setting up animation ---------------------------")
+    def setup_animation(self, anim_file=sample_data['xml_animation_file'], enable_packet_metadata=True):
         self.anim = ns.AnimationInterface(anim_file)
         if enable_packet_metadata:
             self.anim.EnablePacketMetadata(True)
 
         self.anim.EnableIpv4RouteTracking(
-            "./sim/monitor/xml/routes.xml", ns.Seconds(10), ns.Seconds(20))
+            sample_data['routing_table_file'], ns.Seconds(10), ns.Seconds(20))
 
         self.anim.EnableIpv4L3ProtocolCounters(
             ns.Seconds(0), ns.Seconds(10), ns.Seconds(10))
@@ -41,12 +41,9 @@ class Monitor:
 
         self.anim.SetMaxPktsPerTraceFile(1000000)
 
-        print(f"Enhanced animation setup complete. Output file")
-        print("- Routing tables, IP counters, and queue information enabled for NetAnim")
         return self.anim
 
-    def setup_pcap_capture(self, prefix="./sim/monitor/pcap/capture", per_node=True, per_device=False):
-        print("\n--------------------------- Setting up PCAP capture ---------------------------")
+    def setup_pcap_capture(self, prefix=sample_data['pcap_files_prefix'], per_node=True, per_device=False):
 
         created_files = []
 
@@ -88,9 +85,6 @@ class Monitor:
                     p2p_helper.EnablePcap(filename, device, True, True)
                 elif "CsmaNetDevice" in device_type:
                     csma_helper.EnablePcap(filename, device, True, True)
-                else:
-                    print(
-                        f"Warning: Unknown device type {device_type} for device {name}")
 
         if per_node:
             all_nodes = []
@@ -125,39 +119,38 @@ class Monitor:
                     elif "CsmaNetDevice" in device_type:
                         csma_helper.EnablePcap(filename, device, True, True)
 
-        print(f"PCAP capture enabled.")
         return created_files
 
     def setup_flow_monitor(self):
-        # print("\n--------------------------- Setting up flow monitor ---------------------------")
-
         self.flow_helper = ns.FlowMonitorHelper()
-
         self.flow_monitor = self.flow_helper.InstallAll()
-
-        print("FlowMonitor setup completed.")
         return self.flow_monitor
 
     def setup_packet_log(self):
-        # print("\n--------------------------- Setting up packet logs ---------------------------")
-        generate_node_files(self.topology.nodes.GetN())
+        global cpp_code_loaded
+        if not cpp_code_loaded:
+            cppyy.cppdef(sample_data['cpp_code_f'])
+            cpp_code_loaded = True
+        module = cppyy.gbl
 
-        trace_modules = []
+        # Set up callbacks for all routers
+        rx_callback = module.CreateRxCallback()
+        tx_callback = module.CreateTxCallback()
 
         for i in range(self.topology.nodes.GetN()):
-            trace_modules.append(run_cpp_file(
-                f"./sim/monitor/cpps/node{i}.cpp"))
+            router = self.topology.nodes.Get(i)
+            ipv4 = router.GetObject[ns.Ipv4]()
+            if ipv4:
+                ipv4.TraceConnectWithoutContext("Rx", rx_callback)
+                ipv4.TraceConnectWithoutContext("Tx", tx_callback)
 
-        for i in range(self.topology.nodes.GetN()):
-            setup_packet_tracing_for_router(
-                self.topology.nodes.Get(i), trace_modules)
-
-        self.trace_modules = trace_modules
-        print("Packet log setup Completed")
+        self.packet_module = module
+        print("Packet log setup completed with in-memory data structures")
 
     def get_packet_logs(self):
+        """Generate packet logs directly from memory to CSV."""
+        # Calculate routing paths
         routing_paths = []
-
         for i in range(self.app.n_clients):
             client_node = self.app.clients.Get(i)
             client_id = client_node.GetId()
@@ -186,15 +179,80 @@ class Monitor:
                     "path": reverse_path
                 })
 
-        for i in range(self.topology.nodes.GetN()):
-            close_func = getattr(
-                self.trace_modules[i], f"node{i}_ClosePacketLog")
-            close_func()
-        # print("&"*60)
-        # print(routing_paths)
-        # print("&"*60)
-        # Create the CSV with path information
-        create_csv("./sim/monitor/logs/packets_log.txt", routing_paths)
+        # Build path lookup for fast access
+        paths_map = {}
+        for path_info in routing_paths:
+            src_ip = path_info["src_ip"]
+            dest_ip = path_info["dest_ip"]
+            path = path_info["path"]
+            paths_map[(src_ip, dest_ip)] = path
+
+        # Get packet data directly from memory
+        module = self.packet_module
+        packet_count = module.GetPacketCount()
+
+        # Prepare data for CSV
+        csv_data = []
+        for i in range(packet_count):
+            node_id = module.GetPacketNodeId(i)
+            packet_id = module.GetPacketUid(i)
+            direction = module.GetPacketDirection(i)
+            protocol = module.GetPacketType(i)
+            port = module.GetPacketPort(i)
+            time = module.GetPacketTime(i)
+            size = module.GetPacketSize(i)
+            offset = module.GetPacketOffset(i)
+            src_ip = module.GetPacketSrcIp(i)
+            dest_ip = module.GetPacketDestIp(i)
+
+            # Calculate path information (same logic as in create_csv)
+            prev_hop = "Null"
+            next_hop = "Null"
+            total_hops = 0
+
+            try:
+                path = paths_map.get((src_ip, dest_ip), [])
+                if path:
+                    node_index = path.index(node_id)
+                    if node_index > 0:
+                        prev_hop = path[node_index - 1]
+                    if node_index < len(path) - 1:
+                        next_hop = path[node_index + 1]
+
+                    # Special cases for client/server endpoints
+                    if node_index - 1 == 0 and port == 9:
+                        prev_hop = "Client"
+                    if node_index - 1 == 0 and port == 49153:
+                        prev_hop = "Server"
+                    if node_index + 1 == len(path) - 1 and port == 9:
+                        next_hop = "Server"
+                    if node_index + 1 == len(path) - 1 and port == 49153:
+                        next_hop = "Client"
+
+                    total_hops = len(path) - 2
+            except:
+                pass  # Keep default values if path info can't be calculated
+
+            csv_data.append([
+                node_id, packet_id, direction, protocol, port,
+                time, size, offset, src_ip, dest_ip,
+                prev_hop, next_hop, total_hops
+            ])
+
+        # Write directly to CSV
+        with open("./sim/monitor/logs/packets_log.csv", "w", newline="") as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow([
+                "Node", "Packet", "Direction", "Protocol", "Port",
+                "Time", "Size", "Offset", "src IP", "dest IP",
+                "prev_hop", "next_hop", "total_hops"
+            ])
+            writer.writerows(csv_data)
+
+        # Clear memory
+        module.ClearPacketData()
+
+        print("CSV file generated directly from memory")
 
     def position_nodes(self, anim=None):
         if anim is None:
@@ -223,7 +281,6 @@ class Monitor:
                         self.app.servers.Get(i), 200, 0+i*20, 0)
 
     def get_node_ips_by_id(self):
-        # print("\n--------------------------- Getting node IPs ---------------------------")
 
         node_ips = {}
 
@@ -256,33 +313,14 @@ class Monitor:
                 if ip_list:
                     node_ips[node_id] = ip_list
 
-        # for node_id, ips in node_ips.items():
-        #     print(f"Node {node_id}: {', '.join(ips)}")
         self.ip_to_node = get_ip_to_node(node_ips)
         self.node_to_ip = node_ips
-
-    def setup_tracert(self):
-
-        for i in range(self.app.n_clients):
-            server_ip = self.app.servers_ip[i % self.app.n_servers]
-            client = self.app.clients.Get(i)
-
-            tracer = ns.V4TraceRouteHelper(server_ip.GetAddress(0, 0))
-
-            app = tracer.Install(client)
-
-            app.Start(ns.Seconds(self.app.app_start_time + 1.0 + i))
-
-            app.Stop(ns.Seconds(self.app.app_start_time + 4.0 + i))
-            print(
-                f"Set up trace route from Client {i} to Server {i % self.app.n_servers}")
-
-        print("Tracert setup completed.")
+        return node_ips
 
     def trace_routes(self):
-        print("\n--------------------------- Tracing routes from clients to servers ---------------------------")
 
-        routing_tables = parse_routes_manually("./sim/monitor/xml/routes.xml")
+        routing_tables = parse_routes_manually(
+            sample_data['routing_table_file'])
         self.routing_tables = routing_tables
         for i in range(self.app.n_clients):
             client_node = self.app.clients.Get(i)
@@ -309,40 +347,10 @@ class Monitor:
                 print(
                     f"  No path found: {self.app.client_info[client_id]['failed']}")
 
-        print("Routing trace completed.")
-
-    def create_csv_summary(self, flow_stats, output_file="./animated-umbrella/sim/monitor/logs/flow_summary.csv"):
-        if not flow_stats:
-            print("No flow statistics to write to CSV.")
-            return
-        try:
-
-            with open(output_file, "w") as file:
-                headers = list(flow_stats[0].keys())
-                file.write(",".join(headers) + "\n")
-
-                for flow in flow_stats:
-                    values = []
-                    for key in headers:
-                        value = flow.get(key, "")
-                        if value is None:
-                            value = ""
-                        elif key == 'loss_ratio':
-                            value = f"{value:.6f}"
-                        elif key in ['delay_ms', 'jitter_ms']:
-                            value = f"{value:.2f}"
-                        values.append(str(value))
-
-                    file.write(",".join(values) + "\n")
-            print(f"CSV summary created at {output_file}")
-
-        except Exception as e:
-            print(f"Error creating CSV summary: {e}")
-            import traceback
-            traceback.print_exc()
-
-    def collect_flow_stats(self, stats_file="./sim/monitor/xml/flow-stats.xml", app_port=None,  filter_noise=True):
-        # print("\n--------------------------- Collecting flow statistics ---------------------------")
+    def collect_flow_stats(self, stats_file=sample_data['flow_stats_file'], app_port=None,  filter_noise=True, log=False):
+        if log:
+            print(
+                "\n--------------------------- Collecting flow statistics ---------------------------")
 
         self.flow_monitor.CheckForLostPackets()
         self.flow_monitor.SerializeToXmlFile(stats_file, True, True)
@@ -353,15 +361,16 @@ class Monitor:
 
             if filter_noise and flowStats.rxPackets < 3:
                 continue
-
-            # print(f"📊 Flow {flow_id}: ")
-            # print(
-            #     f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
-            # print(
-            #     f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
-            # print(
-            #     f"   Lost Packets: {flowStats.txPackets - flowStats.rxPackets}")
-            # print(
-            #     f"   Throughput: {(flowStats.rxBytes/(flowStats.rxPackets*self.app.app_interval))} Bps")
-            # print(f"   Mean Delay: {flowStats.delaySum.GetSeconds()} sec")
-            # print(f"   Mean Jitter: {flowStats.jitterSum.GetSeconds()} sec")
+            if log:
+                print(f"📊 Flow {flow_id}: ")
+                print(
+                    f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
+                print(
+                    f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
+                print(
+                    f"   Lost Packets: {flowStats.txPackets - flowStats.rxPackets}")
+                print(
+                    f"   Throughput: {(flowStats.rxBytes/(flowStats.rxPackets*self.app.app_interval))} Bps")
+                print(f"   Mean Delay: {flowStats.delaySum.GetSeconds()} sec")
+                print(
+                    f"   Mean Jitter: {flowStats.jitterSum.GetSeconds()} sec")

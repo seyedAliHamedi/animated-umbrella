@@ -45,7 +45,7 @@ class Topology:
                         link.SetChannelAttribute(
                             "Delay", ns.StringValue(link_delays[x]))
                         link.SetQueue("ns3::DropTailQueue", "MaxSize", ns.QueueSizeValue(
-                            ns.QueueSize(f"{links_queue[i]}p")))
+                            ns.QueueSize(f"{links_queue[x]}p")))
                     elif links_types[x] == "csma":
                         link = ns.CsmaHelper()
                         link.SetChannelAttribute(
@@ -53,7 +53,7 @@ class Topology:
                         link.SetChannelAttribute(
                             "Delay", ns.StringValue(link_delays[x]))
                         link.SetQueue("ns3::DropTailQueue", "MaxSize", ns.QueueSizeValue(
-                            ns.QueueSize(f"{links_queue[i]}p")))
+                            ns.QueueSize(f"{links_queue[x]}p")))
 
                     node_pair = ns.NodeContainer()
                     node_pair.Add(routers.Get(i))
@@ -62,7 +62,7 @@ class Topology:
                     devices.append(dev_pair)
 
                     error_model = ns.CreateObject[ns.RateErrorModel]()
-                    error_model.SetRate(links_errors[i])
+                    error_model.SetRate(links_errors[x])
                     error_model.SetUnit(ns.RateErrorModel.ERROR_UNIT_PACKET)
                     dev_pair.Get(1).SetAttribute("ReceiveErrorModel",
                                                  ns.PointerValue(error_model))

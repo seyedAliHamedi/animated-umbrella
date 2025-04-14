@@ -1,74 +1,93 @@
-from app import App
-from topology import Topology
 from ns import ns
 
 import os
-from monitor import Monitor
 
-ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
-ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
+from app import App
+from monitor import Monitor
+from topology import Topology
+
+# ns.LogComponentEnable("UdpEchoClientApplication", ns.LOG_LEVEL_INFO)
+# ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
 # ns.LogComponentEnable("PacketSink", ns.LOG_LEVEL_INFO)
 # ns.LogComponentEnable("OnOffApplication", ns.LOG_LEVEL_INFO)
+import time
 
 
 def main():
-
+    duration = 100
+    t = time.time()
+    # clean the monitor dir
     for root, dirs, files in os.walk("./sim/monitor"):
         for file in files:
             file_path = os.path.join(root, file)
             os.remove(file_path)
 
-    duration = 100
-    a = []
-    for i in range(15):
-        row = []
-        for j in range(15):
-            row.append(1 if i != j else 0)
-        a.append(row)
+    print("\n--------------------------- INITIALIZING TOPOLOGY ---------------------------")
+    topology = Topology()
 
-    print("\n========================== INITIALIZING TOPOLOGY ==========================")
-    topology = Topology(adj_matrix=a, links_delay=['1ms'], links_type=['p2p'])
-
-    print("\n========================== INITIALIZING APPLICATION ==========================")
+    print("\n--------------------------- INITIALIZING APPLICATION ---------------------------")
     app = App(topology, n_clients=5, n_servers=4, app_duration=30,
               links_delay=['1ms'], links_type=['p2p'])
 
-    print("\n========================== RUNNING SIMULATION ==========================")
     mobility = ns.MobilityHelper()
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
     mobility.Install(app.topology.nodes)
     mobility.Install(app.clients)
     mobility.Install(app.servers)
 
-    print(
-        f"\n--------------------------- Running simulation for {duration} seconds ---------------------------")
-
+    print("\n========================== INITIALIZING MONITOR ==========================")
     app.monitor = Monitor(app.topology, app)
 
+    print("\n--------------------------- Setting up animation ---------------------------")
     anim = app.monitor.setup_animation(app.animFile)
-    app.monitor.setup_pcap_capture()
+    print(f"Enhanced animation setup complete. Output file")
+    print("- Routing tables, IP counters, and queue information enabled for NetAnim")
+
+    # print("\n--------------------------- Setting up PCAP capture ---------------------------")
+    # app.monitor.setup_pcap_capture()
+    # print(f"PCAP capture enabled.")
+
+    print("\n--------------------------- Setting up packet logs ---------------------------")
     app.monitor.setup_packet_log()
+    print("Packet log setup Completed")
+
+    print("\n--------------------------- Setting up flow monitor ---------------------------")
     app.monitor.setup_flow_monitor()
+    print("FlowMonitor setup completed.")
     app.monitor.position_nodes(anim)
+
+    print(
+        f"\n--------------------------- RUNNING SIMULATION : {duration} seconds ---------------------------")
 
     ns.Simulator.Stop(ns.Seconds(duration))
     ns.Simulator.Run()
 
-    app.monitor.get_node_ips_by_id()
-    app.monitor.trace_routes()
+    print("\n--------------------------- Getting node IPs ---------------------------")
+    node_ips = app.monitor.get_node_ips_by_id()
+    for node_id, ips in node_ips.items():
+        print(f"Node {node_id}: {', '.join(ips)}")
 
-    app.monitor.collect_flow_stats(app_port=app.app_port, filter_noise=True)
+    print("\n--------------------------- Tracing routes from clients to servers ---------------------------")
+    app.monitor.trace_routes()
+    print("Routing trace completed.")
+
+    print("\n--------------------------- Collecting flow statistics ---------------------------")
+    app.monitor.collect_flow_stats(
+        app_port=app.app_port, filter_noise=True, log=True)
+
+    print("\n--------------------------- Processing Packet Logs ---------------------------")
     app.monitor.get_packet_logs()
+    print(f"CSV summary file has been created successfully with path information.")
 
     ns.Simulator.Destroy()
 
-    print("\n--------------------------- Simulation Complete ---------------------------")
+    print("\n--------------------------- SIMULATION COMPLETED ---------------------------")
     print(f"Animation file created at: {app.animFile}")
-    print("Flow statistics saved in: ./sim/monitor/xml/flow-stats.xml")
-    print("CSV summary saved in: ./sim/monitor/logs/flow_summary.csv")
+    print("xml files saved in: ./sim/monitor/xml/")
     print("PCAP files saved in: ./sim/monitor/pcap/")
-    print("Run NetAnim to visualize the simulation (load XML files from ./sim/monitor/xml/)")
+    print("packet logs saved in: ./sim/monitor/logs/")
     print("------------------------------------------------------------------")
+    print(time.time()-t)
 
 
 if __name__ == "__main__":

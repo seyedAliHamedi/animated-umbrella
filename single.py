@@ -1,4 +1,5 @@
 # single.py
+import time
 import sys
 import json
 from ns import ns
@@ -11,9 +12,6 @@ def run_single_epoch(epoch_number):
     print(f"Running Epoch {epoch_number}")
     middle.load_data()
     adj_matrix = middle.data['adj_matrix']
-    print("888888")
-    print(adj_matrix)
-    print("888888")
     env = NetworkEnv(
         simulation_duration=50,
         adj_matrix=adj_matrix
@@ -26,7 +24,7 @@ def run_single_epoch(epoch_number):
     print(f"Epoch {epoch_number} completed")
 
 
-# --- Entry point ---
-epoch_number = int(sys.argv[1])
-
-run_single_epoch(epoch_number)
+# epoch_number = int(sys.argv[1])
+a = time.time()
+run_single_epoch(epoch_number=1)
+print(time.time()-a)

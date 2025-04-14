@@ -28,14 +28,13 @@ class NetworkEnv:
 
     def setup_environment(self):
 
-        self.topology = Topology(
-            adj_matrix=self.adj_matrix, base_network="192.168.1.0/24")
+        self.topology = Topology(adj_matrix=self.adj_matrix)
 
         self.active_links = [1] * self.topology.N_links
         self.active_routers = [1] * self.topology.N_routers
 
         self.app = App(self.topology, app_interval=1,
-                       app_duration=200)
+                       app_duration=self.simulation_duration)
 
         self.app.monitor = Monitor(
             self.topology.nodes,
@@ -43,6 +42,12 @@ class NetworkEnv:
         )
 
         self.app.monitor = Monitor(self.app.topology, self.app)
+
+        mobility = ns.MobilityHelper()
+        mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
+        mobility.Install(self.app.topology.nodes)
+        mobility.Install(self.app.clients)
+        mobility.Install(self.app.servers)
 
         anim = self.app.monitor.setup_animation(self.app.animFile)
         # self.app.monitor.setup_pcap_capture()
@@ -237,56 +242,23 @@ class NetworkEnv:
         }
         return metrics
 
-    def collect_node_metrics(self, node_idx):
-        node_metrics = {
-            'is_active': self.active_routers[node_idx],
+    def collect_metrics(self):
+        """Collect metrics for all nodes efficiently."""
+        # Get graph metrics once
+        graph_metrics = self.collect_graph_metrics()
 
-            'avg_power_per_operation': np.random.uniform(0.5, 2.0),
-            'avg_energy_consumption': np.random.uniform(5.0, 20.0),
-            'idle_interface_energy': np.random.uniform(0.1, 0.5),
+        # Process packet data once instead of per node
+        packet_data = self.process_packet_data_once()
 
-            'tx_packets': 0,
-            'tx_bytes': 0,
-            'rx_packets': 0,
-            'rx_bytes': 0,
+        # Create metrics for each node
+        all_node_metrics = {}
+        for index in range(self.topology.N_routers):
+            all_node_metrics[index] = self.collect_node_metrics(
+                index, graph_metrics, packet_data)
 
-            'lost_on_send': 0,
-            'lost_on_receive': 0,
+        return all_node_metrics
 
-            'expected_packets': {
-                'high_priority': np.random.randint(10, 50),
-                'medium_priority': np.random.randint(5, 30),
-                'low_priority': np.random.randint(1, 20)
-            },
-
-            "active_interfaces": 0,
-
-            'graph_metrics': {
-                'betweenness_centrality': {
-                    'original': 0,
-                    'current': 0
-                },
-                'degree_centrality': {
-                    'original': 0,
-                    'current': 0
-                },
-                'clustering_coefficient': {
-                    'original': 0,
-                    'current': 0
-                },
-                'eigenvector_centrality': {
-                    'original': 0,
-                    'current': 0
-                },
-                'is_articulation_point': {
-                    'original': False,
-                    'current': False
-                }
-            },
-
-
-        }
-
+    def process_packet_data_once(self):
         df = pd.read_csv('./sim/monitor/logs/packets_log.csv')
         df = df[(df["Port"] == 9) | (df["Port"] == 49153)]
 
@@ -299,86 +271,82 @@ class NetworkEnv:
             ),
             axis=1
         )
+
         df = df.merge(
             packet_summary[['Packet', 'Port', 'total_hops', 'status']],
             on=['Packet', 'Port', 'total_hops'],
             how='left'
         )
 
-        node_tx = df[(df['Node'] == node_idx) & (df['Direction'] == 'TX')]
-        node_rx = df[(df['Node'] == node_idx) & (df['Direction'] == 'RX')]
-
-        node_metrics['tx_packets'] = len(node_tx)
-        node_metrics['tx_bytes'] = int(node_tx['Size'].sum())
-        node_metrics['rx_packets'] = len(node_rx)
-        node_metrics['rx_bytes'] = int(node_rx['Size'].sum())
-
+        node_data = {}
         lost_packets_df = df[df['status'] == 'LOST']
 
-        node_metrics['lost_on_send'] = len(
-            lost_packets_df[lost_packets_df['Node'] == node_idx])
-        node_metrics['lost_on_receive'] = len(
-            lost_packets_df[lost_packets_df['next_hop'] == node_idx])
+        for node_idx in range(self.topology.N_routers):
+            node_tx = df[(df['Node'] == node_idx) & (df['Direction'] == 'TX')]
+            node_rx = df[(df['Node'] == node_idx) & (df['Direction'] == 'RX')]
+
+            node_data[node_idx] = {
+                'tx_packets': len(node_tx),
+                'tx_bytes': int(node_tx['Size'].sum()) if not node_tx.empty else 0,
+                'rx_packets': len(node_rx),
+                'rx_bytes': int(node_rx['Size'].sum()) if not node_rx.empty else 0,
+                'lost_on_send': len(lost_packets_df[lost_packets_df['Node'] == node_idx]),
+                'lost_on_receive': len(lost_packets_df[lost_packets_df['next_hop'] == node_idx])
+            }
+
+        return node_data
+
+    def collect_node_metrics(self, node_idx, graph_metrics, packet_data):
+        node_metrics = {
+            'is_active': self.active_routers[node_idx],
+            'avg_power_per_operation': np.random.uniform(0.5, 2.0),
+            'avg_energy_consumption': np.random.uniform(5.0, 20.0),
+            'idle_interface_energy': np.random.uniform(0.1, 0.5),
+
+            # Use pre-calculated packet data
+            'tx_packets': packet_data[node_idx]['tx_packets'],
+            'tx_bytes': packet_data[node_idx]['tx_bytes'],
+            'rx_packets': packet_data[node_idx]['rx_packets'],
+            'rx_bytes': packet_data[node_idx]['rx_bytes'],
+            'lost_on_send': packet_data[node_idx]['lost_on_send'],
+            'lost_on_receive': packet_data[node_idx]['lost_on_receive'],
+
+            'expected_packets': {
+                'high_priority': np.random.randint(10, 50),
+                'medium_priority': np.random.randint(5, 30),
+                'low_priority': np.random.randint(1, 20)
+            },
+            'active_interfaces': 0,
+            'graph_metrics': {
+                'betweenness_centrality': {
+                    'original': graph_metrics['betweenness_centrality']['original'].get(node_idx, 0),
+                    'current': graph_metrics['betweenness_centrality']['current'].get(node_idx, 0)
+                },
+                'degree_centrality': {
+                    'original': graph_metrics['degree_centrality']['original'].get(node_idx, 0),
+                    'current': graph_metrics['degree_centrality']['current'].get(node_idx, 0)
+                },
+                'clustering_coefficient': {
+                    'original': graph_metrics['clustering_coefficient']['original'].get(node_idx, 0),
+                    'current': graph_metrics['clustering_coefficient']['current'].get(node_idx, 0)
+                },
+                'eigenvector_centrality': {
+                    'original': graph_metrics.get('eigenvector_centrality', {}).get('original', {}).get(node_idx, 0),
+                    'current': graph_metrics.get('eigenvector_centrality', {}).get('current', {}).get(node_idx, 0)
+                },
+                'is_articulation_point': {
+                    'original': node_idx in graph_metrics['articulation_points']['original'],
+                    'current': node_idx in graph_metrics['articulation_points']['current']
+                }
+            }
+        }
 
         node = self.topology.nodes.Get(node_idx)
         ipv4 = node.GetObject[ns.Ipv4]()
 
         if ipv4:
-            active_interfaces = []
-            for i in range(ipv4.GetNInterfaces()):
-                if ipv4.IsUp(i):
-                    active_interfaces.append(i)
-
-        node_metrics['active_interfaces'] = len(active_interfaces)
-        graph_metrics = self.collect_graph_metrics()
-
-        node_metrics['graph_metrics']['betweenness_centrality']['original'] = (
-            graph_metrics['betweenness_centrality']['original'].get(
-                node_idx, 0)
-        )
-        node_metrics['graph_metrics']['betweenness_centrality']['current'] = (
-            graph_metrics['betweenness_centrality']['current'].get(
-                node_idx, 0)
-        )
-
-        node_metrics['graph_metrics']['degree_centrality']['original'] = (
-            graph_metrics['degree_centrality']['original'].get(node_idx, 0)
-        )
-        node_metrics['graph_metrics']['degree_centrality']['current'] = (
-            graph_metrics['degree_centrality']['current'].get(node_idx, 0)
-        )
-
-        node_metrics['graph_metrics']['clustering_coefficient']['original'] = (
-            graph_metrics['clustering_coefficient']['original'].get(
-                node_idx, 0)
-        )
-        node_metrics['graph_metrics']['clustering_coefficient']['current'] = (
-            graph_metrics['clustering_coefficient']['current'].get(
-                node_idx, 0)
-        )
-
-        node_metrics['graph_metrics']['eigenvector_centrality']['original'] = (
-            graph_metrics.get('eigenvector_centrality', {}).get(
-                'original', {}).get(node_idx, 0)
-        )
-        node_metrics['graph_metrics']['eigenvector_centrality']['current'] = (
-            graph_metrics.get('eigenvector_centrality', {}).get(
-                'current', {}).get(node_idx, 0)
-        )
-
-        # Check if node is an articulation point
-        node_metrics['graph_metrics']['is_articulation_point']['original'] = (
-            node_idx in graph_metrics['articulation_points']['original']
-        )
-        node_metrics['graph_metrics']['is_articulation_point']['current'] = (
-            node_idx in graph_metrics['articulation_points']['current']
-        )
+            active_interfaces = sum(1 for i in range(
+                ipv4.GetNInterfaces()) if ipv4.IsUp(i))
+            node_metrics['active_interfaces'] = active_interfaces
 
         return node_metrics
-
-    def collect_metrics(self):
-        all_node_metrics = {}
-        for index in range(self.topology.N_routers):
-            all_node_metrics[index] = self.collect_node_metrics(index)
-
-        return all_node_metrics
