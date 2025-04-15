@@ -11,7 +11,7 @@ from sim.monitor import Monitor
 
 class NetworkEnv:
 
-    def __init__(self, adj_matrix, n_clients, original_adj_matrix, n_servers, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2):
+    def __init__(self, adj_matrix, n_clients, orinigal_adj_matrix, n_servers, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2):
 
         self.adj_matrix = adj_matrix
         self.simulation_duration = simulation_duration
@@ -23,7 +23,7 @@ class NetworkEnv:
 
         self.n_clients = n_clients
         self.n_servers = n_servers
-        self.orinigal_adj_matrix = original_adj_matrix
+        self.orinigal_adj_matrix = orinigal_adj_matrix
 
         self.router_energy_cost = router_energy_cost
         self.link_energy_cost = link_energy_cost

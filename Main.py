@@ -27,6 +27,7 @@ for epoch in range(2000):
     env = NetworkEnv(
         simulation_duration=50,
         adj_matrix=adj_matrix,
+        orinigal_adj_matrix=original_adj_matrix,
         n_clients=1,
         n_servers=1,
     )
