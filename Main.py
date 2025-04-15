@@ -10,7 +10,7 @@ from agent import Agent
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 
 
-n = 15
+n = 4
 
 original_adj_matrix = fc_graph(n)
 adj_matrix = original_adj_matrix.copy()
@@ -26,7 +26,9 @@ for epoch in range(2000):
 
     env = NetworkEnv(
         simulation_duration=50,
-        adj_matrix=adj_matrix
+        adj_matrix=adj_matrix,
+        n_clients=1,
+        n_servers=1,
     )
 
     metrics, reward = env.step()

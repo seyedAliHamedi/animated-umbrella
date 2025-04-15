@@ -11,7 +11,7 @@ from sim.monitor import Monitor
 
 class NetworkEnv:
 
-    def __init__(self, adj_matrix, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2):
+    def __init__(self, adj_matrix, n_clients, original_adj_matrix, n_servers, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2):
 
         self.adj_matrix = adj_matrix
         self.simulation_duration = simulation_duration
@@ -20,6 +20,10 @@ class NetworkEnv:
         self.min_throughput = min_throughput
         self.max_latency = max_latency
         self.max_packet_loss = max_packet_loss
+
+        self.n_clients = n_clients
+        self.n_servers = n_servers
+        self.orinigal_adj_matrix = original_adj_matrix
 
         self.router_energy_cost = router_energy_cost
         self.link_energy_cost = link_energy_cost
@@ -50,7 +54,7 @@ class NetworkEnv:
                     self.active_links.append(0)
 
         self.app = App(self.topology, app_interval=1,
-                       app_duration=self.simulation_duration)
+                       app_duration=self.simulation_duration, n_clients=self.n_clients, n_servers=self.n_servers)
 
         self.app.monitor = Monitor(
             self.topology.nodes,
@@ -202,20 +206,11 @@ class NetworkEnv:
         return 5
 
     def collect_graph_metrics(self):
-        original_graph = nx.from_numpy_array(
+        current_graph = nx.from_numpy_array(
             np.array(self.topology.adj_matrix))
 
-        current_graph = nx.Graph()
-
-        active_nodes = [i for i in range(
-            self.topology.N_routers) if self.active_routers[i]]
-        current_graph.add_nodes_from(active_nodes)
-
-        for i in range(self.topology.N_routers):
-            for j in range(i+1, self.topology.N_routers):
-                if (self.topology.adj_matrix[i][j] == 1 and
-                        self.active_routers[i] and self.active_routers[j]):
-                    current_graph.add_edge(i, j)
+        original_graph = nx.from_numpy_array(
+            np.array(self.original_adj_matrix))
 
         metrics = {
             'betweenness_centrality': {
