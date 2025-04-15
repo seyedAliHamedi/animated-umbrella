@@ -54,15 +54,14 @@ class App:
 
         available_gateways = list(range(self.topology.N_routers))[:-1]
 
-
         client_gateways = random.sample(available_gateways, self.n_clients)
         remaining_gateways = [
             gw for gw in available_gateways if gw not in client_gateways]
         server_gateways = random.sample(remaining_gateways, self.n_servers) if len(
             remaining_gateways) >= self.n_servers else random.sample(available_gateways, self.n_servers)
 
-        print("Clients gateways:", client_gateways)
-        print("Servers gateways:", server_gateways)
+        # print("Clients gateways:", client_gateways)
+        # print("Servers gateways:", server_gateways)
 
         links_types = distribute_values(
             self.links_type, self.n_clients + self.n_servers)

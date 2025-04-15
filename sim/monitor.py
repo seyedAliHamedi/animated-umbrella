@@ -145,7 +145,7 @@ class Monitor:
                 ipv4.TraceConnectWithoutContext("Tx", tx_callback)
 
         self.packet_module = module
-        print("Packet log setup completed with in-memory data structures")
+        # print("Packet log setup completed with in-memory data structures")
 
     def get_packet_logs(self):
         """Generate packet logs directly from memory to CSV."""
@@ -252,7 +252,7 @@ class Monitor:
         # Clear memory
         module.ClearPacketData()
 
-        print("CSV file generated directly from memory")
+        # print("CSV file generated directly from memory")
 
     def position_nodes(self, anim=None):
         if anim is None:
@@ -342,9 +342,9 @@ class Monitor:
             if path:
                 # print(f"  {' → '.join(str(node) for node in path)}")
                 pass
-            else:                
+            else:
                 self.app.client_info[client_id]["failed"] = self.app.client_info[client_id]["max_packets"]
-                print(self.app.client_info[client_id]["failed"])
+                # print(self.app.client_info[client_id]["failed"])
         #
             # print(
             # f"  No path found: {self.app.client_info[client_id]['failed']}")

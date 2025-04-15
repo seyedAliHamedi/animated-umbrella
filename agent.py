@@ -42,7 +42,7 @@ class Agent(nn.Module):
         num_nodes = len(node_features_dict)
         if len(edge_index) == 0:
             edge_index = [[i, i] for i in range(num_nodes)]
-            print("Warning: No edges found. Added self-loops for all nodes.")
+            # print("Warning: No edges found. Added self-loops for all nodes.")
 
         edge_index = torch.tensor(
             edge_index, dtype=torch.long).t().contiguous()
@@ -100,8 +100,7 @@ class Agent(nn.Module):
         logits = self(data)
         p = torch.sigmoid(logits).view(-1)
         actions = torch.bernoulli(p)
-        actions = actions + (p - p.detach())
+        # actions = actions + (p - p.detach())
         # actions = (p >= 0.4).float()
-
 
         return actions, p, logits

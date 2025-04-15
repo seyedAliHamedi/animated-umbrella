@@ -84,17 +84,17 @@ def calculate_subnet_mask(mask_bits):
 
 
 def fix_xml(animFile="./animated-umbrella/rip_udp.xml"):
-    print("\n ------------------------- fixing XML --------------------------")
+    # print("\n ------------------------- fixing XML --------------------------")
     with open(animFile, "r") as file:
         data = file.read()
     data = data.replace("&amp;#10", "&#10")
     with open(animFile, "w") as file:
         file.write(data)
-    print("XML Fixed")
+    # print("XML Fixed")
 
 
 def create_xml(all_nodes, positions, animFile):
-    print("\n ------------------------- creating XML --------------------------")
+    # print("\n ------------------------- creating XML --------------------------")
     mobility = ns.MobilityHelper()
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
     mobility.Install(all_nodes)
@@ -112,7 +112,7 @@ def create_xml(all_nodes, positions, animFile):
         node = all_nodes.Get(i)
         anim.SetConstantPosition(node, positions[i][0], positions[i][1], 0)
 
-    print("XML Created")
+    # print("XML Created")
     return all_nodes, anim
 
 
@@ -348,7 +348,7 @@ std::vector<PacketInfo{i}> node{i}_GetReceivedPackets() {{
         with open(out_path, 'w') as f:
             f.write(code)
 
-    print(f"Generated {num_nodes} node files in {output_dir}")
+    # print(f"Generated {num_nodes} node files in {output_dir}")
 
 
 def run_cpp_file(cpp_file_path):
@@ -392,7 +392,7 @@ def create_csv(input_file, routing_paths=None):
             dest_ip = path_info["dest_ip"]
             path = path_info["path"]
             q_type = path_info["q_type"]
-            paths_map[(src_ip, dest_ip)] = [path,q_type]
+            paths_map[(src_ip, dest_ip)] = [path, q_type]
 
     with open(input_file, "r+") as file:
         for line in file:
@@ -413,7 +413,7 @@ def create_csv(input_file, routing_paths=None):
 
                     prev_hop = path[node_index - 1]
                     next_hop = path[node_index + 1]
-                    
+
                     q_type = paths_map.get((src_ip, dest_ip), [])[1]
                     if node_index-1 == 0:
                         if port == "9":
@@ -430,9 +430,9 @@ def create_csv(input_file, routing_paths=None):
                     total_hops = len(path)-2
                 except:
                     pass
-                
+
                 data.append([node, packet, direction, protocol, port, time,
-                            size, offset, src_ip, dest_ip, prev_hop, next_hop, total_hops,q_type])
+                            size, offset, src_ip, dest_ip, prev_hop, next_hop, total_hops, q_type])
 
     with open(output_file, "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
@@ -496,7 +496,7 @@ def convert_all_to_node_paths(blocks, ip_mapping_path, src_ip_list):
 
         src_node = ip_to_node.get(src_ip)
         if src_node is None:
-            print(f"⚠️ Source IP {src_ip} not found in mapping, skipping.")
+            # print(f"⚠️ Source IP {src_ip} not found in mapping, skipping.")
             continue
 
         node_path = [src_node]
@@ -523,12 +523,12 @@ def find_path(start_node, dest_ip, routing_tables, ip_to_node):
     while max_hops > 0:
         # Check if we have routing information for the current node
         if current_node not in routing_tables:
-            print(f"  No routing table for node {current_node}")
+            # print(f"  No routing table for node {current_node}")
             return None
 
         # Check if we have a route to the destination network
         if dest_net not in routing_tables[current_node]:
-            print(f"  No route from node {current_node} to {dest_net}")
+            # print(f"  No route from node {current_node} to {dest_net}")
             return None
 
         # Get the next hop IP
@@ -549,11 +549,11 @@ def find_path(start_node, dest_ip, routing_tables, ip_to_node):
                 break
 
         if next_node is None:
-            print(f"  Unknown node for IP {next_hop}")
+            # print(f"  Unknown node for IP {next_hop}")
             return None
 
         if next_node in visited:
-            print(f"  Loop detected at {current_node} → {next_node}")
+            # print(f"  Loop detected at {current_node} → {next_node}")
             return None
 
         path.append(next_node)
@@ -573,7 +573,7 @@ def find_path(start_node, dest_ip, routing_tables, ip_to_node):
 
         max_hops -= 1
 
-    print("  Maximum hop count exceeded")
+    # print("  Maximum hop count exceeded")
     return None
 
 
@@ -615,8 +615,9 @@ def parse_routes_manually(file_path):
                             if gateway != '0.0.0.0' and gateway != 'Genmask':
                                 routing_tables[node_id][dest_net] = gateway
 
-    print(f"Found routing data for {len(routing_tables)} nodes")
+    # print(f"Found routing data for {len(routing_tables)} nodes")
     return routing_tables
+
 
     # Define a C++ module that stores data in memory and provides access methods
 sample_data['cpp_code_f'] = '''

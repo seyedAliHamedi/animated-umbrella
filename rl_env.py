@@ -11,7 +11,7 @@ from sim.monitor import Monitor
 
 class NetworkEnv:
 
-    def __init__(self, adj_matrix, n_clients, orinigal_adj_matrix, n_servers, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2):
+    def __init__(self, adj_matrix, n_clients, original_adj_matrix, n_servers, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2):
 
         self.adj_matrix = adj_matrix
         self.simulation_duration = simulation_duration
@@ -23,7 +23,7 @@ class NetworkEnv:
 
         self.n_clients = n_clients
         self.n_servers = n_servers
-        self.orinigal_adj_matrix = orinigal_adj_matrix
+        self.original_adj_matrix = original_adj_matrix
 
         self.router_energy_cost = router_energy_cost
         self.link_energy_cost = link_energy_cost
@@ -53,7 +53,7 @@ class NetworkEnv:
                 else:
                     self.active_links.append(0)
 
-        self.app = App(self.topology, app_interval=1,n_clients=self.n_clients, n_servers= self.n_servers,
+        self.app = App(self.topology, app_interval=1, n_clients=self.n_clients, n_servers=self.n_servers,
                        app_duration=self.simulation_duration)
 
         self.app.monitor = Monitor(
@@ -191,9 +191,6 @@ class NetworkEnv:
 
     def calculate_reward(self, metrics):
         r = 0
-        print("*"*40)
-        print("INFOO    ",self.app.client_info.values())
-        print("*"*40)
         n_total = sum(info["max_packets"]
                       for info in self.app.client_info.values())
         n_failed = sum(info["failed"]
@@ -214,9 +211,8 @@ class NetworkEnv:
             np.array(self.topology.adj_matrix))
 
         original_graph = nx.from_numpy_array(
-            np.array(self.orinigal_adj_matrix))
+            np.array(self.original_adj_matrix))
 
-        print(current_graph)
         metrics = {
             'betweenness_centrality': {
                 'original': dict(nx.betweenness_centrality(original_graph)),
