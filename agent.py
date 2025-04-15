@@ -100,5 +100,8 @@ class Agent(nn.Module):
         logits = self(data)
         p = torch.sigmoid(logits).view(-1)
         actions = torch.bernoulli(p)
+        actions = actions * (p - p.detach())
+        # actions = (p >= 0.4).float()
+
 
         return actions, p, logits

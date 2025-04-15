@@ -1,7 +1,7 @@
 from ns import ns
 
 import os
-
+import time
 from app import App
 from monitor import Monitor
 from topology import Topology
@@ -10,7 +10,6 @@ from topology import Topology
 # ns.LogComponentEnable("UdpEchoServerApplication", ns.LOG_LEVEL_INFO)
 # ns.LogComponentEnable("PacketSink", ns.LOG_LEVEL_INFO)
 # ns.LogComponentEnable("OnOffApplication", ns.LOG_LEVEL_INFO)
-import time
 
 
 def main():

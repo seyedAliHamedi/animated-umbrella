@@ -382,7 +382,6 @@ def create_csv(input_file, routing_paths=None):
         r"\s*Time:\s*([0-9.]+),\s*Size:\s*(\d+),\s*Offset=\s*(\d+),"
         r"\s*src IP:\s*([\d\.]+),\s*dest IP:\s*([\d\.]+)"
     )
-
     output_file = os.path.splitext(input_file)[0] + ".csv"
     data = []
 
@@ -392,7 +391,8 @@ def create_csv(input_file, routing_paths=None):
             src_ip = path_info["src_ip"]
             dest_ip = path_info["dest_ip"]
             path = path_info["path"]
-            paths_map[(src_ip, dest_ip)] = path
+            q_type = path_info["q_type"]
+            paths_map[(src_ip, dest_ip)] = [path,q_type]
 
     with open(input_file, "r+") as file:
         for line in file:
@@ -404,14 +404,17 @@ def create_csv(input_file, routing_paths=None):
                 prev_hop = "Null"
                 next_hop = "Null"
                 total_hops = 0
+                q_type = "Null"
 
                 try:
-                    path = paths_map.get((src_ip, dest_ip), [])
+                    path = paths_map.get((src_ip, dest_ip), [])[0]
 
                     node_index = path.index(node)
 
                     prev_hop = path[node_index - 1]
                     next_hop = path[node_index + 1]
+                    
+                    q_type = paths_map.get((src_ip, dest_ip), [])[1]
                     if node_index-1 == 0:
                         if port == "9":
                             prev_hop = "Client"
@@ -427,14 +430,14 @@ def create_csv(input_file, routing_paths=None):
                     total_hops = len(path)-2
                 except:
                     pass
-
+                
                 data.append([node, packet, direction, protocol, port, time,
-                            size, offset, src_ip, dest_ip, prev_hop, next_hop, total_hops])
+                            size, offset, src_ip, dest_ip, prev_hop, next_hop, total_hops,q_type])
 
     with open(output_file, "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(["Node", "Packet", "Direction", "Protocol", "Port",
-                        "Time", "Size", "Offset", "src IP", "dest IP", "prev_hop", "next_hop", "total_hops"])
+                        "Time", "Size", "Offset", "src IP", "dest IP", "prev_hop", "next_hop", "total_hops", "q_type"])
         writer.writerows(data)
 
 

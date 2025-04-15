@@ -342,9 +342,10 @@ class Monitor:
             if path:
                 # print(f"  {' → '.join(str(node) for node in path)}")
                 pass
-            else:
+            else:                
                 self.app.client_info[client_id]["failed"] = self.app.client_info[client_id]["max_packets"]
-#
+                print(self.app.client_info[client_id]["failed"])
+        #
             # print(
             # f"  No path found: {self.app.client_info[client_id]['failed']}")
 

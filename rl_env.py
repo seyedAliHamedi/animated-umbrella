@@ -53,8 +53,8 @@ class NetworkEnv:
                 else:
                     self.active_links.append(0)
 
-        self.app = App(self.topology, app_interval=1,
-                       app_duration=self.simulation_duration, n_clients=self.n_clients, n_servers=self.n_servers)
+        self.app = App(self.topology, app_interval=1,n_clients=self.n_clients, n_servers= self.n_servers,
+                       app_duration=self.simulation_duration)
 
         self.app.monitor = Monitor(
             self.topology.nodes,
@@ -191,15 +191,19 @@ class NetworkEnv:
 
     def calculate_reward(self, metrics):
         r = 0
+        print("*"*40)
+        print("INFOO    ",self.app.client_info.values())
+        print("*"*40)
         n_total = sum(info["max_packets"]
                       for info in self.app.client_info.values())
         n_failed = sum(info["failed"]
                        for info in self.app.client_info.values())
 
         if n_failed > 0:
-            r = -100 * (n_failed / n_total)
+            r = -1 * (n_failed / n_total)
         else:
             r = 1 + len(self.active_routers) - sum(self.active_routers)
+            # r =  (np.exp(-len(self.active_routers)+sum(self.active_routers)))
         return r
 
     def calculate_energy(self):
@@ -210,8 +214,9 @@ class NetworkEnv:
             np.array(self.topology.adj_matrix))
 
         original_graph = nx.from_numpy_array(
-            np.array(self.original_adj_matrix))
+            np.array(self.orinigal_adj_matrix))
 
+        print(current_graph)
         metrics = {
             'betweenness_centrality': {
                 'original': dict(nx.betweenness_centrality(original_graph)),

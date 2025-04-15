@@ -52,7 +52,9 @@ class App:
         stack.Install(clients)
         stack.Install(servers)
 
-        available_gateways = list(range(self.topology.N_routers))
+        available_gateways = list(range(self.topology.N_routers))[:-1]
+
+
         client_gateways = random.sample(available_gateways, self.n_clients)
         remaining_gateways = [
             gw for gw in available_gateways if gw not in client_gateways]
