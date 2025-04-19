@@ -53,6 +53,7 @@ class Agent(nn.Module):
             node_data = node_features_dict[node_id]
             features = [
                 1.0 if node_data['is_active'] else 0.0,
+                1.0 if node_data['is_client_server'] else 0.0,
                 float(node_data['avg_power_per_operation']),
                 float(node_data['avg_energy_consumption']),
                 float(node_data['idle_interface_energy']),

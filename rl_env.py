@@ -308,6 +308,7 @@ class NetworkEnv:
     def collect_node_metrics(self, node_idx, graph_metrics, packet_data):
         node_metrics = {
             'is_active': self.active_routers[node_idx],
+            'is_client_server': 1 if node_idx in self.app.client_gateways or node_idx in self.app.server_gateways else 0,
             'avg_power_per_operation': np.random.uniform(0.5, 2.0),
             'avg_energy_consumption': np.random.uniform(5.0, 20.0),
             'idle_interface_energy': np.random.uniform(0.1, 0.5),

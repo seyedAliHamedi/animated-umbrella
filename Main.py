@@ -17,7 +17,7 @@ original_adj_matrix = [[0, 0, 0, 1],
 adj_matrix = original_adj_matrix.copy()
 
 
-agent = Agent(num_node_features=24, hidden_channels1=64, hidden_channels2=32)
+agent = Agent(num_node_features=25, hidden_channels1=64, hidden_channels2=32)
 env = None
 prev_actions = None
 

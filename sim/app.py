@@ -32,8 +32,11 @@ class App:
         self.animFile = animFile
         self.monitor = None
         self.client_info = {}
+        self.client_gateways = []
+        self.server_gateways = []
 
         self.clients, self.servers, self.clients_ip, self.servers_ip = self.initialize_client_server()
+
         self.install_app()
 
     def initialize_client_server(self):
@@ -54,14 +57,15 @@ class App:
 
         available_gateways = list(range(self.topology.N_routers))[:-1]
 
-        client_gateways = random.sample(available_gateways, self.n_clients)
+        self.client_gateways = random.sample(
+            available_gateways, self.n_clients)
         remaining_gateways = [
-            gw for gw in available_gateways if gw not in client_gateways]
-        server_gateways = random.sample(remaining_gateways, self.n_servers) if len(
+            gw for gw in available_gateways if gw not in self.client_gateways]
+        self.server_gateways = random.sample(remaining_gateways, self.n_servers) if len(
             remaining_gateways) >= self.n_servers else random.sample(available_gateways, self.n_servers)
 
-        # print("Clients gateways:", client_gateways)
-        # print("Servers gateways:", server_gateways)
+        print("Clients gateways:", self.client_gateways)
+        print("Servers gateways:", self.server_gateways)
 
         links_types = distribute_values(
             self.links_type, self.n_clients + self.n_servers)
@@ -72,7 +76,7 @@ class App:
 
         address = ns.Ipv4AddressHelper()
 
-        for i, gateway_idx in enumerate(client_gateways):
+        for i, gateway_idx in enumerate(self.client_gateways):
             gateway = self.topology.nodes.Get(gateway_idx)
             client = clients.Get(i)
 
@@ -99,7 +103,7 @@ class App:
             ip_interface = address.Assign(device_pair)
             clients_ip.append(ip_interface)
 
-        for i, gateway_idx in enumerate(server_gateways):
+        for i, gateway_idx in enumerate(self.server_gateways):
             gateway = self.topology.nodes.Get(gateway_idx)
             server = servers.Get(i)
 
@@ -164,7 +168,8 @@ class App:
             "q_type": q_type,
             "max_packets": max_packets,
             "packet_size": packet_size,
-            "failed": 0
+            "failed": 0,
+            "is_clientServer": 1
         }
         # print(f"q_type: {client.GetId()}, max_packets: {max_packets}, packet_size: {packet_size}")
 
