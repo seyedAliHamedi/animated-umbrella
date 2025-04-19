@@ -264,12 +264,20 @@ class NetworkEnv:
         for index in range(self.topology.N_routers):
             all_node_metrics[index] = self.collect_node_metrics(
                 index, graph_metrics, packet_data)
-
+        print("()"*100)
+        print("()"*100)
+        print("()"*100)
+        print(all_node_metrics)
+        print("()"*100)
+        print("()"*100)
+        print("()"*100)
         return all_node_metrics
 
     def process_packet_data_once(self):
         df = pd.read_csv('./sim/monitor/logs/packets_log.csv')
         df = df[(df["Port"] == 9) | (df["Port"] == 49153)]
+
+        df['Time'] = df['Time'].astype(float)
 
         packet_summary = df.groupby(
             ["Packet", "Port", "total_hops"]).size().reset_index(name="count")
@@ -294,13 +302,65 @@ class NetworkEnv:
             node_tx = df[(df['Node'] == node_idx) & (df['Direction'] == 'TX')]
             node_rx = df[(df['Node'] == node_idx) & (df['Direction'] == 'RX')]
 
+            total_transmit_time = 0
+            total_receive_time = 0
+            transmit_count = 0
+            receive_count = 0
+
+            for _, tx_row in node_tx.iterrows():
+                packet_id = tx_row['Packet']
+                next_hop = tx_row['next_hop']
+
+                if next_hop != "Null" and next_hop != "Server" and next_hop != "Client":
+                    next_hop = int(next_hop)
+                    rx_at_next = df[(df['Node'] == next_hop) &
+                                    (df['Packet'] == packet_id) &
+                                    (df['Direction'] == 'RX')]
+
+                    if not rx_at_next.empty:
+                        tx_time = tx_row['Time']
+                        rx_time = rx_at_next.iloc[0]['Time']
+                        transmit_time = rx_time - tx_time
+
+                        if transmit_time > 0:  # Sanity check
+                            total_transmit_time += transmit_time
+                            transmit_count += 1
+
+            for _, rx_row in node_rx.iterrows():
+                packet_id = rx_row['Packet']
+                prev_hop = rx_row['prev_hop']
+
+                if prev_hop != "Null" and prev_hop != "Server" and prev_hop != "Client":
+                    prev_hop = int(prev_hop)
+                    tx_at_prev = df[(df['Node'] == prev_hop) &
+                                    (df['Packet'] == packet_id) &
+                                    (df['Direction'] == 'TX')]
+
+                    if not tx_at_prev.empty:
+                        rx_time = rx_row['Time']
+                        tx_time = tx_at_prev.iloc[0]['Time']
+                        receive_time = rx_time - tx_time
+
+                        if receive_time > 0:  # Sanity check
+                            total_receive_time += receive_time
+                            receive_count += 1
+
+            avg_transmit_time = total_transmit_time / \
+                transmit_count if transmit_count > 0 else 0
+            avg_receive_time = total_receive_time / \
+                receive_count if receive_count > 0 else 0
+
             node_data[node_idx] = {
                 'tx_packets': len(node_tx),
                 'tx_bytes': int(node_tx['Size'].sum()) if not node_tx.empty else 0,
                 'rx_packets': len(node_rx),
                 'rx_bytes': int(node_rx['Size'].sum()) if not node_rx.empty else 0,
                 'lost_on_send': len(lost_packets_df[lost_packets_df['Node'] == node_idx]),
-                'lost_on_receive': len(lost_packets_df[lost_packets_df['next_hop'] == node_idx])
+                'lost_on_receive': len(lost_packets_df[lost_packets_df['next_hop'] == node_idx]),
+                'total_transmit_time': float(total_transmit_time),
+                'avg_transmit_time': float(avg_transmit_time),
+                'total_receive_time': float(total_receive_time),
+                'avg_receive_time': float(avg_receive_time),
             }
 
         return node_data
@@ -320,6 +380,10 @@ class NetworkEnv:
             'rx_bytes': packet_data[node_idx]['rx_bytes'],
             'lost_on_send': packet_data[node_idx]['lost_on_send'],
             'lost_on_receive': packet_data[node_idx]['lost_on_receive'],
+            'total_transmit_time': packet_data[node_idx]['total_transmit_time'],
+            'avg_transmit_time': packet_data[node_idx]['avg_transmit_time'],
+            'total_receive_time': packet_data[node_idx]['total_receive_time'],
+            'avg_receive_time': packet_data[node_idx]['avg_receive_time'],
 
             'expected_packets': {
                 'high_priority': np.random.randint(10, 50),
