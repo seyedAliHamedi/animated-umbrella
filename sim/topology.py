@@ -20,6 +20,9 @@ class Topology:
         self.base_networks = base_network
         self.xml_file = xml_file
 
+        self.edge_pairs = []
+        self.link_properties = []
+
         self.nodes, self.devices, self.interfaces, self.ip_interfaces = self.initialize()
 
     def initialize(self):
@@ -38,6 +41,16 @@ class Topology:
         for i in range(self.N_routers):
             for j in range(i, self.N_routers):
                 if self.adj_matrix[i][j] == 1:
+                    self.edge_pairs.append((i, j))
+
+                    self.link_properties.append({
+                        'type': links_types[x],
+                        'rate': links_rate[x],
+                        'delay': link_delays[x],
+                        'queue_size': links_queue[x],
+                        'error_rate': links_errors[x]
+                    })
+
                     if links_types[x] == "p2p":
                         link = ns.PointToPointHelper()
                         link.SetDeviceAttribute(

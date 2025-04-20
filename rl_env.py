@@ -83,10 +83,11 @@ class NetworkEnv:
     def step(self):
         self.run_simulation(self.simulation_duration)
 
-        metrics = self.collect_metrics()
-        reward = self.calculate_reward(metrics)
+        node_metrics = self.collect_metrics()
+        edge_metrics = self.collect_edge_features()
+        reward = self.calculate_reward(node_metrics, edge_metrics)
 
-        return metrics, reward
+        return node_metrics, edge_metrics, reward
 
     def run_simulation(self, duration):
         # print(f"Running simulation for {duration} seconds...")
@@ -189,18 +190,31 @@ class NetworkEnv:
     #         print(f"Error in set_interface_state: {e}")
     #         traceback.print_exc()
 
-    def calculate_reward(self, metrics):
+    def calculate_reward(self, node_metrics, edge_metrics=None):
         r = 0
         n_total = sum(info["max_packets"]
                       for info in self.app.client_info.values())
         n_failed = sum(info["failed"]
                        for info in self.app.client_info.values())
 
+        active_links = 0
+        total_links = 0
+        for i in range(self.topology.N_routers):
+            for j in range(i+1, self.topology.N_routers):
+                if self.original_adj_matrix[i][j] == 1:
+                    total_links += 1
+                    if self.adj_matrix[i][j] == 1:
+                        active_links += 1
+
         if n_failed > 0:
             r = -1 * (n_failed / n_total)
         else:
-            r = 1 + len(self.active_routers) - sum(self.active_routers)
-            # r =  (np.exp(-len(self.active_routers)+sum(self.active_routers)))
+            inactive_nodes = len(self.active_routers) - \
+                sum(self.active_routers)
+            inactive_links = total_links - active_links
+
+            r = 1.0 + 0.1 * inactive_nodes + 0.1 * inactive_links
+
         return r
 
     def calculate_energy(self):
@@ -264,13 +278,6 @@ class NetworkEnv:
         for index in range(self.topology.N_routers):
             all_node_metrics[index] = self.collect_node_metrics(
                 index, graph_metrics, packet_data)
-        print("()"*100)
-        print("()"*100)
-        print("()"*100)
-        print(all_node_metrics)
-        print("()"*100)
-        print("()"*100)
-        print("()"*100)
         return all_node_metrics
 
     def process_packet_data_once(self):
@@ -322,7 +329,7 @@ class NetworkEnv:
                         rx_time = rx_at_next.iloc[0]['Time']
                         transmit_time = rx_time - tx_time
 
-                        if transmit_time > 0:  # Sanity check
+                        if transmit_time > 0:
                             total_transmit_time += transmit_time
                             transmit_count += 1
 
@@ -424,3 +431,108 @@ class NetworkEnv:
             node_metrics['active_interfaces'] = active_interfaces
 
         return node_metrics
+
+    def collect_edge_features(self):
+        edge_features = {}
+
+        df = pd.read_csv('./sim/monitor/logs/packets_log.csv')
+        df = df[(df["Port"] == 9) | (df["Port"] == 49153)]
+        df['Time'] = df['Time'].astype(float)
+
+        for i in range(self.topology.N_routers):
+            for j in range(i+1, self.topology.N_routers):
+                edge_id = (i, j)
+
+                is_active = self.adj_matrix[i][j] == 1
+
+                if is_active:
+                    packets_i_to_j = df[(df['Node'] == i) & (
+                        df['next_hop'] == j) & (df['Direction'] == 'TX')]
+                    packets_j_to_i = df[(df['Node'] == j) & (
+                        df['next_hop'] == i) & (df['Direction'] == 'TX')]
+
+                    traffic_volume = len(packets_i_to_j) + len(packets_j_to_i)
+                    bytes_transferred = int(
+                        packets_i_to_j['Size'].sum()) + int(packets_j_to_i['Size'].sum())
+
+                    latencies = []
+
+                    for _, tx_row in packets_i_to_j.iterrows():
+                        packet_id = tx_row['Packet']
+                        rx_packets = df[(df['Node'] == j) & (df['Packet'] == packet_id) &
+                                        (df['Direction'] == 'RX') & (df['Time'] > tx_row['Time'])]
+
+                        if not rx_packets.empty:
+                            tx_time = tx_row['Time']
+                            rx_time = rx_packets.iloc[0]['Time']
+                            latency = rx_time - tx_time
+                            if latency > 0:
+                                latencies.append(latency)
+
+                    for _, tx_row in packets_j_to_i.iterrows():
+                        packet_id = tx_row['Packet']
+                        rx_packets = df[(df['Node'] == i) & (df['Packet'] == packet_id) &
+                                        (df['Direction'] == 'RX') & (df['Time'] > tx_row['Time'])]
+
+                        if not rx_packets.empty:
+                            tx_time = tx_row['Time']
+                            rx_time = rx_packets.iloc[0]['Time']
+                            latency = rx_time - tx_time
+                            if latency > 0:
+                                latencies.append(latency)
+
+                    total_tx = len(packets_i_to_j) + len(packets_j_to_i)
+
+                    received_at_j = df[(df['Node'] == j) &
+                                       (df['prev_hop'] == i) &
+                                       (df['Direction'] == 'RX')]
+
+                    received_at_i = df[(df['Node'] == i) &
+                                       (df['prev_hop'] == j) &
+                                       (df['Direction'] == 'RX')]
+
+                    total_rx = len(received_at_j) + len(received_at_i)
+                    packet_loss = (total_tx - total_rx) / \
+                        total_tx if total_tx > 0 else 0
+
+                    link_idx = None
+                    for idx, (a, b) in enumerate(self.topology.edge_pairs):
+                        if (a == i and b == j) or (a == j and b == i):
+                            link_idx = idx
+                            break
+
+                    link_type = self.topology.link_properties[link_idx]['type']
+                    link_rate = self.topology.link_properties[link_idx]['rate']
+                    link_delay = self.topology.link_properties[link_idx]['delay']
+                    link_queue = self.topology.link_properties[link_idx]['queue_size']
+                    link_error_rate = self.topology.link_properties[link_idx]['error_rate']
+
+                    edge_features[edge_id] = {
+                        'is_active': 1,
+                        'traffic_volume': traffic_volume,
+                        'bytes_transferred': bytes_transferred,
+                        'avg_latency': sum(latencies) / len(latencies) if latencies else 0,
+                        'max_latency': max(latencies) if latencies else 0,
+                        'packet_loss_rate': packet_loss,
+                        'link_type': link_type,
+                        'link_rate': link_rate,
+                        'link_delay': link_delay,
+                        'link_queue_size': link_queue,
+                        'link_error_rate': link_error_rate,
+                    }
+                else:
+                    edge_features[edge_id] = {
+                        'is_active': 0,
+                        'traffic_volume': 0,
+                        'bytes_transferred': 0,
+                        'avg_latency': 0,
+                        'max_latency': 0,
+                        'packet_loss_rate': 0,
+                        'link_type': '',
+                        'link_rate': 0,
+                        'link_delay': 0,
+                        'link_queue_size': 0,
+                        'link_error_rate': 0,
+                    }
+
+        return edge_features
