@@ -44,14 +44,17 @@ class NetworkEnv:
 
             self.active_routers.append(1 if flag else 0)
 
-        self.active_links = []
+        self.active_links = {
+            i: int(sum(self.adj_matrix[i]))
+            for i in range(self.topology.N_routers)
+        }
 
-        for i in range(self.topology.N_routers):
-            for j in range(i+1, self.topology.N_routers):
-                if self.adj_matrix[i][j] == 1:
-                    self.active_links.append(1)
-                else:
-                    self.active_links.append(0)
+        # for i in range(self.topology.N_routers):
+        #     for j in range(i+1, self.topology.N_routers):
+        #         if self.adj_matrix[i][j] == 1:
+        #             self.active_links.append(1)
+        #         else:
+        #             self.active_links.append(0)
 
         self.app = App(self.topology, app_interval=1, n_clients=self.n_clients, n_servers=self.n_servers,
                        app_duration=self.simulation_duration)
@@ -199,7 +202,7 @@ class NetworkEnv:
         if n_failed > 0:
             r = -1 * (n_failed / n_total)
         else:
-            r = 1 + len(self.active_routers) - sum(self.active_routers)
+            r = 1 + len(self.active_routers) / sum(self.active_routers)
             # r =  (np.exp(-len(self.active_routers)+sum(self.active_routers)))
         return r
 
@@ -264,13 +267,6 @@ class NetworkEnv:
         for index in range(self.topology.N_routers):
             all_node_metrics[index] = self.collect_node_metrics(
                 index, graph_metrics, packet_data)
-        print("()"*100)
-        print("()"*100)
-        print("()"*100)
-        print(all_node_metrics)
-        print("()"*100)
-        print("()"*100)
-        print("()"*100)
         return all_node_metrics
 
     def process_packet_data_once(self):
@@ -373,6 +369,7 @@ class NetworkEnv:
             'avg_energy_consumption': np.random.uniform(5.0, 20.0),
             'idle_interface_energy': np.random.uniform(0.1, 0.5),
 
+
             # Use pre-calculated packet data
             'tx_packets': packet_data[node_idx]['tx_packets'],
             'tx_bytes': packet_data[node_idx]['tx_bytes'],
@@ -390,7 +387,8 @@ class NetworkEnv:
                 'medium_priority': np.random.randint(5, 30),
                 'low_priority': np.random.randint(1, 20)
             },
-            'active_interfaces': 0,
+            'active_interfaces': self.active_links[node_idx],
+
             'graph_metrics': {
                 'betweenness_centrality': {
                     'original': graph_metrics['betweenness_centrality']['original'].get(node_idx, 0),
