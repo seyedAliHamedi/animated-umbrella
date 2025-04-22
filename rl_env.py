@@ -92,7 +92,7 @@ class NetworkEnv:
         self.collect_edge_features()
         # print(self.inter_info)
         print("-" * 30)
-        self.app.monitor.collect_flow_stats()
+        self.app.monitor.collect_flow_stats(log=True)
         print("-" * 30)
         reward = self.calculate_reward(metrics)
 
@@ -449,16 +449,14 @@ class NetworkEnv:
                 tx_bytes = 0
                 rx_bytes = 0
                 packets_i_to_j = pd.DataFrame()
-                packets_j_to_i = pd.DataFrame()
+                all_rx_packets = []
 
                 if is_active:
                     packets_i_to_j = df[(df['Node'] == i) & (
-                        df['next_hop'] == str(j))]
-                    packets_j_to_i = df[(df['Node'] == j) & (
-                        df['next_hop'] == str(i))]
+                        df['next_hop'] == str(j)) & (df['Direction'] == 'TX')]
+
 
                     tx_bytes = int(packets_i_to_j['Size'].sum())
-                    rx_bytes = int(packets_j_to_i['Size'].sum())
 
                     for _, tx_row in packets_i_to_j.iterrows():
                         packet_id = tx_row['Packet']
@@ -468,19 +466,12 @@ class NetworkEnv:
                             tx_time = tx_row['Time']
                             rx_time = rx_packets.iloc[0]['Time']
                             latency = rx_time - tx_time
+                            all_rx_packets.append(rx_packets)
+
                             if latency > 0:
                                 latencies_tx.append(latency)
 
-                    for _, tx_row in packets_j_to_i.iterrows():
-                        packet_id = tx_row['Packet']
-                        rx_packets = df[(df['Node'] == i) & (df['Packet'] == packet_id) &
-                                        (df['Direction'] == 'RX') & (df['Time'] > tx_row['Time'])]
-                        if not rx_packets.empty:
-                            tx_time = tx_row['Time']
-                            rx_time = rx_packets.iloc[0]['Time']
-                            latency = rx_time - tx_time
-                            if latency > 0:
-                                latencies_rx.append(latency)
+
 
                 total_time_tx = sum(latencies_tx)
                 avg_time_tx = total_time_tx / \
@@ -492,8 +483,8 @@ class NetworkEnv:
 
                 # print(f"Edge {edge_id}: tx_bytes={tx_bytes}, rx_bytes={rx_bytes}, total_time_tx={total_time_tx}, avg_time_tx={avg_time_tx}, total_time_rx={total_time_rx}, avg_time_rx={avg_time_rx}")
                 print(
-                    f"Edge {edge_id}: tx_ps={len(packets_i_to_j)}, rx_ps={len(packets_j_to_i)}, total_time_tx={total_time_tx}, total_time_rx={total_time_rx}")
-
+                    f"Edge {edge_id}: tx_ps={len(packets_i_to_j)}, rx_ps={len(all_rx_packets)}, total_time_tx={total_time_tx}, total_time_rx={total_time_rx}")
+                print("pack")
                 if is_active:
                     self.inter_info[edge_id] = {
                         'node': i,
@@ -506,7 +497,7 @@ class NetworkEnv:
                         'total_time_rx': total_time_rx,
                         'avg_time_rx': avg_time_rx,
                         'tx_packets': len(packets_i_to_j),
-                        'rx_packets': len(packets_j_to_i),
+                        'rx_packets': len(all_rx_packets),
                         # 'lost_tx': len(packets_i_to_j[packets_i_to_j['status'] == 'LOST']),
                         # 'lost_rx': len(packets_j_to_i[packets_j_to_i['status'] == 'LOST'])
                     }
