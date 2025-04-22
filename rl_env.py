@@ -468,8 +468,7 @@ class NetworkEnv:
                             latency = rx_time - tx_time
                             all_rx_packets.append(rx_packets)
 
-                            if latency > 0:
-                                latencies_tx.append(latency)
+                            latencies_tx.append(latency)
 
 
 
@@ -477,14 +476,11 @@ class NetworkEnv:
                 avg_time_tx = total_time_tx / \
                     len(latencies_tx) if len(latencies_tx) > 0 else 0
 
-                total_time_rx = sum(latencies_rx)
-                avg_time_rx = total_time_rx / \
-                    len(latencies_rx) if len(latencies_rx) > 0 else 0
+
 
                 # print(f"Edge {edge_id}: tx_bytes={tx_bytes}, rx_bytes={rx_bytes}, total_time_tx={total_time_tx}, avg_time_tx={avg_time_tx}, total_time_rx={total_time_rx}, avg_time_rx={avg_time_rx}")
                 print(
-                    f"Edge {edge_id}: tx_ps={len(packets_i_to_j)}, rx_ps={len(all_rx_packets)}, total_time_tx={total_time_tx}, total_time_rx={total_time_rx}")
-                print("pack")
+                    f"Edge {edge_id}: tx_ps={len(packets_i_to_j)}, rx_ps={len(all_rx_packets)}, latency={total_time_tx}")
                 if is_active:
                     self.inter_info[edge_id] = {
                         'node': i,
@@ -494,8 +490,6 @@ class NetworkEnv:
                         'rx_bytes': rx_bytes,
                         'total_time_tx': total_time_tx,
                         'avg_time_tx': avg_time_tx,
-                        'total_time_rx': total_time_rx,
-                        'avg_time_rx': avg_time_rx,
                         'tx_packets': len(packets_i_to_j),
                         'rx_packets': len(all_rx_packets),
                         # 'lost_tx': len(packets_i_to_j[packets_i_to_j['status'] == 'LOST']),
