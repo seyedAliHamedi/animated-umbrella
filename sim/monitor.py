@@ -349,7 +349,7 @@ class Monitor:
             # print(
             # f"  No path found: {self.app.client_info[client_id]['failed']}")
 
-    def collect_flow_stats(self, stats_file=sample_data['flow_stats_file'], app_port=None,  filter_noise=True, log=False):
+    def collect_flow_stats(self, stats_file=sample_data['flow_stats_file'], app_port=None,  filter_noise=True, log=True):
         if log:
             print(
                 "\n--------------------------- Collecting flow statistics ---------------------------")
