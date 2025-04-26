@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch_geometric.data import Data
-from torch_geometric.nn import GCNConv
+from torch_geometric.nn import GCNConv, BatchNorm
 from sklearn.preprocessing import StandardScaler
 
 
@@ -20,7 +20,6 @@ class Agent(nn.Module):
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
-
         x = self.conv1(x, edge_index)
         x = F.relu(x)
 

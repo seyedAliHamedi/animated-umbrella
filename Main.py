@@ -9,19 +9,20 @@ os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 
 # n = 4
 
-# original_adj_matrix = fc_graph(n)
+# original_adj_matrix = fc_graph(4)
 original_adj_matrix = [[0, 0, 0, 1],
                        [0, 0, 0, 1],
                        [0, 0, 0, 1],
                        [1, 1, 1, 0]]
 adj_matrix = original_adj_matrix.copy()
 
+total_e = 0
 
 agent = Agent(num_node_features=25, hidden_channels1=64, hidden_channels2=32)
 env = None
 prev_actions = None
 
-for epoch in range(2000):
+for epoch in range(1000):
     if env is not None:
         ns.Simulator.Destroy()
         env = None
@@ -35,7 +36,8 @@ for epoch in range(2000):
     )
     print(f"-------------------Epoch {epoch}-----------------------")
 
-    metrics, reward = env.step()
+    metrics, reward, e, q = env.step()
+    total_e += e
     if prev_actions is not None:
         log_prob = prev_actions * torch.log(prev_p + 1e-10) + \
             (1 - prev_actions) * torch.log(1 - prev_p + 1e-10)
@@ -47,7 +49,8 @@ for epoch in range(2000):
             agent.optimizer.zero_grad()
             loss.backward()
             agent.optimizer.step()
-            print(f"Epoch {epoch}, Reward: {reward}, Loss: {loss.item()}")
+            print(
+                f"Epoch {epoch}, Reward: {reward}, Loss: {loss.item()}, e: {e}, q: {q}")
     else:
         print(f"Epoch {epoch}, First epoch – no previous actions.")
 
@@ -58,3 +61,6 @@ for epoch in range(2000):
     adj_matrix = changeAdj(actions, original_adj_matrix)
     prev_actions = actions
     prev_p = p
+
+
+print(total_e / 20)

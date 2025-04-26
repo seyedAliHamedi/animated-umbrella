@@ -24,6 +24,7 @@ class Monitor:
         self.node_to_ip = {}
         self.routing_tables = None
         self.trace_modules = []
+        self.flow_info = {}
 
     def setup_animation(self, anim_file=sample_data['xml_animation_file'], enable_packet_metadata=True):
         self.anim = ns.AnimationInterface(anim_file)
@@ -349,7 +350,7 @@ class Monitor:
             # print(
             # f"  No path found: {self.app.client_info[client_id]['failed']}")
 
-    def collect_flow_stats(self, stats_file=sample_data['flow_stats_file'], app_port=None,  filter_noise=True, log=False):
+    def collect_flow_stats(self, stats_file=sample_data['flow_stats_file'], app_port=None,  filter_noise=True, log=False, q=False):
         if log:
             print(
                 "\n--------------------------- Collecting flow statistics ---------------------------")
@@ -363,16 +364,49 @@ class Monitor:
 
             if filter_noise and flowStats.rxPackets < 3:
                 continue
+
+            # Extract values
+            src_ip = str(flowClass.sourceAddress).strip()
+            dst_ip = str(flowClass.destinationAddress).strip()
+            # print(f"src_ip: {src_ip}, dst_ip: {dst_ip}")
+            tx_packets = flowStats.txPackets
+            rx_packets = flowStats.rxPackets
+            lost_packets = tx_packets - rx_packets
+            total_delay = flowStats.delaySum.GetSeconds()
+            mean_delay = total_delay / rx_packets if rx_packets > 0 else 0
+            total_jitter = flowStats.jitterSum.GetSeconds()
+            mean_jitter = total_jitter / rx_packets if rx_packets > 0 else 0
+            # Match q_type by looking up src/dest IP in self.app.client_info
+            q_type = "NA"
+            for info in self.app.client_info.values():
+                if (info["src_ip"] == src_ip and info["dest_ip"] == dst_ip) or info["src_ip"] == dst_ip and info["dest_ip"] == src_ip:
+                    q_type = info["q_type"]
+                    # print(
+                    #     f"q_type: {q_type}, src_ip: {src_ip}, dest_ip: {dst_ip}")
+                    break
+
+            if q == True:
+                self.flow_info[flow_id] = {
+                    "src_ip": src_ip,
+                    "dst_ip": dst_ip,
+                    "tx_packets": tx_packets,
+                    "rx_packets": rx_packets,
+                    "lost_packets": lost_packets,
+                    "mean_delay": mean_delay,
+                    "total_delay": total_delay,
+                    "mean_jitter": mean_jitter,
+                    "total_jitter": total_jitter,
+                    "q_type": q_type
+                }
+
             if log:
                 print(f"📊 Flow {flow_id}: ")
+                print(f"   Source IP: {src_ip}, Dest IP: {dst_ip}")
+                print(f"   Tx Packets: {tx_packets}, Rx Packets: {rx_packets}")
+                print(f"   Lost Packets: {lost_packets}")
                 print(
-                    f"   Source IP: {flowClass.sourceAddress}, Dest IP: {flowClass.destinationAddress}")
-                print(
-                    f"   Tx Packets: {flowStats.txPackets}, Rx Packets: {flowStats.rxPackets}")
-                print(
-                    f"   Lost Packets: {flowStats.txPackets - flowStats.rxPackets}")
-                print(
-                    f"   Throughput: {(flowStats.rxBytes/(flowStats.rxPackets*self.app.app_interval))} Bps")
-                print(f"   Mean Delay: {flowStats.delaySum.GetSeconds()} sec")
-                print(
-                    f"   Mean Jitter: {flowStats.jitterSum.GetSeconds()} sec")
+                    f"   Throughput: {(flowStats.rxBytes / (rx_packets * self.app.app_interval)) if rx_packets > 0 else 0:.2f} Bps")
+                print(f"   Mean Delay: {mean_delay:.6f} sec")
+                print(f"   Total Delay: {total_delay:.6f} sec")
+                print(f"   Mean Jitter: {mean_jitter:.6f} sec")
+                print(f"   Total Jitter: {total_jitter:.6f} sec")

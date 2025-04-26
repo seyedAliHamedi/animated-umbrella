@@ -49,11 +49,81 @@ sample_data = {
     "tcp_app_data_rate": 500000,
 
     "app_animation_file": "./sim/monitor/xml/app.xml",
-    "q_list": {"q1": {"max_packets": [200, 400], "packet_size": [100, 1000], "score_th": 0.7},
-               "q2": {"max_packets": [200, 400], "packet_size": [100, 1000], "score_th": 0.7},
-               "q3": {"max_packets": [200, 400], "packet_size": [100, 1000], "score_th": 0.7},
-               "q4": {"max_packets": [200, 400], "packet_size": [100, 1000], "score_th": 0.7}
-               },
+    "q_list": {
+        # QCI 1: Conversational Voice (very delay- and jitter-sensitive)
+        "voice": {
+                "max_packets": [2000, 3000],      # total packets in 50 s
+                "packet_size": [160, 200],        # in bytes
+                "data_rate": [0.06, 0.08],        # Mbps
+                "score_th": 0.80,
+                "w_l": 0.20,
+                "w_j": 0.40,
+                "w_d": 0.40,
+                "w_b": 0.00,
+                "p": 1.0                          # highest priority
+        },
+
+        # QCI 2: Conversational Video (live streaming / video calls)
+        "live_video": {
+            "max_packets": [5000, 10000],     # total packets in 50 s
+            "packet_size": [1200, 1500],      # in bytes
+            "data_rate": [1.0, 2.6],          # Mbps
+            "score_th": 0.75,
+            "w_l": 0.40,
+            "w_j": 0.20,
+            "w_d": 0.30,
+            "w_b": 0.10,
+            "p": 0.8                          # high, but below voice/gaming
+        },
+
+        # QCI 3: Real-Time Gaming / V2X (ultra-low latency)
+        "gaming": {
+            "max_packets": [1000, 2000],      # total packets in 50 s
+            "packet_size": [50, 200],         # in bytes
+            "data_rate": [0.05, 0.20],        # Mbps
+            "score_th": 0.85,
+            "w_l": 0.25,
+            "w_j": 0.25,
+            "w_d": 0.50,
+            "w_b": 0.00,
+            "p": 1.0                          # highest priority
+        },
+
+        # QCI 8: Bulk Data / Best-Effort (web, file transfer, email)
+        "bulk_data": {
+            "max_packets": [20000, 50000],    # total packets in 50 s
+            "packet_size": [500, 1500],       # in bytes
+            "data_rate": [5.0, 20.0],         # Mbps
+            "score_th": 0.70,
+            "w_l": 0.20,
+            "w_j": 0.15,
+            "w_d": 0.15,
+            "w_b": 0.50,
+            "p": 0.5                          # lowest priority
+        }
+    },
+    "routers": {
+        0: {'name': 'Cisco ASR 9904', 'P_idle': 4.0, 'P_rx': 35.0, 'P_tx': 35.0, 'P_base': 1150.0},
+        1: {'name': 'Cisco ASR 1001-X', 'P_idle': 0.75, 'P_rx': 7.0, 'P_tx': 5.0, 'P_base': 175.0},
+        2: {'name': 'Cisco NCS 5508', 'P_idle': 5.0, 'P_rx': 27.5, 'P_tx': 27.5, 'P_base': 650.0},
+        3: {'name': 'Cisco Nexus 9300', 'P_idle': 3.0, 'P_rx': 17.5, 'P_tx': 17.5, 'P_base': 200.0},
+        4: {'name': 'Cisco Catalyst 9500', 'P_idle': 1.5, 'P_rx': 11.5, 'P_tx': 11.5, 'P_base': 110.0},
+        5: {'name': 'Juniper MX960', 'P_idle': 5.0, 'P_rx': 17.5, 'P_tx': 17.5, 'P_base': 1350.0},
+        6: {'name': 'Juniper MX204', 'P_idle': 0.75, 'P_rx': 17.5, 'P_tx': 17.5, 'P_base': 350.0},
+        7: {'name': 'Juniper PTX10008', 'P_idle': 8.5, 'P_rx': 35.0, 'P_tx': 35.0, 'P_base': 4000.0},
+        8: {'name': 'Juniper PTX1000', 'P_idle': 0.75, 'P_rx': 20.0, 'P_tx': 20.0, 'P_base': 225.0},
+        9: {'name': 'Juniper QFX5200', 'P_idle': 3.5, 'P_rx': 20.0, 'P_tx': 20.0, 'P_base': 105.0},
+        10: {'name': 'Arista 7500R3', 'P_idle': 7.5, 'P_rx': 42.5, 'P_tx': 42.5, 'P_base': 1500.0},
+        11: {'name': 'Nokia 7750 SR-12e', 'P_idle': 4.0, 'P_rx': 15.0, 'P_tx': 15.0, 'P_base': 1250.0},
+        12: {'name': 'Nokia 7750 SR-1', 'P_idle': 1.5, 'P_rx': 3.0, 'P_tx': 3.0, 'P_base': 225.0},
+        13: {'name': 'Nokia 7950 XRS-20', 'P_idle': 7.5, 'P_rx': 40.0, 'P_tx': 40.0, 'P_base': 6500.0},
+        14: {'name': 'Nokia 7250 IXR-6/10', 'P_idle': 3.0, 'P_rx': 32.5, 'P_tx': 32.5, 'P_base': 600.0},
+        15: {'name': 'Extreme SLX 9850', 'P_idle': 4.0, 'P_rx': 12.5, 'P_tx': 12.5, 'P_base': 650.0},
+        16: {'name': 'Extreme MLXe-16', 'P_idle': 4.0, 'P_rx': 18.0, 'P_tx': 18.0, 'P_base': 900.0},
+        17: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5, 'P_base': 4100.0}
+        # 18: {'name': 'Arista 7280R', 'P_idle': None, 'P_rx': 17.5, 'P_tx': 17.5, 'P_base': 175.0},
+        # 19: {'name': 'Arista 7050X3', 'P_idle': None, 'P_rx': 7.0, 'P_tx': 7.0, 'P_base': 65.0}
+    },
 
     "app_duration": 100,
     "app_start_time": 10,
@@ -617,7 +687,6 @@ def parse_routes_manually(file_path):
 
     # print(f"Found routing data for {len(routing_tables)} nodes")
     return routing_tables
-
 
     # Define a C++ module that stores data in memory and provides access methods
 sample_data['cpp_code_f'] = '''

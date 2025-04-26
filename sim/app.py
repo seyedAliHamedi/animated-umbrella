@@ -34,8 +34,8 @@ class App:
         self.client_info = {}
         self.client_gateways = []
         self.server_gateways = []
-
-        self.clients, self.servers, self.clients_ip, self.servers_ip = self.initialize_client_server()
+        self.clients_ip = []
+        self.clients, self.servers, self.servers_ip = self.initialize_client_server()
 
         self.install_app()
 
@@ -101,7 +101,7 @@ class App:
             address.SetBase(ns.Ipv4Address(
                 f"1.1.{10+i}.0"), ns.Ipv4Mask("255.255.255.0"))
             ip_interface = address.Assign(device_pair)
-            clients_ip.append(ip_interface)
+            self.clients_ip.append(ip_interface)
 
         for i, gateway_idx in enumerate(self.server_gateways):
             gateway = self.topology.nodes.Get(gateway_idx)
@@ -130,7 +130,7 @@ class App:
             ip_interface = address.Assign(device_pair)
             servers_ip.append(ip_interface)
 
-        return clients, servers, clients_ip, servers_ip
+        return clients, servers, servers_ip
 
     def install_app(self):
         for i in range(self.n_servers):
@@ -139,7 +139,7 @@ class App:
         for i in range(self.n_clients):
             client = self.clients.Get(i)
             server = self.servers_ip[i % self.n_servers]
-            self.setup_client(client, server)
+            self.setup_client(i, client, server)
 
     def setup_server(self, server):
         if self.app_type == "udp_echo":
@@ -155,7 +155,7 @@ class App:
         server_app.Start(ns.Seconds(self.app_start_time))
         server_app.Stop(ns.Seconds(self.app_start_time + self.app_duration))
 
-    def setup_client(self, client, server):
+    def setup_client(self, client_idx, client, server):
         q_type = random.choice(list(sample_data["q_list"].keys()))
         q_config = sample_data["q_list"][q_type]
         max_packets = random.randint(*q_config["max_packets"])
@@ -164,16 +164,22 @@ class App:
                             8) if min_size % 8 != 0 else min_size
         end = max_size - (max_size % 8)
         packet_size = random.randrange(start, end + 1, 8)
+        client_ip = str(self.clients_ip[client_idx].GetAddress(0)).strip()
+        server_ip = str(server.GetAddress(0, 0)).strip()
+
+        # print(f"Client {client_idx} src_ip: {client_ip}, dst ip: {server_ip}")
+
         self.client_info[client.GetId()] = {
             "q_type": q_type,
             "max_packets": max_packets,
             "packet_size": packet_size,
             "failed": 0,
-            "is_clientServer": 1
+            "is_clientServer": 1,
+            "src_ip": client_ip,
+            "dest_ip": server_ip
         }
-        # print(f"q_type: {client.GetId()}, max_packets: {max_packets}, packet_size: {packet_size}")
-
         server_ip = server.GetAddress(0, 0).ConvertTo()
+        # print(f"q_type: {client.GetId()}, max_packets: {max_packets}, packet_size: {packet_size}")
 
         if self.app_type == "udp_echo":
             echo_client = ns.UdpEchoClientHelper(server_ip, self.app_port)

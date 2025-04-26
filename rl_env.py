@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import traceback
 import networkx as nx
-
+from sim.utils import *
 from sim.topology import Topology
 from sim.app import App
 from sim.monitor import Monitor
@@ -31,6 +31,11 @@ class NetworkEnv:
         self.inter_info = {}
 
         self.setup_environment()
+
+        self.router_type = {
+            i: sample_data["routers"][i % len(sample_data["routers"])]
+            for i in range(self.topology.N_routers)
+        }
 
     def setup_environment(self):
 
@@ -91,12 +96,16 @@ class NetworkEnv:
         metrics = self.collect_metrics()
         self.collect_edge_features()
         # print(self.inter_info)
-        print("-" * 30)
-        self.app.monitor.collect_flow_stats(log=True)
-        print("-" * 30)
-        reward = self.calculate_reward(metrics)
+        # self.app.monitor.collect_flow_stats(q=True)
+        # print(self.app.client_info)
+        # print("Client info:", self.app.client_info)
+        # print("--" * 20)
+        # print("flow info: ", self.app.monitor.flow_info)
+        e = self.calculate_energy()
+        q = self.calculate_qos()
+        reward = self.calculate_reward(e, q)
 
-        return metrics, reward
+        return metrics, reward, e, q
 
     def run_simulation(self, duration):
         # print(f"Running simulation for {duration} seconds...")
@@ -107,7 +116,7 @@ class NetworkEnv:
         self.app.monitor.trace_routes()
 
         self.app.monitor.collect_flow_stats(
-            app_port=self.app.app_port, filter_noise=True)
+            app_port=self.app.app_port, filter_noise=True, q=True)
         self.app.monitor.get_packet_logs()
         # print("Simulation completed")
 
@@ -199,7 +208,8 @@ class NetworkEnv:
     #         print(f"Error in set_interface_state: {e}")
     #         traceback.print_exc()
 
-    def calculate_reward(self, metrics):
+    def calculate_reward(self, e, q):
+        e /= 200000  # Normalize energy consumption
         r = 0
         n_total = sum(info["max_packets"]
                       for info in self.app.client_info.values())
@@ -207,14 +217,69 @@ class NetworkEnv:
                        for info in self.app.client_info.values())
 
         if n_failed > 0:
-            r = -1 * (n_failed / n_total)
+            r = -0.00001 * (n_failed / n_total)
+
         else:
-            r = 1 + len(self.active_routers) / sum(self.active_routers)
-            # r =  (np.exp(-len(self.active_routers)+sum(self.active_routers)))
+            if e > 0:
+                #         # r = 1 + len(self.active_routers) / sum(self.active_routers)
+                #         # r = (100000 * q) / (e + 1e-10)
+                # r = 1 / (e + 1e-10)
+                r = 1 - e
+        # r =  (np.exp(-len(self.active_routers)+sum(self.active_routers)))
         return r
 
-    def calculate_energy(self, edge_features):
-        return 5
+    def calculate_energy(self):
+
+        total_e = 0
+        sim_duration = self.simulation_duration
+        for i in range(self.topology.N_routers):
+            if self.active_routers[i] == 0:
+                continue
+            e_base = sample_data["routers"][i]["P_base"] * \
+                sim_duration
+            total_e += e_base
+            for edge_id, interface in self.inter_info.items():
+                if interface['is_active'] == 1 and interface['node'] == i:
+                    t_tx = interface['total_time_tx']
+                    t_rx = interface['total_time_tx']
+                    t_idle = sim_duration - (t_rx + t_tx)
+                    e_rx = t_rx * sample_data["routers"][i]["P_rx"]
+                    e_tx = t_tx * sample_data["routers"][i]["P_tx"]
+                    e_idle = t_idle * sample_data["routers"][i]["P_idle"]
+                    self.inter_info[edge_id]['energy'] = e_rx + e_tx + e_idle
+                    total_e += e_rx + e_tx + e_idle
+
+        return total_e
+
+    def calculate_qos(self):
+        W = []
+        Q = []
+        for flow_id, flow in self.app.monitor.flow_info.items():
+            q_type = flow["q_type"]
+            w_b = sample_data["q_list"][q_type]["w_b"]
+            w_j = sample_data["q_list"][q_type]["w_j"]
+            w_d = sample_data["q_list"][q_type]["w_d"]
+            w_l = sample_data["q_list"][q_type]["w_l"]
+
+            n = flow["rx_packets"]
+            p = sample_data["q_list"][q_type]["p"]
+            w = n * p
+            W.append(w)
+
+            # b = 0
+            l = flow["lost_packets"] / n
+            d = flow["total_delay"]
+            j = flow["total_jitter"]
+
+            q = 1 - (w_j * j + w_d * d + w_l * l)
+            Q.append(q)
+
+        total_weight = sum(W)
+        if total_weight == 0:
+            return 0  # No traffic at all
+
+        weighted_qos = sum(w * q for w, q in zip(W, Q)) / total_weight
+        return weighted_qos
 
     def collect_graph_metrics(self):
         current_graph = nx.from_numpy_array(
@@ -455,7 +520,6 @@ class NetworkEnv:
                     packets_i_to_j = df[(df['Node'] == i) & (
                         df['next_hop'] == str(j)) & (df['Direction'] == 'TX')]
 
-
                     tx_bytes = int(packets_i_to_j['Size'].sum())
 
                     for _, tx_row in packets_i_to_j.iterrows():
@@ -470,17 +534,13 @@ class NetworkEnv:
 
                             latencies_tx.append(latency)
 
-
-
                 total_time_tx = sum(latencies_tx)
                 avg_time_tx = total_time_tx / \
                     len(latencies_tx) if len(latencies_tx) > 0 else 0
 
-
-
                 # print(f"Edge {edge_id}: tx_bytes={tx_bytes}, rx_bytes={rx_bytes}, total_time_tx={total_time_tx}, avg_time_tx={avg_time_tx}, total_time_rx={total_time_rx}, avg_time_rx={avg_time_rx}")
-                print(
-                    f"Edge {edge_id}: tx_ps={len(packets_i_to_j)}, rx_ps={len(all_rx_packets)}, latency={total_time_tx}")
+                # print(
+                #     f"Edge {edge_id}: tx_ps={len(packets_i_to_j)}, rx_ps={len(all_rx_packets)}, latency={total_time_tx}")
                 if is_active:
                     self.inter_info[edge_id] = {
                         'node': i,
@@ -490,8 +550,11 @@ class NetworkEnv:
                         'rx_bytes': rx_bytes,
                         'total_time_tx': total_time_tx,
                         'avg_time_tx': avg_time_tx,
+                        'total_time_rx': 0,
+                        'avg_time_rx': 0,
                         'tx_packets': len(packets_i_to_j),
                         'rx_packets': len(all_rx_packets),
+                        'energy': 0
                         # 'lost_tx': len(packets_i_to_j[packets_i_to_j['status'] == 'LOST']),
                         # 'lost_rx': len(packets_j_to_i[packets_j_to_i['status'] == 'LOST'])
                     }
@@ -509,5 +572,6 @@ class NetworkEnv:
                         'tx_packets': 0,
                         'rx_packets': 0,
                         'lost_tx': 0,
-                        'lost_rx': 0
+                        'lost_rx': 0,
+                        'energy': 0
                     }
