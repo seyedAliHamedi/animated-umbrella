@@ -69,6 +69,8 @@ class NetworkEnv:
         )
 
         self.app.monitor = Monitor(self.app.topology, self.app)
+        self.app.monitor.ip_to_node = self.ip_to_node
+        self.app.monitor.node_to_ip = self.node_to_ip
 
         mobility = ns.MobilityHelper()
         mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
@@ -95,14 +97,6 @@ class NetworkEnv:
     def run_simulation(self, duration):
         ns.Simulator.Stop(ns.Seconds(duration))
         ns.Simulator.Run()
-
-        if self.ip_to_node is None:
-            self.app.monitor.get_node_ips_by_id()
-            self.ip_to_node = self.app.monitor.ip_to_node
-            self.node_to_ip = self.app.monitor.node_to_ip
-
-        self.app.monitor.ip_to_node = self.ip_to_node
-        self.app.monitor.node_to_ip = self.node_to_ip
 
         self.app.monitor.trace_routes()
 

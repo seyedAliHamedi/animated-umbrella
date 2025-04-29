@@ -93,7 +93,7 @@ class App:
             device_pair = link.Install(node_pair)
 
             address.SetBase(ns.Ipv4Address(
-                f"192.168.{10+i}.0"), ns.Ipv4Mask("255.255.255.0"))
+                f"111.111.{gateway_idx}.0"), ns.Ipv4Mask("255.255.255.0"))
             ip_interface = address.Assign(device_pair)
             self.clients_ip.append(ip_interface)
 
@@ -120,7 +120,7 @@ class App:
             device_pair = link.Install(node_pair)
 
             address.SetBase(ns.Ipv4Address(
-                f"192.169.{10+i}.0"), ns.Ipv4Mask("255.255.255.0"))
+                f"222.222.{gateway_idx}.0"), ns.Ipv4Mask("255.255.255.0"))
             ip_interface = address.Assign(device_pair)
             servers_ip.append(ip_interface)
 

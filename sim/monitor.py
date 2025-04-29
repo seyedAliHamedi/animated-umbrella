@@ -332,8 +332,8 @@ class Monitor:
             server_node = self.app.servers.Get(server_idx)
             server_id = server_node.GetId()
 
-            client_ip = self.node_to_ip[client_id][0]
-            server_ip = self.node_to_ip[server_id][0]
+            client_ip = self.node_to_ip[client_id][self.app.client_gateways[i]]
+            server_ip = self.node_to_ip[server_id][self.app.server_gateways[i]]
 
             # print(
             # f"\nRoute from Client {i} (Node {client_id}, IP {client_ip}) to Server {server_idx} (Node {server_id}, IP {server_ip}):")

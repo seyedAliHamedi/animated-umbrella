@@ -22,8 +22,9 @@ client_gateways, server_gateways = get_gw(adj_matrix, n_clients, n_servers)
 
 env = None
 ######## CACHE ######
-ip_to_node = None
-node_to_ip = None
+ip_to_node, node_to_ip = generate_ip_node_mappings(
+    fc_graph(4), n_clients, n_servers)
+
 
 for epoch in range(20000):
     print('-'*20, "epoch : ", epoch, '-'*20)
@@ -48,7 +49,6 @@ for epoch in range(20000):
     metrics, reward, e, q, (ip_to_node, node_to_ip) = env.step()
     log_prob = torch.log(p) * actions + torch.log(1-p) * (1-actions)
     loss = -torch.sum(log_prob * reward)
-
     agent.optimizer.zero_grad()
     loss.backward()
     agent.optimizer.step()
