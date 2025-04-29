@@ -32,7 +32,6 @@ sample_data = {
     "topology_links_delay": ['5ms', '10ms', '10ms',],
     "topology_links_queue": ['5000', '10000'],
     "topology_links_errors": [0, 0.1, 0],
-    "topology_base_network": "192.166.1.0/24",
     "topology_xml_file": "./sim/monitor/xml/topology.xml",
 
 
@@ -687,6 +686,7 @@ def parse_routes_manually(file_path):
 
     # print(f"Found routing data for {len(routing_tables)} nodes")
     return routing_tables
+
 
     # Define a C++ module that stores data in memory and provides access methods
 sample_data['cpp_code_f'] = '''

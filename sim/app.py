@@ -8,7 +8,10 @@ from sim.utils import *
 
 
 class App:
-    def __init__(self, topology, n_servers=sample_data['app_n_servers'], n_clients=sample_data['app_n_clients'],
+    def __init__(self, topology,
+                 client_gateways,
+                 server_gateways,
+                 n_servers=sample_data['app_n_servers'], n_clients=sample_data['app_n_clients'],
                  links_type=sample_data['app_links_type'], links_rate=sample_data['app_links_rate'],
                  links_delay=sample_data['app_links_delay'], app_type=sample_data['app_type'],
                  app_max_packets=sample_data['app_max_packets'], app_interval=sample_data['app_interval'],
@@ -32,8 +35,8 @@ class App:
         self.animFile = animFile
         self.monitor = None
         self.client_info = {}
-        self.client_gateways = []
-        self.server_gateways = []
+        self.client_gateways = client_gateways
+        self.server_gateways = server_gateways
         self.clients_ip = []
         self.clients, self.servers, self.servers_ip = self.initialize_client_server()
 
@@ -54,15 +57,6 @@ class App:
         stack.SetRoutingHelper(ipv4RoutingHelper)
         stack.Install(clients)
         stack.Install(servers)
-
-        available_gateways = list(range(self.topology.N_routers))[:-1]
-
-        self.client_gateways = random.sample(
-            available_gateways, self.n_clients)
-        remaining_gateways = [
-            gw for gw in available_gateways if gw not in self.client_gateways]
-        self.server_gateways = random.sample(remaining_gateways, self.n_servers) if len(
-            remaining_gateways) >= self.n_servers else random.sample(available_gateways, self.n_servers)
 
         print("Clients gateways:", self.client_gateways)
         print("Servers gateways:", self.server_gateways)
@@ -99,7 +93,7 @@ class App:
             device_pair = link.Install(node_pair)
 
             address.SetBase(ns.Ipv4Address(
-                f"1.1.{10+i}.0"), ns.Ipv4Mask("255.255.255.0"))
+                f"192.168.{10+i}.0"), ns.Ipv4Mask("255.255.255.0"))
             ip_interface = address.Assign(device_pair)
             self.clients_ip.append(ip_interface)
 
@@ -126,7 +120,7 @@ class App:
             device_pair = link.Install(node_pair)
 
             address.SetBase(ns.Ipv4Address(
-                f"2.2.{10+i}.0"), ns.Ipv4Mask("255.255.255.0"))
+                f"192.169.{10+i}.0"), ns.Ipv4Mask("255.255.255.0"))
             ip_interface = address.Assign(device_pair)
             servers_ip.append(ip_interface)
 

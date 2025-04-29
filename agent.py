@@ -1,4 +1,6 @@
 import numpy as np
+import random
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,24 +13,19 @@ from sklearn.preprocessing import StandardScaler
 class Agent(nn.Module):
     def __init__(self, num_node_features, hidden_channels1, hidden_channels2, lr=0.001):
         super().__init__()
-        self.conv1 = GCNConv(num_node_features, hidden_channels1)
-        self.conv2 = GCNConv(hidden_channels1, hidden_channels2)
-        self.lin1 = nn.Linear(hidden_channels2, 64)
-        self.lin2 = nn.Linear(64, 1)
-
+        self.nn = nn.Sequential(
+            nn.Linear(num_node_features, 64),
+            nn.ReLU(inplace=True),
+            nn.Linear(64, 32),
+            nn.ReLU(inplace=True),
+            nn.Linear(32, 1),
+        )
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
-        x = self.conv1(x, edge_index)
-        x = F.relu(x)
 
-        x = self.conv2(x, edge_index)
-        x = F.relu(x)
-
-        x = self.lin1(x)
-        x = F.relu(x)
-        x = self.lin2(x)
+        x = self.nn(x)
         return x
 
     def dict_to_data(self, adj_matrix, node_features_dict):
@@ -50,6 +47,12 @@ class Agent(nn.Module):
 
         for node_id in range(num_nodes):
             node_data = node_features_dict[node_id]
+            features = [
+                # 1.0 if node_data['is_active'] else 0.0,
+                1.0 if node_data['is_client_server'] else 0.0,
+            ]
+            feature_list.append(features)
+            continue
             features = [
                 1.0 if node_data['is_active'] else 0.0,
                 1.0 if node_data['is_client_server'] else 0.0,
@@ -89,8 +92,8 @@ class Agent(nn.Module):
 
         features_array = np.array(feature_list)
         scaler = StandardScaler()
-        normalized_features = scaler.fit_transform(features_array)
-        x = torch.tensor(normalized_features, dtype=torch.float)
+        # normalized_features = scaler.fit_transform(features_array)
+        x = torch.tensor(feature_list, dtype=torch.float)
 
         return Data(x=x, edge_index=edge_index)
 
@@ -98,9 +101,10 @@ class Agent(nn.Module):
         data = self.dict_to_data(adj_matrix, metrics)
 
         logits = self(data)
-        p = torch.sigmoid(logits).view(-1)
-        actions = torch.bernoulli(p)
-        # actions = actions + (p - p.detach())
-        # actions = (p >= 0.4).float()
+        p = torch.sigmoid(logits)
+        if random.random() < 0.1:
+            actions = torch.bernoulli(torch.ones_like(p) * 0.5)
+        else:
+            actions = torch.bernoulli(p)
 
         return actions, p, logits

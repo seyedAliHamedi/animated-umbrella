@@ -7,7 +7,7 @@ from sim.utils import *
 
 
 class Topology:
-    def __init__(self, adj_matrix=sample_data['topology_adj_matrix'], links_type=sample_data['topology_links_type'], links_rate=sample_data['topology_links_rate'], links_delay=sample_data['topology_links_delay'], links_queue=sample_data['topology_links_queue'], links_errors=sample_data['topology_links_errors'], base_network=sample_data['topology_base_network'], xml_file=sample_data['topology_xml_file']):
+    def __init__(self, adj_matrix=sample_data['topology_adj_matrix'], links_type=sample_data['topology_links_type'], links_rate=sample_data['topology_links_rate'], links_delay=sample_data['topology_links_delay'], links_queue=sample_data['topology_links_queue'], links_errors=sample_data['topology_links_errors'], xml_file=sample_data['topology_xml_file']):
 
         self.adj_matrix = adj_matrix
         self.N_routers = len(self.adj_matrix)
@@ -17,7 +17,6 @@ class Topology:
         self.links_delays = links_delay
         self.links_queue = links_queue
         self.links_errors = links_errors
-        self.base_networks = base_network
         self.xml_file = xml_file
 
         self.nodes, self.devices, self.interfaces, self.ip_interfaces = self.initialize()
@@ -81,16 +80,15 @@ class Topology:
         internet.SetRoutingHelper(ipv4RoutingHelper)
         internet.Install(routers)
 
-        address = ns.Ipv4AddressHelper()
-
-        base_ip, base_mask = self.base_networks.split("/")
-        mask_bits = int(base_mask)
-        subnet_mask = calculate_subnet_mask(mask_bits)
-
-        address.SetBase(ns.Ipv4Address(base_ip), ns.Ipv4Mask(subnet_mask))
-
+        y = 0
         ip_interfaces = []
-        for i, _ in enumerate(devices):
-            ip_interfaces.append(address.Assign(devices[i]))
+        for i in range(self.N_routers):
+            for j in range(i, self.N_routers):
+                address = ns.Ipv4AddressHelper()
+                address.SetBase(ns.Ipv4Address(
+                    f"1.{i}.{j}.0"), ns.Ipv4Mask('255.255.255.0'))
+                if self.adj_matrix[i][j] == 1:
+                    ip_interfaces.append(address.Assign(devices[y]))
+                    y += 1
 
         return routers, devices, internet, ip_interfaces

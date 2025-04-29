@@ -1,35 +1,40 @@
+import time
 from ns import ns
 import numpy as np
 import pandas as pd
-import traceback
 import networkx as nx
 from sim.utils import *
-from sim.topology import Topology
 from sim.app import App
 from sim.monitor import Monitor
+from sim.topology import Topology
 
 
 class NetworkEnv:
 
-    def __init__(self, adj_matrix, n_clients, original_adj_matrix, n_servers, simulation_duration=100, min_throughput=1.0, max_latency=100.0, max_packet_loss=0.1, router_energy_cost=10, link_energy_cost=2):
+    def __init__(self,
+                 adj_matrix,
+                 n_clients,
+                 original_adj_matrix,
+                 n_servers,
+                 client_gateways,
+                 server_gateways,
+                 ip_to_node,
+                 node_to_ip,
+                 simulation_duration=100,
+                 ):
 
         self.adj_matrix = adj_matrix
         self.simulation_duration = simulation_duration
-        self.current_step = 0
-
-        self.min_throughput = min_throughput
-        self.max_latency = max_latency
-        self.max_packet_loss = max_packet_loss
 
         self.n_clients = n_clients
         self.n_servers = n_servers
         self.original_adj_matrix = original_adj_matrix
 
-        self.router_energy_cost = router_energy_cost
-        self.link_energy_cost = link_energy_cost
-
+        self.client_gateways = client_gateways
+        self.server_gateways = server_gateways
         self.inter_info = {}
-
+        self.ip_to_node = ip_to_node
+        self.node_to_ip = node_to_ip
         self.setup_environment()
 
         self.router_type = {
@@ -52,18 +57,10 @@ class NetworkEnv:
             self.active_routers.append(1 if flag else 0)
 
         self.active_links = {
-            i: int(sum(self.adj_matrix[i]))
-            for i in range(self.topology.N_routers)
+            i: int(sum(self.adj_matrix[i]))for i in range(self.topology.N_routers)
         }
 
-        # for i in range(self.topology.N_routers):
-        #     for j in range(i+1, self.topology.N_routers):
-        #         if self.adj_matrix[i][j] == 1:
-        #             self.active_links.append(1)
-        #         else:
-        #             self.active_links.append(0)
-
-        self.app = App(self.topology, app_interval=1, n_clients=self.n_clients, n_servers=self.n_servers,
+        self.app = App(self.topology, client_gateways=self.client_gateways, server_gateways=self.server_gateways, app_interval=1, n_clients=self.n_clients, n_servers=self.n_servers,
                        app_duration=self.simulation_duration)
 
         self.app.monitor = Monitor(
@@ -85,131 +82,36 @@ class NetworkEnv:
         self.app.monitor.setup_flow_monitor()
         # self.app.monitor.position_nodes(anim)
 
-    def reset(self):
-        print("reset environment")
-        ns.Simulator.Destroy()
-        self.setup_environment()
-
     def step(self):
         self.run_simulation(self.simulation_duration)
-
-        metrics = self.collect_metrics()
-        self.collect_edge_features()
-        # print(self.inter_info)
-        # self.app.monitor.collect_flow_stats(q=True)
-        # print(self.app.client_info)
-        # print("Client info:", self.app.client_info)
-        # print("--" * 20)
-        # print("flow info: ", self.app.monitor.flow_info)
+        # metrics = self.collect_metrics()
+        metrics = None
         e = self.calculate_energy()
         q = self.calculate_qos()
         reward = self.calculate_reward(e, q)
 
-        return metrics, reward, e, q
+        return metrics, reward, e, q, (self.ip_to_node, self.node_to_ip)
 
     def run_simulation(self, duration):
-        # print(f"Running simulation for {duration} seconds...")
         ns.Simulator.Stop(ns.Seconds(duration))
         ns.Simulator.Run()
 
-        self.app.monitor.get_node_ips_by_id()
+        if self.ip_to_node is None:
+            self.app.monitor.get_node_ips_by_id()
+            self.ip_to_node = self.app.monitor.ip_to_node
+            self.node_to_ip = self.app.monitor.node_to_ip
+
+        self.app.monitor.ip_to_node = self.ip_to_node
+        self.app.monitor.node_to_ip = self.node_to_ip
+
         self.app.monitor.trace_routes()
 
         self.app.monitor.collect_flow_stats(
             app_port=self.app.app_port, filter_noise=True, q=True)
         self.app.monitor.get_packet_logs()
-        # print("Simulation completed")
-
-    # def set_interface_state(self, r, interface_index, state):
-    #     """
-    #     Set the state of router interfaces.
-
-    #     Parameters:
-    #     r - The router node
-    #     interface_index - The interface to modify (-1 for all interfaces)
-    #     state - Boolean (True = UP, False = DOWN)
-    #     """
-    #     try:
-    #         # Get IPv4 stack safely
-    #         ipv4 = None
-    #         try:
-    #             ipv4 = r.GetObject[ns.Ipv4]()
-    #         except Exception as e:
-    #             print(f"Failed to get IPv4 object: {e}")
-    #             return
-
-    #         if ipv4 is None:
-    #             print(f"Warning: No IPv4 stack on router {r.GetId()}")
-    #             return
-
-    #         num_interfaces = ipv4.GetNInterfaces()  # Get total interfaces
-
-    #         if interface_index == -1:
-    #             # Apply to all interfaces (except loopback, usually index 0)
-    #             for i in range(1, num_interfaces):
-    #                 try:
-    #                     if state:
-    #                         ipv4.SetUp(i)
-    #                     else:
-    #                         ipv4.SetDown(i)
-
-    #                     # Get routing protocol safely
-    #                     routing_protocol = None
-    #                     try:
-    #                         routing_protocol = ipv4.GetRoutingProtocol()
-    #                     except Exception as e:
-    #                         print(f"Failed to get routing protocol: {e}")
-    #                         continue
-
-    #                     if routing_protocol:
-    #                         if not state:
-    #                             routing_protocol.NotifyInterfaceDown(i)
-    #                         else:
-    #                             routing_protocol.NotifyInterfaceUp(i)
-    #                 except Exception as e:
-    #                     print(f"Error setting interface {i} state: {e}")
-
-    #             print(
-    #                 f"Router {r.GetId()} {'enabled' if state else 'disabled'} (all {num_interfaces-1} interfaces)")
-    #         else:
-    #             # Apply only to the specified interface
-    #             if 0 < interface_index < num_interfaces:
-    #                 try:
-    #                     if state:
-    #                         ipv4.SetUp(interface_index)
-    #                     else:
-    #                         ipv4.SetDown(interface_index)
-
-    #                     # Get routing protocol safely
-    #                     routing_protocol = None
-    #                     try:
-    #                         routing_protocol = ipv4.GetRoutingProtocol()
-    #                     except Exception as e:
-    #                         print(f"Failed to get routing protocol: {e}")
-    #                         return
-
-    #                     if routing_protocol:
-    #                         if not state:
-    #                             routing_protocol.NotifyInterfaceDown(
-    #                                 interface_index)
-    #                         else:
-    #                             routing_protocol.NotifyInterfaceUp(
-    #                                 interface_index)
-    #                 except Exception as e:
-    #                     print(
-    #                         f"Error setting interface {interface_index} state: {e}")
-
-    #                 print(
-    #                     f"Router {r.GetId()} {'enabled' if state else 'disabled'} (interface {interface_index})")
-    #             else:
-    #                 print(
-    #                     f"Invalid interface index {interface_index} for router {r.GetId()}")
-    #     except Exception as e:
-    #         print(f"Error in set_interface_state: {e}")
-    #         traceback.print_exc()
 
     def calculate_reward(self, e, q):
-        e /= 200000  # Normalize energy consumption
+        e /= 200000
         r = 0
         n_total = sum(info["max_packets"]
                       for info in self.app.client_info.values())
@@ -217,15 +119,11 @@ class NetworkEnv:
                        for info in self.app.client_info.values())
 
         if n_failed > 0:
-            r = -0.00001 * (n_failed / n_total)
+            r = -10*(n_failed / n_total)
 
         else:
-            if e > 0:
-                #         # r = 1 + len(self.active_routers) / sum(self.active_routers)
-                #         # r = (100000 * q) / (e + 1e-10)
-                # r = 1 / (e + 1e-10)
-                r = 1 - e
-        # r =  (np.exp(-len(self.active_routers)+sum(self.active_routers)))
+            r = 1/(e+1e-10)
+            # r = sum(self.active_routers) / len(self.active_routers)
         return r
 
     def calculate_energy(self):
@@ -327,14 +225,9 @@ class NetworkEnv:
         return metrics
 
     def collect_metrics(self):
-        """Collect metrics for all nodes efficiently."""
-        # Get graph metrics once
         graph_metrics = self.collect_graph_metrics()
-
-        # Process packet data once instead of per node
         packet_data = self.process_packet_data_once()
-
-        # Create metrics for each node
+        self.collect_edge_features()
         all_node_metrics = {}
         for index in range(self.topology.N_routers):
             all_node_metrics[index] = self.collect_node_metrics(
@@ -442,7 +335,6 @@ class NetworkEnv:
             'idle_interface_energy': np.random.uniform(0.1, 0.5),
 
 
-            # Use pre-calculated packet data
             'tx_packets': packet_data[node_idx]['tx_packets'],
             'tx_bytes': packet_data[node_idx]['tx_bytes'],
             'rx_packets': packet_data[node_idx]['rx_packets'],
@@ -485,6 +377,9 @@ class NetworkEnv:
             }
         }
 
+        node_metrics = {
+            'is_active': self.active_routers[node_idx],
+            'is_client_server': 1 if node_idx in self.app.client_gateways or node_idx in self.app.server_gateways else 0, }
         node = self.topology.nodes.Get(node_idx)
         ipv4 = node.GetObject[ns.Ipv4]()
 
@@ -508,7 +403,6 @@ class NetworkEnv:
 
                 is_active = self.adj_matrix[i][j] == 1
 
-                # Ensure these variables are always defined
                 latencies_tx = []
                 latencies_rx = []
                 tx_bytes = 0
