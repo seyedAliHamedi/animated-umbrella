@@ -46,7 +46,7 @@ for epoch in range(20000):
         node_to_ip=node_to_ip,
     )
 
-    metrics, reward, e, q, (ip_to_node, node_to_ip) = env.step()
+    metrics, reward, e, q = env.step()
     log_prob = torch.log(p) * actions + torch.log(1-p) * (1-actions)
     loss = -torch.sum(log_prob * reward)
     agent.optimizer.zero_grad()

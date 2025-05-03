@@ -14,11 +14,11 @@ class Agent(nn.Module):
     def __init__(self, num_node_features, hidden_channels1, hidden_channels2, lr=0.001):
         super().__init__()
         self.nn = nn.Sequential(
-            nn.Linear(num_node_features, 64),
+            nn.Linear(num_node_features, 32),
             nn.ReLU(inplace=True),
-            nn.Linear(64, 32),
+            nn.Linear(32, 16),
             nn.ReLU(inplace=True),
-            nn.Linear(32, 1),
+            nn.Linear(16, 1),
         )
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 

@@ -43,22 +43,15 @@ class NetworkEnv:
         }
 
     def setup_environment(self):
-
         self.topology = Topology(adj_matrix=self.adj_matrix)
 
         self.active_routers = []
+        self.active_links = {}
+
         for i in range(self.topology.N_routers):
-            flag = False
-            for j in range(self.topology.N_routers):
-                if self.adj_matrix[i][j] == 1:
-                    flag = True
-                    break
-
-            self.active_routers.append(1 if flag else 0)
-
-        self.active_links = {
-            i: int(sum(self.adj_matrix[i]))for i in range(self.topology.N_routers)
-        }
+            row_sum = sum(self.adj_matrix[i])
+            self.active_routers.append(1 if row_sum > 0 else 0)
+            self.active_links[i] = int(row_sum)
 
         self.app = App(self.topology, client_gateways=self.client_gateways, server_gateways=self.server_gateways, app_interval=1, n_clients=self.n_clients, n_servers=self.n_servers,
                        app_duration=self.simulation_duration)
@@ -92,32 +85,43 @@ class NetworkEnv:
         q = self.calculate_qos()
         reward = self.calculate_reward(e, q)
 
-        return metrics, reward, e, q, (self.ip_to_node, self.node_to_ip)
+        return metrics, reward, e, q
 
     def run_simulation(self, duration):
         ns.Simulator.Stop(ns.Seconds(duration))
         ns.Simulator.Run()
-
+        a = time.time()
         self.app.monitor.trace_routes()
+        print("trace_routes", time.time()-a)
+        a = time.time()
 
-        self.app.monitor.collect_flow_stats(
-            app_port=self.app.app_port, filter_noise=True, q=True)
+        # self.app.monitor.collect_flow_stats(
+        #     app_port=self.app.app_port, filter_noise=True, q=True)
+        print("collect_flow_stats", time.time()-a)
+        a = time.time()
         self.app.monitor.get_packet_logs()
+        print("get_packet_logs", time.time()-a)
 
     def calculate_reward(self, e, q):
-        e /= 200000
+        e2 = e/200000
         r = 0
         n_total = sum(info["max_packets"]
                       for info in self.app.client_info.values())
         n_failed = sum(info["failed"]
                        for info in self.app.client_info.values())
 
-        if n_failed > 0:
-            r = -10*(n_failed / n_total)
+        for i in range(len(self.active_routers)):
+            if self.active_routers[i] == 0:
+                if i in self.client_gateways or i in self.server_gateways:
+                    r -= 2
+                else:
+                    r += 1
 
+        r = 0
+        if n_failed > 0:
+            r = -(n_failed/n_total)
         else:
-            r = 1/(e+1e-10)
-            # r = sum(self.active_routers) / len(self.active_routers)
+            r = 10*(1-e2)
         return r
 
     def calculate_energy(self):
