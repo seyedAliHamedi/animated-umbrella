@@ -121,7 +121,7 @@ class NetworkEnv:
         if n_failed > 0:
             r = -(n_failed/n_total)
         else:
-            r = 10*(1-e2)
+            r = 100*(1-e2)
         return r
 
     def calculate_energy(self):

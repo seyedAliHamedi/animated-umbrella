@@ -9,7 +9,7 @@ from agent import Agent
 from rl_env import NetworkEnv
 
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
-agent = Agent(num_node_features=1, hidden_channels1=64, hidden_channels2=32)
+agent = Agent(num_node_features=1, hidden_channels1=32, hidden_channels2=16)
 torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=0.5)
 
 
@@ -29,7 +29,8 @@ ip_to_node, node_to_ip = generate_ip_node_mappings(
 for epoch in range(20000):
     print('-'*20, "epoch : ", epoch, '-'*20)
 
-    m = get_state(adj_matrix, client_gateways, server_gateways)
+    m = get_state(adj_matrix, client_gateways,
+                  server_gateways, original_adj_matrix)
 
     actions, p, logits = agent.get_action(m, adj_matrix)
     adj_matrix = changeAdj(actions, original_adj_matrix)

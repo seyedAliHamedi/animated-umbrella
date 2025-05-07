@@ -1,4 +1,6 @@
 import random
+import numpy as np
+import networkx as nx
 
 
 def fc_graph(n):
@@ -32,12 +34,38 @@ def get_gw(adj_matrix, n_clients, n_servers):
     return client_gateways, server_gateways
 
 
-def get_state(adj_matrix, client_gw, servers_gw):
+def get_state(adj_matrix, client_gw, servers_gw, original):
+
+    graph_metrics = collect_graph_metrics(adj_matrix, original)
     all_node_state = []
-    for index in range(len(adj_matrix)):
+    for node_idx in range(len(adj_matrix)):
         node_state = {
             # 'is_active': sum(adj_matrix[index]) > 0,
-            'is_client_server': 1 if index in client_gw or index in servers_gw else 0,
+            'is_client_server': 1 if node_idx in client_gw or node_idx in servers_gw else 0,
+
+            'graph_metrics': {
+                'betweenness_centrality': {
+                    'original': graph_metrics['betweenness_centrality']['original'].get(node_idx, 0),
+                    'current': graph_metrics['betweenness_centrality']['current'].get(node_idx, 0)
+                },
+                'degree_centrality': {
+                    'original': graph_metrics['degree_centrality']['original'].get(node_idx, 0),
+                    'current': graph_metrics['degree_centrality']['current'].get(node_idx, 0)
+                },
+                'clustering_coefficient': {
+                    'original': graph_metrics['clustering_coefficient']['original'].get(node_idx, 0),
+                    'current': graph_metrics['clustering_coefficient']['current'].get(node_idx, 0)
+                },
+                'eigenvector_centrality': {
+                    'original': graph_metrics.get('eigenvector_centrality', {}).get('original', {}).get(node_idx, 0),
+                    'current': graph_metrics.get('eigenvector_centrality', {}).get('current', {}).get(node_idx, 0)
+                },
+                'is_articulation_point': {
+                    'original': node_idx in graph_metrics['articulation_points']['original'],
+                    'current': node_idx in graph_metrics['articulation_points']['current']
+                }
+            }
+
         }
         all_node_state.append(node_state)
     return all_node_state
@@ -98,3 +126,49 @@ def generate_ip_node_mappings(adj_matrix, n_clients, n_servers):
             node_to_ip[gateway_idx].append(gateway_ip)
 
     return ip_to_node, node_to_ip
+
+
+def collect_graph_metrics(adj_matrix, original_adj_matrix):
+    current_graph = nx.from_numpy_array(
+        np.array(adj_matrix))
+
+    original_graph = nx.from_numpy_array(
+        np.array(original_adj_matrix))
+
+    metrics = {
+        'betweenness_centrality': {
+            'original': dict(nx.betweenness_centrality(original_graph)),
+            'current': dict(nx.betweenness_centrality(current_graph))
+        },
+        'degree_centrality': {
+            'original': dict(nx.degree_centrality(original_graph)),
+            'current': dict(nx.degree_centrality(current_graph))
+        },
+
+        'clustering_coefficient': {
+            'original': dict(nx.clustering(original_graph)),
+            'current': dict(nx.clustering(current_graph))
+        },
+
+        'articulation_points': {
+            'original': list(nx.articulation_points(original_graph)),
+            'current': list(nx.articulation_points(current_graph))
+        },
+
+        'graph_metrics': {
+            'original': {
+                'diameter': nx.diameter(original_graph) if nx.is_connected(original_graph) else float('inf'),
+                'radius': nx.radius(original_graph) if nx.is_connected(original_graph) else float('inf'),
+                'is_connected': nx.is_connected(original_graph),
+                'number_of_components': nx.number_connected_components(original_graph)
+            },
+            'current': {
+                'diameter': nx.diameter(current_graph) if nx.is_connected(current_graph) else float('inf'),
+                'radius': nx.radius(current_graph) if nx.is_connected(current_graph) else float('inf'),
+                'is_connected': nx.is_connected(current_graph),
+                'number_of_components': nx.number_connected_components(current_graph)
+            }
+        },
+
+    }
+    return metrics

@@ -1,30 +1,50 @@
-import numpy as np
-import random
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch_geometric.data import Data
-from torch_geometric.nn import GCNConv, BatchNorm
-from sklearn.preprocessing import StandardScaler
+from torch_geometric.nn import MessagePassing, GCNConv
+from torch_geometric.utils import add_self_loops
+import numpy as np
+import random
+
+
+# class WeightedSelfAggregation(MessagePassing):
+#     def __init__(self, in_channels, out_channels):
+#         super().__init__(aggr='add')
+#         self.lin = nn.Linear(in_channels, out_channels)
+
+#     def forward(self, x, edge_index):
+#         self.num_nodes = x.size(0)
+#         edge_index, _ = add_self_loops(edge_index, num_nodes=self.num_nodes)
+#         x = self.lin(x)
+#         return self.propagate(edge_index=edge_index, x=x)
+
+#     def message(self, x_j, edge_index):
+#         source, target = edge_index
+#         is_self = source == target
+#         N = self.num_nodes
+#         weights = torch.where(is_self, torch.tensor(
+#             1.0, device=x_j.device), torch.tensor(0.0 / (N - 1), device=x_j.device))
+#         return x_j * weights.view(-1, 1)
 
 
 class Agent(nn.Module):
     def __init__(self, num_node_features, hidden_channels1, hidden_channels2, lr=0.001):
         super().__init__()
-        self.nn = nn.Sequential(
-            nn.Linear(num_node_features, 32),
-            nn.ReLU(inplace=True),
-            nn.Linear(32, 16),
-            nn.ReLU(inplace=True),
-            nn.Linear(16, 1),
-        )
+        self.conv1 = GCNConv(num_node_features, hidden_channels1)
+        self.conv2 = GCNConv(hidden_channels1, hidden_channels2)
+        self.embed = nn.Linear(num_node_features, hidden_channels2)
+        self.nn = nn.Linear(hidden_channels2, 1)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
-
+        temp = x
+        x = F.relu(self.conv1(x, edge_index))
+        x = F.relu(self.conv2(x, edge_index))
+        temp = self.embed(temp)
+        x = x + temp
         x = self.nn(x)
         return x
 
@@ -38,37 +58,17 @@ class Agent(nn.Module):
         num_nodes = len(node_features_dict)
         if len(edge_index) == 0:
             edge_index = [[i, i] for i in range(num_nodes)]
-            # print("Warning: No edges found. Added self-loops for all nodes.")
 
         edge_index = torch.tensor(
             edge_index, dtype=torch.long).t().contiguous()
 
         feature_list = []
-
         for node_id in range(num_nodes):
             node_data = node_features_dict[node_id]
             features = [
-                # 1.0 if node_data['is_active'] else 0.0,
                 1.0 if node_data['is_client_server'] else 0.0,
             ]
-            feature_list.append(features)
-            continue
-            features = [
-                1.0 if node_data['is_active'] else 0.0,
-                1.0 if node_data['is_client_server'] else 0.0,
-                float(node_data['avg_power_per_operation']),
-                float(node_data['avg_energy_consumption']),
-                float(node_data['idle_interface_energy']),
-                float(node_data['tx_packets']),
-                float(node_data['tx_bytes']),
-                float(node_data['rx_packets']),
-                float(node_data['rx_bytes']),
-                float(node_data['lost_on_send']),
-                float(node_data['lost_on_receive']),
-                float(node_data['expected_packets']['high_priority']),
-                float(node_data['expected_packets']['medium_priority']),
-                float(node_data['expected_packets']['low_priority']),
-                float(node_data['active_interfaces']),
+            a = [
                 float(node_data['graph_metrics']
                       ['betweenness_centrality']['original']),
                 float(node_data['graph_metrics']
@@ -90,21 +90,15 @@ class Agent(nn.Module):
             ]
             feature_list.append(features)
 
-        features_array = np.array(feature_list)
-        scaler = StandardScaler()
-        # normalized_features = scaler.fit_transform(features_array)
         x = torch.tensor(feature_list, dtype=torch.float)
-
         return Data(x=x, edge_index=edge_index)
 
     def get_action(self, metrics, adj_matrix):
         data = self.dict_to_data(adj_matrix, metrics)
-
         logits = self(data)
         p = torch.sigmoid(logits)
         if random.random() < 0.1:
             actions = torch.bernoulli(torch.ones_like(p) * 0.5)
         else:
             actions = torch.bernoulli(p)
-
         return actions, p, logits
