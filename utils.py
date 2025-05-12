@@ -24,7 +24,7 @@ def changeAdj(actions, original_adj_matrix):
 
 
 def get_gw(adj_matrix, n_clients, n_servers):
-    available_gateways = list(range(len(adj_matrix)))[:-1]
+    available_gateways = list(range(len(adj_matrix)))  # [:-1]
 
     client_gateways = random.sample(available_gateways, n_clients)
     remaining_gateways = [
@@ -69,6 +69,10 @@ def get_state(adj_matrix, client_gw, servers_gw, original):
         }
         all_node_state.append(node_state)
     return all_node_state
+
+
+def plot_metrics(total_loss, total_fail, total_e):
+    pass
 
 
 def generate_ip_node_mappings(adj_matrix, n_clients, n_servers):

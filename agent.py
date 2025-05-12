@@ -67,8 +67,8 @@ class Agent(nn.Module):
             node_data = node_features_dict[node_id]
             features = [
                 1.0 if node_data['is_client_server'] else 0.0,
-            ]
-            a = [
+                # ]
+                # a = [
                 float(node_data['graph_metrics']
                       ['betweenness_centrality']['original']),
                 float(node_data['graph_metrics']
