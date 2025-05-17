@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch_geometric.data import Data
-from torch_geometric.nn import MessagePassing, GCNConv
+from torch_geometric.nn import MessagePassing, GCNConv, GATConv
 from torch_geometric.utils import add_self_loops
 import numpy as np
 import random
@@ -32,10 +32,10 @@ import random
 class Agent(nn.Module):
     def __init__(self, num_node_features, hidden_channels1, hidden_channels2, lr=0.001):
         super().__init__()
-        self.conv1 = GCNConv(num_node_features, hidden_channels1)
-        self.conv2 = GCNConv(hidden_channels1, hidden_channels2)
+        self.conv1 = GATConv(num_node_features, hidden_channels1)
+        self.conv2 = GATConv(hidden_channels1, hidden_channels2)
         self.embed = nn.Linear(num_node_features, hidden_channels2)
-        self.nn = nn.Linear(hidden_channels2, 1)
+        self.nn = nn.Linear(hidden_channels2 * 2, 1)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, data):
@@ -44,7 +44,8 @@ class Agent(nn.Module):
         x = F.relu(self.conv1(x, edge_index))
         x = F.relu(self.conv2(x, edge_index))
         temp = self.embed(temp)
-        x = x + temp
+        # x = x + temp
+        x = torch.cat([x, temp], dim=1)
         x = self.nn(x)
         return x
 
@@ -97,6 +98,8 @@ class Agent(nn.Module):
         data = self.dict_to_data(adj_matrix, metrics)
         logits = self(data)
         p = torch.sigmoid(logits)
+        # tmp_p = p
+        p = torch.clamp(p, 1e-10, 1 - 1e-10)
         if random.random() < 0.1:
             actions = torch.bernoulli(torch.ones_like(p) * 0.5)
         else:

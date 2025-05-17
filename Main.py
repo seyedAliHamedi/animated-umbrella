@@ -11,7 +11,7 @@ from rl_env import NetworkEnv
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 
 # initialize agent
-agent = Agent(num_node_features=11, hidden_channels1=32, hidden_channels2=16)
+agent = Agent(num_node_features=11, hidden_channels1=64, hidden_channels2=32)
 torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=0.5)
 
 # original graph
@@ -21,13 +21,24 @@ torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=0.5)
 #     [0, 0, 0, 1],
 #     [1, 1, 1, 0]
 # ]
+# original_adj_matrix = [
+#     [0, 0, 0, 0, 1, 0],
+#     [0, 0, 0, 0, 1, 0],
+#     [0, 0, 0, 0, 0, 1],
+#     [0, 0, 0, 0, 0, 1],
+#     [1, 1, 0, 0, 0, 1],
+#     [0, 0, 1, 1, 1, 0]
+# ]
 original_adj_matrix = [
-    [0, 0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 0, 1],
-    [0, 0, 0, 0, 0, 1],
-    [1, 1, 0, 0, 0, 1],
-    [0, 0, 1, 1, 1, 0]
+    [0, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 0, 1, 0, 0],
+    [0, 0, 0, 0, 0, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 1, 0, 0, 0],
+    [1, 1, 0, 0, 0, 1, 0, 1, 0],
+    [0, 0, 1, 1, 1, 0, 0, 1, 0],
+    [0, 1, 0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 0, 0],
 ]
 adj_matrix = original_adj_matrix.copy()
 
@@ -54,7 +65,7 @@ block_avg_energy = []
 # ensure plot directory exists
 os.makedirs('plots', exist_ok=True)
 
-for epoch in range(20000):
+for epoch in range(4000):
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
 
     # get state and select action
@@ -146,3 +157,5 @@ for epoch in range(20000):
         client_gateways, server_gateways = get_gw(
             adj_matrix, n_clients, n_servers
         )
+torch.save(agent.state_dict(), "agent_weights.pth")
+print("Model weights saved to agent_weights.pth")
