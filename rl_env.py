@@ -85,7 +85,7 @@ class NetworkEnv:
 
     def calculate_reward(self, e, q):
         # Normalize energy
-        e_norm = e / 200000
+        e_norm = e / 415000
 
         # Calculate success rate
         n_total = sum(info["max_packets"]
@@ -93,10 +93,10 @@ class NetworkEnv:
         n_failed = sum(info["failed"]
                        for info in self.app.client_info.values())
 
-        fail = 1 - (n_failed / n_total) if n_total > 0 else 0
-
-        r = (3*fail + (1 - e_norm))
-
+        if n_failed > 0:
+            r = 1 - (n_failed / n_total) + 0.5
+        else:
+            r = 100 * (1 - e_norm)
         return r
 
     def calculate_energy(self):
