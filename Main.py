@@ -80,6 +80,9 @@ for epoch in range(1000):
     agent.optimizer.zero_grad()
     loss.backward()
     agent.optimizer.step()
+    if reward == 0.5 and len(list(nx.all_simple_paths(nx.from_numpy_array(
+            np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
+        print("="*20, " 1FAIL1 ", "="*20)
 
     print(
         f"Epoch {epoch}, Reward: {reward}, Loss: {loss_value:.4f}, e: {e:.4f}, q: {q}")

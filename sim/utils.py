@@ -144,35 +144,39 @@ def get_ip_to_node(ip_list):
     return ip_to_node
 
 
-def find_path(start_node, dest_ip, routing_tables, ip_to_node):
-    dest_parts = dest_ip.split('.')
-    dest_net = f"{dest_parts[0]}.{dest_parts[1]}.{dest_parts[2]}.0"
+def find_path(start_node, dest_node, routing_tables, ip_to_node):
+    dest_ips = [ip for ip, node in ip_to_node.items() if node == dest_node]
+    if not dest_ips:
+        return None
+
+    dest_networks = {'.'.join(ip.split('.')[:3]) + '.0' for ip in dest_ips}
 
     path = [start_node]
+    visited = set([start_node])
     current_node = start_node
-    visited = {current_node}
     max_hops = 30
 
     while max_hops > 0:
         if current_node not in routing_tables:
             return None
 
-        if dest_net not in routing_tables[current_node]:
+        found = False
+        for net in dest_networks:
+            if net in routing_tables[current_node]:
+                next_hop_ip = routing_tables[current_node][net]
+                found = True
+                break
+
+        if not found:
             return None
 
-        next_hop = routing_tables[current_node][dest_net]
-
-        if next_hop == '0.0.0.0' or next_hop == dest_ip:
-            dest_node = ip_to_node.get(dest_ip)
-            if dest_node:
-                path.append(int(dest_node))
+        if ip_to_node.get(next_hop_ip) == dest_node:
+            path.append(dest_node)
             return path
 
-        next_node = ip_to_node.get(next_hop)
+        next_node = ip_to_node.get(next_hop_ip)
         if next_node is None:
             return None
-
-        next_node = int(next_node)
 
         if next_node in visited:
             return None
@@ -180,16 +184,6 @@ def find_path(start_node, dest_ip, routing_tables, ip_to_node):
         path.append(next_node)
         visited.add(next_node)
         current_node = next_node
-
-        node_ips = [ip for ip, node in ip_to_node.items() if int(node)
-                    == next_node]
-        for ip in node_ips:
-            if ip.startswith('.'.join(dest_parts[:3])):
-                dest_node = ip_to_node.get(dest_ip)
-                if dest_node:
-                    path.append(int(dest_node))
-                return path
-
         max_hops -= 1
 
     return None
@@ -211,7 +205,7 @@ def parse_routes_manually(file_path):
             node_id = int(node_id)
             time = int(time)
 
-            if time == 10:
+            if 30 < time < 40:
                 if node_id not in routing_tables:
                     routing_tables[node_id] = {}
 

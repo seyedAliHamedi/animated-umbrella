@@ -53,7 +53,7 @@ class NetworkEnv:
             self.active_routers.append(1 if row_sum > 0 else 0)
             self.active_links[i] = int(row_sum)
 
-        self.app = App(self.topology, client_gateways=self.client_gateways, server_gateways=self.server_gateways, app_interval=1, n_clients=self.n_clients, n_servers=self.n_servers,
+        self.app = App(self.topology, client_gateways=self.client_gateways, server_gateways=self.server_gateways, app_interval=1, n_clients=self.n_clients, n_servers=self.n_servers, app_start_time=40,
                        app_duration=self.simulation_duration)
 
         self.app.monitor = Monitor(self.app.topology, self.app)

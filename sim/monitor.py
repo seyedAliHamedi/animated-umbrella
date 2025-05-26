@@ -30,7 +30,7 @@ class Monitor:
     def setup_animation(self, anim_file=sample_data['xml_animation_file'], enable_packet_metadata=True):
         self.anim = ns.AnimationInterface('/dev/null')
         self.anim.EnableIpv4RouteTracking(
-            sample_data['routing_table_file'], ns.Seconds(10), ns.Seconds(20))
+            sample_data['routing_table_file'], ns.Seconds(30), ns.Seconds(40))
         return self.anim
 
     def setup_flow_monitor(self):
@@ -204,14 +204,13 @@ class Monitor:
             server_node = self.app.servers.Get(server_idx)
             server_id = server_node.GetId()
 
-            client_ip = self.node_to_ip[client_id][self.app.client_gateways[i]]
-            server_ip = self.node_to_ip[server_id][self.app.server_gateways[i]]
-
-            # print(
-            # f"\nRoute from Client {i} (Node {client_id}, IP {client_ip}) to Server {server_idx} (Node {server_id}, IP {server_ip}):")
-
-            path = find_path(client_id, server_ip,
-                             routing_tables, self.ip_to_node)
+            client = self.app.client_gateways[i]
+            server = self.app.server_gateways[server_idx]
+            path = find_path(client, server,
+                             routing_tables, self.ip_to_node,)
+            if path is None:
+                path = find_path(server, client,
+                                 routing_tables, self.ip_to_node,)
 
             if not path:
                 self.app.client_info[client_id]["failed"] = self.app.client_info[client_id]["max_packets"]

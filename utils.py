@@ -110,7 +110,7 @@ def collect_graph_metrics(adj_matrix, original_adj_matrix):
     # Convert to numpy arrays once
     current_array = np.array(adj_matrix)
     original_array = np.array(original_adj_matrix)
-    
+
     # Cache graph creation
     current_graph = nx.from_numpy_array(current_array)
     original_graph = nx.from_numpy_array(original_array)
