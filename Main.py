@@ -10,7 +10,7 @@ from rl_env import NetworkEnv
 
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 
-agent = Agent(num_node_features=11, hidden_channels1=64, hidden_channels2=32)
+agent = Agent(num_node_features=3, hidden_channels1=64, hidden_channels2=32)
 torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=0.5)
 
 original_adj_matrix = [
@@ -41,10 +41,11 @@ block_avg_loss = []
 block_fails_count = []
 block_avg_energy = []
 
+if os.path.exists('./agent_weights.pth'):
+    agent.load_state_dict(torch.load(
+        './agent_weights.pth', weights_only=True))
 for epoch in range(1000):
-    if os.path.exists('./agent_weights.pth'):
-        agent.load_state_dict(torch.load(
-            './agent_weights.pth', weights_only=True))
+
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
 
     m = get_state(adj_matrix, client_gateways,
@@ -65,7 +66,7 @@ for epoch in range(1000):
         node_to_ip=node_to_ip,
     )
 
-    metrics, reward, e, q = env.step()
+    metrics, reward, fail, ratio, e, q = env.step()
 
     log_prob = torch.log(p) * actions + torch.log(1-p) * (1-actions)
     entropy = - (p * torch.log(p + 1e-8) + (1 - p)
@@ -80,12 +81,12 @@ for epoch in range(1000):
     agent.optimizer.zero_grad()
     loss.backward()
     agent.optimizer.step()
-    if reward == 0.5 and len(list(nx.all_simple_paths(nx.from_numpy_array(
+    if reward == -1 and len(list(nx.all_simple_paths(nx.from_numpy_array(
             np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
         print("="*20, " 1FAIL1 ", "="*20)
 
     print(
-        f"Epoch {epoch}, Reward: {reward}, Loss: {loss_value:.4f}, e: {e:.4f}, q: {q}")
+        f"Epoch {epoch}, Reward: {reward}, Loss: {loss_value:.4f}, e: {e:.4f}, q: {q}, r: {ratio}")
     print("Sigmoid probabilities:", p.view(-1))
     print("Sampled actions:", actions.view(-1))
 

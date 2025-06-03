@@ -27,6 +27,9 @@ class Monitor:
         self.trace_modules = []
         self.flow_info = {}
 
+        self.all_paths = []
+        self.path_routers = [0] * self.topology.N_routers
+
     def setup_animation(self, anim_file=sample_data['xml_animation_file'], enable_packet_metadata=True):
         self.anim = ns.AnimationInterface('/dev/null')
         self.anim.EnableIpv4RouteTracking(
@@ -75,6 +78,7 @@ class Monitor:
 
             path = find_path(client_id, server_ip,
                              self.routing_tables, self.ip_to_node)
+
             if path:
                 routing_paths.append({
                     "src_ip": client_ip,
@@ -196,6 +200,7 @@ class Monitor:
         routing_tables = parse_routes_manually(
             sample_data['routing_table_file'])
         self.routing_tables = routing_tables
+        used_routers = set()
         for i in range(self.app.n_clients):
             client_node = self.app.clients.Get(i)
             client_id = client_node.GetId()
@@ -211,9 +216,22 @@ class Monitor:
             if path is None:
                 path = find_path(server, client,
                                  routing_tables, self.ip_to_node,)
+            print(path)
+            if path:
+                self.all_paths.append(path)
+
+                # Extract only router nodes from the path
+                # Exclude first node (client) and last node (server)
+                for node_id in path:
+                    # Check if this node is actually a router
+                    if node_id < self.app.topology.N_routers:
+                        used_routers.add(node_id)
 
             if not path:
                 self.app.client_info[client_id]["failed"] = self.app.client_info[client_id]["max_packets"]
+
+        self.path_routers = [1 if i in used_routers else 0 for i in range(
+            self.app.topology.N_routers)]
 
     def collect_flow_stats(self, stats_file=sample_data['flow_stats_file'], app_port=None, filter_noise=True, q=False):
         self.flow_monitor.CheckForLostPackets()

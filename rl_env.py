@@ -74,8 +74,8 @@ class NetworkEnv:
         self.run_simulation(self.simulation_duration)
         e = self.calculate_energy()
         q = self.calculate_qos()
-        reward = self.calculate_reward(e, q)
-        return None, reward, e, q
+        reward, f, r, e_eff = self.calculate_reward(e, q)
+        return None, reward, f, r, e_eff, q
 
     def run_simulation(self, duration):
         ns.Simulator.Stop(ns.Seconds(duration))
@@ -83,9 +83,21 @@ class NetworkEnv:
         self.app.monitor.trace_routes()
         self.app.monitor.get_packet_logs()
 
-    def calculate_reward(self, e, q):
+    def calculate_reward(self, e, q, m=0.2, alpha=3):
+
+        num_active_routers = sum(self.active_routers)
+        num_path_routers = sum(self.app.monitor.path_routers)
+        print(num_active_routers, num_path_routers)
         # Normalize energy
         e_norm = e / 415000
+
+        if num_path_routers != 0:
+            r = num_active_routers / num_path_routers
+        else:
+            r = 0
+
+        # e_eff = e * (m + alpha * (r - 1))
+        # e_eff /= 820000
 
         # Calculate success rate
         n_total = sum(info["max_packets"]
@@ -94,10 +106,13 @@ class NetworkEnv:
                        for info in self.app.client_info.values())
 
         if n_failed > 0:
-            r = 1 - (n_failed / n_total) + 0.5
+            f = 1
+            # r = 1 - (n_failed / n_total) + 0.5
+            reward = -(n_failed / n_total)
         else:
-            r = 100 * (1 - e_norm)
-        return r
+            f = 0
+            reward = 100 * (1 - e_norm)
+        return reward, f, r, e_norm
 
     def calculate_energy(self):
         total_e = 0

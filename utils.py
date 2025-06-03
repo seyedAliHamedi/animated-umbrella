@@ -1,6 +1,73 @@
 import random
 import numpy as np
 import networkx as nx
+from networkx.algorithms.simple_paths import shortest_simple_paths
+
+
+def compute_fbc(adj_matrix, flows, K=2):
+    """
+    Compute a "near‐shortest" Flow‐Betweenness Centrality (FBC) for each node
+    in an unweighted graph, allowing paths up to (d_min + K) hops.
+    """
+    # 1) Build an unweighted NetworkX Graph from adj_matrix
+    A = np.asarray(adj_matrix)
+    N = A.shape[0]
+    G = nx.Graph()
+    G.add_nodes_from(range(N))
+    for i in range(N):
+        for j in range(i+1, N):
+            if A[i, j] != 0:
+                G.add_edge(i, j)
+
+    # 2) Initialize output dictionary
+    flow_bc = {v: 0.0 for v in G.nodes()}
+
+    # 3) For each (s, t), gather all simple paths of length ≤ d_min + K
+    for (s, t) in flows:
+        if s == t:
+            continue
+
+        # 3a) Compute the true shortest‐hop distance d_min
+        try:
+            d_min = nx.shortest_path_length(G, source=s, target=t)
+        except nx.NetworkXNoPath:
+            # no path at all → skip this (s,t)
+            continue
+
+        # 3b) Use shortest_simple_paths to generate simple paths
+        try:
+            from networkx.algorithms.simple_paths import shortest_simple_paths
+            all_paths_generator = shortest_simple_paths(G, s, t)
+        except ImportError:
+            # Fallback for older NetworkX versions
+            all_paths_generator = nx.all_simple_paths(
+                G, s, t, cutoff=d_min + K)
+
+        # 3c) Collect paths π with len(π)-1 ≤ d_min + K
+        path_list = []
+        weight_list = []
+        for pi in all_paths_generator:
+            hop_len = len(pi) - 1
+            if hop_len > d_min + K:
+                break
+
+            w = 1.0 / ((hop_len - d_min) + 1.0)
+            path_list.append(pi)
+            weight_list.append(w)
+
+        if not path_list:
+            continue
+
+        # 3d) Normalize weights
+        total_w = sum(weight_list)
+        normalized_weights = [w_i / total_w for w_i in weight_list]
+
+        # 3e) Accumulate contributions
+        for pi, norm_w in zip(path_list, normalized_weights):
+            for v in pi[1:-1]:  # interior nodes only
+                flow_bc[v] += norm_w
+
+    return flow_bc
 
 
 def changeAdj(actions, original_adj_matrix):
@@ -25,7 +92,8 @@ def get_gw(adj_matrix, n_clients, n_servers):
 
 
 def get_state(adj_matrix, client_gw, servers_gw, original):
-    graph_metrics = collect_graph_metrics(adj_matrix, original)
+    graph_metrics = collect_graph_metrics(
+        adj_matrix, original, client_gw, servers_gw)
     all_node_state = []
     for node_idx in range(len(adj_matrix)):
         node_state = {
@@ -50,6 +118,10 @@ def get_state(adj_matrix, client_gw, servers_gw, original):
                 'is_articulation_point': {
                     'original': node_idx in graph_metrics['articulation_points']['original'],
                     'current': node_idx in graph_metrics['articulation_points']['current']
+                },
+                'flow_betweenness_centrality': {
+                    'original': graph_metrics['flow_betweenness_centrality']['original'].get(node_idx, 0),
+                    'current': graph_metrics['flow_betweenness_centrality']['current'].get(node_idx, 0)
                 }
             }
         }
@@ -106,7 +178,7 @@ def generate_ip_node_mappings(adj_matrix, n_clients, n_servers):
     return ip_to_node, node_to_ip
 
 
-def collect_graph_metrics(adj_matrix, original_adj_matrix):
+def collect_graph_metrics(adj_matrix, original_adj_matrix, client_gateways=None, server_gateways=None):
     # Convert to numpy arrays once
     current_array = np.array(adj_matrix)
     original_array = np.array(original_adj_matrix)
@@ -118,6 +190,28 @@ def collect_graph_metrics(adj_matrix, original_adj_matrix):
     # Pre-calculate connected status
     original_connected = nx.is_connected(original_graph)
     current_connected = nx.is_connected(current_graph)
+
+    # Generate flows from client gateways to server gateways (paired)
+    flows = []
+    if client_gateways is not None and server_gateways is not None:
+        n_clients = len(client_gateways)
+        n_servers = len(server_gateways)
+        for i in range(n_clients):
+            # Each client i connects to server (i % n_servers)
+            client = client_gateways[i]
+            server_idx = i % n_servers
+            server = server_gateways[server_idx]
+            if client != server:  # Avoid self-loops
+                flows.append((client, server))
+
+    # Calculate FBC for both graphs
+    if flows:
+        fbc_original = compute_fbc(original_adj_matrix, flows, K=2)
+        fbc_current = compute_fbc(adj_matrix, flows, K=2)
+    else:
+        # If no flows provided, initialize with zeros
+        fbc_original = {i: 0.0 for i in range(len(original_adj_matrix))}
+        fbc_current = {i: 0.0 for i in range(len(adj_matrix))}
 
     metrics = {
         'betweenness_centrality': {
@@ -150,5 +244,9 @@ def collect_graph_metrics(adj_matrix, original_adj_matrix):
                 'number_of_components': nx.number_connected_components(current_graph)
             }
         },
+        'flow_betweenness_centrality': {
+            'original': fbc_original,
+            'current': fbc_current
+        }
     }
     return metrics
