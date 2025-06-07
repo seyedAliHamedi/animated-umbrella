@@ -89,7 +89,8 @@ class NetworkEnv:
         num_path_routers = sum(self.app.monitor.path_routers)
         print(num_active_routers, num_path_routers)
         # Normalize energy
-        e_norm = e / 415000
+        # e_norm = e / 415000
+        e_norm = e / 1401250
 
         if num_path_routers != 0:
             r = num_active_routers / num_path_routers
@@ -120,7 +121,8 @@ class NetworkEnv:
         for i in range(self.topology.N_routers):
             if self.active_routers[i] == 0:
                 continue
-            e_base = sample_data["routers"][i]["P_base"] * sim_duration
+            e_base = sample_data["routers"][i % len(
+                sample_data["routers"])]["P_base"] * sim_duration
             total_e += e_base
 
             for edge_id, interface in self.inter_info.items():

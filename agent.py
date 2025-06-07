@@ -45,28 +45,28 @@ class Agent(nn.Module):
         edge_index = torch.tensor(edge_list, dtype=torch.long).t().contiguous()
 
         # Batch process features
-        features = torch.zeros((num_nodes, 3), dtype=torch.float)
+        features = torch.zeros((num_nodes, 11), dtype=torch.float)
         for node_id in range(num_nodes):
             node_data = node_features_dict[node_id]
             features[node_id, 0] = 1.0 if node_data['is_client_server'] else 0.0
-            # features[node_id, 1] = float(
-            #     node_data['graph_metrics']['betweenness_centrality']['original'])
-            # features[node_id, 2] = float(
-            #     node_data['graph_metrics']['betweenness_centrality']['current'])
-            # features[node_id, 3] = float(
-            #     node_data['graph_metrics']['degree_centrality']['original'])
-            # features[node_id, 4] = float(
-            #     node_data['graph_metrics']['degree_centrality']['current'])
-            # features[node_id, 5] = float(
-            #     node_data['graph_metrics']['clustering_coefficient']['original'])
-            # features[node_id, 6] = float(
-            #     node_data['graph_metrics']['clustering_coefficient']['current'])
-            # features[node_id, 7] = float(
-            #     node_data['graph_metrics']['eigenvector_centrality']['original'])
-            # features[node_id, 8] = float(
-            #     node_data['graph_metrics']['eigenvector_centrality']['current'])
-            # features[node_id, 9] = 1.0 if node_data['graph_metrics']['is_articulation_point']['original'] else 0.0
-            # features[node_id, 10] = 1.0 if node_data['graph_metrics']['is_articulation_point']['current'] else 0.0
+            features[node_id, 1] = float(
+                node_data['graph_metrics']['betweenness_centrality']['original'])
+            features[node_id, 2] = float(
+                node_data['graph_metrics']['betweenness_centrality']['current'])
+            features[node_id, 3] = float(
+                node_data['graph_metrics']['degree_centrality']['original'])
+            features[node_id, 4] = float(
+                node_data['graph_metrics']['degree_centrality']['current'])
+            features[node_id, 5] = float(
+                node_data['graph_metrics']['clustering_coefficient']['original'])
+            features[node_id, 6] = float(
+                node_data['graph_metrics']['clustering_coefficient']['current'])
+            features[node_id, 7] = float(
+                node_data['graph_metrics']['eigenvector_centrality']['original'])
+            features[node_id, 8] = float(
+                node_data['graph_metrics']['eigenvector_centrality']['current'])
+            features[node_id, 9] = 1.0 if node_data['graph_metrics']['is_articulation_point']['original'] else 0.0
+            features[node_id, 10] = 1.0 if node_data['graph_metrics']['is_articulation_point']['current'] else 0.0
             features[node_id, 1] = float(
                 node_data['graph_metrics']['flow_betweenness_centrality']['original'])
             features[node_id, 2] = float(
