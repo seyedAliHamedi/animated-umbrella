@@ -37,10 +37,24 @@ class NetworkEnv:
         self.node_to_ip = node_to_ip
         self.setup_environment()
 
-        self.router_type = {
-            i: sample_data["routers"][i % len(sample_data["routers"])]
-            for i in range(self.topology.N_routers)
-        }
+        # self.router_type = {
+        #     i: sample_data["routers"][i % len(sample_data["routers"])]
+        #     for i in range(self.topology.N_routers)
+        # }
+        # self.router_type = {0: sample_data["routers"][4],
+        #                     1: sample_data["routers"][9],
+        #                     2: sample_data["routers"][1],
+        #                     3: sample_data["routers"][8],
+        #                     4: sample_data["routers"][12],
+        #                     5: sample_data["routers"][12], }
+        self.router_type = {0: sample_data["routers"][4],
+                            1: sample_data["routers"][7],
+                            2: sample_data["routers"][13],
+                            3: sample_data["routers"][8],
+                            4: sample_data["routers"][4],
+                            5: sample_data["routers"][6],
+                            6: sample_data["routers"][1],
+                            7: sample_data["routers"][3], }
 
     def setup_environment(self):
         self.topology = Topology(adj_matrix=self.adj_matrix)
@@ -82,15 +96,18 @@ class NetworkEnv:
         ns.Simulator.Run()
         self.app.monitor.trace_routes()
         self.app.monitor.get_packet_logs()
+        self.app.monitor.collect_flow_stats(
+            app_port=self.app.app_port, filter_noise=True, q=True)
 
     def calculate_reward(self, e, q, m=0.2, alpha=3):
-
         num_active_routers = sum(self.active_routers)
         num_path_routers = sum(self.app.monitor.path_routers)
         print(num_active_routers, num_path_routers)
         # Normalize energy
+        # e_norm = e / 560750
+        e_norm = e / 583500
         # e_norm = e / 415000
-        e_norm = e / 1401250
+        # e_norm = e / 1401250
 
         if num_path_routers != 0:
             r = num_active_routers / num_path_routers
@@ -108,11 +125,15 @@ class NetworkEnv:
 
         if n_failed > 0:
             f = 1
-            # r = 1 - (n_failed / n_total) + 0.5
-            reward = -(n_failed / n_total)
+            reward = 1 - (n_failed / n_total) + 1e-6
+            # reward = -(n_failed / n_total)
         else:
             f = 0
-            reward = 100 * (1 - e_norm)
+            reward = 100 * ((1 - e_norm) + q)
+
+            # reward = (q / (e_norm + 1e-6))
+            # reward = (1 / (e_norm + 1e-6))
+            reward *= (1/r)
         return reward, f, r, e_norm
 
     def calculate_energy(self):
@@ -121,8 +142,10 @@ class NetworkEnv:
         for i in range(self.topology.N_routers):
             if self.active_routers[i] == 0:
                 continue
-            e_base = sample_data["routers"][i % len(
-                sample_data["routers"])]["P_base"] * sim_duration
+            # e_base = sample_data["routers"][i % len(
+            #     sample_data["routers"])]["P_base"] * sim_duration
+
+            e_base = self.router_type[i]["P_base"] * sim_duration
             total_e += e_base
 
             for edge_id, interface in self.inter_info.items():
@@ -130,9 +153,12 @@ class NetworkEnv:
                     t_tx = interface['total_time_tx']
                     t_rx = interface['total_time_rx']
                     t_idle = sim_duration - (t_rx + t_tx)
-                    e_rx = t_rx * sample_data["routers"][i]["P_rx"]
-                    e_tx = t_tx * sample_data["routers"][i]["P_tx"]
-                    e_idle = t_idle * sample_data["routers"][i]["P_idle"]
+                    # e_rx = t_rx * sample_data["routers"][i]["P_rx"]
+                    # e_tx = t_tx * sample_data["routers"][i]["P_tx"]
+                    # e_idle = t_idle * sample_data["routers"][i]["P_idle"]
+                    e_rx = t_rx * self.router_type[i]["P_rx"]
+                    e_tx = t_tx * self.router_type[i]["P_tx"]
+                    e_idle = t_idle * self.router_type[i]["P_idle"]
                     self.inter_info[edge_id]['energy'] = e_rx + e_tx + e_idle
                     total_e += e_rx + e_tx + e_idle
 
@@ -143,21 +169,45 @@ class NetworkEnv:
         Q = []
         for flow_id, flow in self.app.monitor.flow_info.items():
             q_type = flow["q_type"]
-            w_b = sample_data["q_list"][q_type]["w_b"]
-            w_j = sample_data["q_list"][q_type]["w_j"]
-            w_d = sample_data["q_list"][q_type]["w_d"]
-            w_l = sample_data["q_list"][q_type]["w_l"]
+            cfg = sample_data["q_list"][q_type]
 
-            n = flow["rx_packets"]
-            p = sample_data["q_list"][q_type]["p"]
-            w = n * p
+            n_tx, n_rx = flow["tx_packets"], flow["rx_packets"]
+            if n_tx == 0:                               # noise / empty flow
+                continue
+
+            w_b = cfg["w_b"]
+            w_j = cfg["w_j"]
+            w_d = cfg["w_d"]
+            w_l = cfg["w_l"]
+
+            p = cfg["p"]
+            w = n_rx * p
             W.append(w)
 
-            l = flow["lost_packets"] / n if n > 0 else 0
-            d = flow["total_delay"]
-            j = flow["total_jitter"]
+            l = flow["lost_packets"] / n_tx if n_tx > 0 else 0
+            l = min(1.0, l / cfg["sla_loss"])
+            # d = flow["total_delay"]
+            # j = flow["total_jitter"]
+
+            d = min(1.0, flow["mean_delay"] / cfg["sla_delay"])
+            j = min(1.0, flow["mean_jitter"] / cfg["sla_jitter"])
+
+            # # Throughput term is optional: only if goodput is recorded & weight > 0
+            # if cfg["w_b"] > 0.0 and "goodput" in flow:
+            #     b_norm = min(1.0, flow["goodput"] / cfg["sla_bw_mbps"])
+            # else:
+            #     b_norm = 1.0
 
             q = 1 - (w_j * j + w_d * d + w_l * l)
+            if q < 0.5:
+                print(f"l: {l}, d: {d}, j: {j}")
+        #     q = 1.0 - (
+        #     cfg["w_d"] * d +
+        #     cfg["w_j"] * j +
+        #     cfg["w_l"] * l +
+        #     cfg["w_b"] * (1.0 - b)
+        # )
+            # q = max(0.0, min(1.0, q))
             Q.append(q)
 
         total_weight = sum(W)

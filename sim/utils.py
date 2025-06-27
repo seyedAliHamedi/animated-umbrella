@@ -55,7 +55,17 @@ sample_data = {
             "w_j": 0.40,
             "w_d": 0.40,
             "w_b": 0.00,
-            "p": 1.0
+            "p": 1.0,
+
+            # --- SLA targets ---
+            # 150 ms :contentReference[oaicite:0]{index=0}
+            "sla_delay": 0.150,
+            # 30 ms  :contentReference[oaicite:1]{index=1}
+            "sla_jitter": 0.030,
+            # 1 %    :contentReference[oaicite:2]{index=2}
+            "sla_loss": 0.01,
+            # ~100 kb s-¹ for G.711 + overhead :contentReference[oaicite:3]{index=3}
+            "sla_bw_mbps": 0.10
         },
         "live_video": {
             "max_packets": [5000, 10000],
@@ -66,7 +76,16 @@ sample_data = {
             "w_j": 0.20,
             "w_d": 0.30,
             "w_b": 0.10,
-            "p": 0.8
+            "p": 0.8,
+
+            # target 250 ms (keep <400 ms) :contentReference[oaicite:4]{index=4}
+            "sla_delay": 0.250,
+            # 50 ms upper bound             :contentReference[oaicite:5]{index=5}
+            "sla_jitter": 0.050,
+            # ≤1 %                         :contentReference[oaicite:6]{index=6}
+            "sla_loss": 0.01,
+            # HD bidirectional conf ≈2 Mb s-¹ :contentReference[oaicite:7]{index=7}
+            "sla_bw_mbps": 2.0
         },
         "gaming": {
             "max_packets": [1000, 2000],
@@ -77,7 +96,14 @@ sample_data = {
             "w_j": 0.25,
             "w_d": 0.50,
             "w_b": 0.00,
-            "p": 1.0
+            "p": 1.0,
+            # 50 ms one-way (≈100 ms RTT)   :contentReference[oaicite:8]{index=8}
+            "sla_delay": 0.050,
+            # keep <30 ms (VoIP-class)      :contentReference[oaicite:9]{index=9}
+            "sla_jitter": 0.030,
+            # aim <1 %                      :contentReference[oaicite:10]{index=10}
+            "sla_loss": 0.01,
+            "sla_bw_mbps": 0.10   # tens of kb s-¹; 0.1 Mb s-¹ covers most titles
         },
         "bulk_data": {
             "max_packets": [20000, 50000],
@@ -88,7 +114,14 @@ sample_data = {
             "w_j": 0.15,
             "w_d": 0.15,
             "w_b": 0.50,
-            "p": 0.5
+            "p": 0.5,
+            # Relaxed - bulk transfers are delay-insensitive
+            # 500 ms (or higher)            :contentReference[oaicite:11]{index=11}
+            "sla_delay": 0.500,
+            "sla_jitter": 0.500,  # 500 ms – effectively “don’t care”
+            # tolerate up to 5 % loss       :contentReference[oaicite:12]{index=12}
+            "sla_loss": 0.05,
+            "sla_bw_mbps": 5.0    # “use whatever is left”; 5 Mb s-¹ nominal floor
         }
     },
     "routers": {

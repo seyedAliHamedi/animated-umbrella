@@ -7,29 +7,62 @@ from torch_geometric.nn import GCNConv, GATConv
 from torch_geometric.utils import add_self_loops
 import numpy as np
 import random
+from sim.utils import sample_data
 
 
 class Agent(nn.Module):
     def __init__(self, num_node_features, hidden_channels1, hidden_channels2, lr=0.001):
         super().__init__()
         self.conv1 = GATConv(num_node_features, hidden_channels1)
-        self.conv2 = GATConv(hidden_channels1, hidden_channels2)
-        # self.embed = nn.Linear(num_node_features, hidden_channels2)
-        # self.nn = nn.Linear(hidden_channels2 * 2, 1)
-        self.nn = nn.Linear(hidden_channels2, 1)
+        # self.conv2 = GATConv(hidden_channels1, hidden_channels2)
+        # self.conv3 = GATConv(hidden_channels1, hidden_channels2)
+        # self.conv4 = GATConv(hidden_channels1, hidden_channels2)
+        # self.conv5 = GATConv(hidden_channels1, hidden_channels2)
+        self.embed = nn.Linear(num_node_features, hidden_channels1)
+        # self.nn1 = nn.Linear(hidden_channels1 * 2, 64)
+        # self.nn2 = nn.Linear(128, 64)
+        # self.nn2 = nn.Linear(64, 1)
+        self.nn = nn.Linear(hidden_channels1 * 2, 1)
+        # self.nn = nn.Linear(hidden_channels2, 1)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
         temp = x
         x = F.relu(self.conv1(x, edge_index))
-        x = F.relu(self.conv2(x, edge_index))
-        # temp = self.embed(temp)
-        # x = torch.cat([x, temp], dim=1)
+        # x = F.relu(self.conv2(x, edge_index))
+        temp = self.embed(temp)
+        x = torch.cat([x, temp], dim=1)
         x = self.nn(x)
+        # x = self.nn2(x)
+        # x = self.nn3(x)
         return x
 
     def dict_to_data(self, adj_matrix, node_features_dict):
+        # router_type = {
+        #     i: sample_data["routers"][i % len(sample_data["routers"])]
+        #     for i in range(len(adj_matrix))
+        # }
+        # router_type = {0: sample_data["routers"][4],
+        #                1: sample_data["routers"][9],
+        #                2: sample_data["routers"][1],
+        #                3: sample_data["routers"][8],
+        #                4: sample_data["routers"][12],
+        #                5: sample_data["routers"][12]}
+        router_type = {0: sample_data["routers"][4],
+                       1: sample_data["routers"][7],
+                       2: sample_data["routers"][13],
+                       3: sample_data["routers"][8],
+                       4: sample_data["routers"][4],
+                       5: sample_data["routers"][6],
+                       6: sample_data["routers"][1],
+                       7: sample_data["routers"][3], }
+
+        all_routers = list(router_type.values())
+        max_p_idle, max_p_rx, max_p_tx, max_p_base = (
+            max(router[key] for router in all_routers)
+            for key in ["P_idle", "P_rx", "P_tx", "P_base"]
+        )
         # Pre-create edge list
         edge_list = []
         for i in range(len(adj_matrix)):
@@ -45,32 +78,62 @@ class Agent(nn.Module):
         edge_index = torch.tensor(edge_list, dtype=torch.long).t().contiguous()
 
         # Batch process features
-        features = torch.zeros((num_nodes, 11), dtype=torch.float)
+        features = torch.zeros((num_nodes, 7), dtype=torch.float)
         for node_id in range(num_nodes):
             node_data = node_features_dict[node_id]
             features[node_id, 0] = 1.0 if node_data['is_client_server'] else 0.0
-            features[node_id, 1] = float(
-                node_data['graph_metrics']['betweenness_centrality']['original'])
-            features[node_id, 2] = float(
-                node_data['graph_metrics']['betweenness_centrality']['current'])
-            features[node_id, 3] = float(
-                node_data['graph_metrics']['degree_centrality']['original'])
-            features[node_id, 4] = float(
-                node_data['graph_metrics']['degree_centrality']['current'])
-            features[node_id, 5] = float(
-                node_data['graph_metrics']['clustering_coefficient']['original'])
-            features[node_id, 6] = float(
-                node_data['graph_metrics']['clustering_coefficient']['current'])
-            features[node_id, 7] = float(
-                node_data['graph_metrics']['eigenvector_centrality']['original'])
-            features[node_id, 8] = float(
-                node_data['graph_metrics']['eigenvector_centrality']['current'])
-            features[node_id, 9] = 1.0 if node_data['graph_metrics']['is_articulation_point']['original'] else 0.0
-            features[node_id, 10] = 1.0 if node_data['graph_metrics']['is_articulation_point']['current'] else 0.0
+            # features[node_id, 1] = float(
+            #     node_data['graph_metrics']['betweenness_centrality']['original'])
+            # features[node_id, 2] = float(
+            #     node_data['graph_metrics']['betweenness_centrality']['current'])
+            # features[node_id, 3] = float(
+            #     node_data['graph_metrics']['degree_centrality']['original'])
+            # features[node_id, 4] = float(
+            #     node_data['graph_metrics']['degree_centrality']['current'])
+            # features[node_id, 5] = float(
+            #     node_data['graph_metrics']['clustering_coefficient']['original'])
+            # features[node_id, 6] = float(
+            #     node_data['graph_metrics']['clustering_coefficient']['current'])
+            # features[node_id, 7] = float(
+            #     node_data['graph_metrics']['eigenvector_centrality']['original'])
+            # features[node_id, 8] = float(
+            #     node_data['graph_metrics']['eigenvector_centrality']['current'])
+            # features[node_id, 9] = 1.0 if node_data['graph_metrics']['is_articulation_point']['original'] else 0.0
+            # features[node_id, 10] = 1.0 if node_data['graph_metrics']['is_articulation_point']['current'] else 0.0
             features[node_id, 1] = float(
                 node_data['graph_metrics']['flow_betweenness_centrality']['original'])
             features[node_id, 2] = float(
                 node_data['graph_metrics']['flow_betweenness_centrality']['current'])
+
+            if node_id in router_type:
+                # features[node_id, 11] = float(
+                #     router_type[node_id]["P_idle"]) / max_p_idle
+                # features[node_id, 12] = float(
+                #     router_type[node_id]["P_rx"]) / max_p_rx
+                # features[node_id, 13] = float(
+                #     router_type[node_id]["P_tx"]) / max_p_tx
+                # features[node_id, 14] = float(
+                #     router_type[node_id]["P_base"]) / max_p_base
+                features[node_id, 3] = float(
+                    router_type[node_id]["P_idle"]) / max_p_idle
+                features[node_id, 4] = float(
+                    router_type[node_id]["P_rx"]) / max_p_rx
+                features[node_id, 5] = float(
+                    router_type[node_id]["P_tx"]) / max_p_tx
+                features[node_id, 6] = float(
+                    router_type[node_id]["P_base"]) / max_p_base
+
+            else:
+                print("ridi")
+                # For non-router nodes (clients/servers), set power features to 0
+                # features[node_id, 11] = 0.0
+                # features[node_id, 12] = 0.0
+                # features[node_id, 13] = 0.0
+                # features[node_id, 14] = 0.0
+                features[node_id, 3] = 0.0
+                features[node_id, 4] = 0.0
+                features[node_id, 5] = 0.0
+                features[node_id, 6] = 0.0
 
         # Normalize features (except binary features at indices 0, 9, 10)
         # for i in [1, 2, 3, 4, 5, 6, 7, 8]:
