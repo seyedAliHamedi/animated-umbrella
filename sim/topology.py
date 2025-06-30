@@ -80,20 +80,20 @@ class Topology:
             (2, 3, 'p2p',  '10Gbps',  '1ms',   1000, 0.0),
 
             # ---------- PATH-2  (balanced) ----------
-            (0, 6, 'p2p',  '1Gbps',   '2ms',    500, 0.0),
-            (6, 7, 'p2p',  '1Gbps',   '2ms',    500, 0.0),
-            (7, 3, 'p2p',  '1Gbps',   '2ms',    500, 0.0),
+            (0, 6, 'p2p',  '10Mbps',   '2ms',    500, 0.0),
+            (6, 7, 'p2p',  '10Mbps',   '2ms',    500, 0.0),
+            (7, 3, 'p2p',  '10Mbps',   '2ms',    500, 0.0),
 
             # ---------- PATH-3  (low-energy / weak QoS) ----------
-            (0, 4, 'csma', '100Mbps', '5ms',    200, 0.0),
-            (4, 5, 'csma', '100Mbps', '5ms',    200, 0.0),
-            (5, 3, 'csma', '100Mbps', '5ms',    200, 0.0),
+            (0, 4, 'csma', '100Kbps', '5ms',    200, 0.0),
+            (4, 5, 'csma', '100Kbps', '5ms',    200, 0.0),
+            (5, 3, 'csma', '100Kbps', '5ms',    200, 0.0),
 
             # ---------- bridging / redundancy ----------
-            (1, 6, 'p2p',  '1Gbps',   '3ms',    500, 0.0),
-            (2, 7, 'p2p',  '1Gbps',   '3ms',    500, 0.0),
-            (4, 6, 'p2p',  '1Gbps',   '3ms',    500, 0.0),
-            (5, 7, 'p2p',  '1Gbps',   '3ms',    500, 0.0),
+            (1, 6, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
+            (2, 7, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
+            (4, 6, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
+            (5, 7, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
         ]
 
         # Build a quick look-up dictionary:  edge_key -> (type, rate, delay, queue, err)

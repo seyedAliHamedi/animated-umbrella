@@ -10,7 +10,7 @@ from rl_env import NetworkEnv
 
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 
-agent = Agent(num_node_features=7, hidden_channels1=64, hidden_channels2=32)
+agent = Agent(num_node_features=16, hidden_channels1=64, hidden_channels2=32)
 torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=0.5)
 
 # original_adj_matrix = [
@@ -101,6 +101,7 @@ n_clients = 1
 n_servers = 1
 
 client_gateways, server_gateways = get_gw(adj_matrix, n_clients, n_servers)
+print("client gw: ", client_gateways)
 
 ip_to_node, node_to_ip = generate_ip_node_mappings(
     original_adj_matrix, n_clients, n_servers
