@@ -117,12 +117,24 @@ block_avg_energy = []
 block_avg_qos = []
 block_avg_r = []
 fails = 0
+start_epoch = 0
 
 if os.path.exists('./agent_weights.pth'):
-    agent.load_state_dict(torch.load(
-        './agent_weights.pth', weights_only=True))
+    checkpoint = torch.load('./agent_weights.pth', weights_only=True)
+    agent.load_state_dict(checkpoint['agent_state_dict'])
+    agent.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    start_epoch = checkpoint['epoch']
+    loss_history = checkpoint['loss_history']
+    qos_history = checkpoint['qos_history']
+    energy_history = checkpoint['energy_history']
+    ratio_history = checkpoint['ratio_history']
+    block_avg_loss = checkpoint['block_avg_loss']
+    block_fails_count = checkpoint['block_fails_count']
+    block_avg_energy = checkpoint['block_avg_energy']
+    block_avg_qos = checkpoint['block_avg_qos']
+    block_avg_r = checkpoint['block_avg_r']
 
-for epoch in range(250):
+for epoch in range(start_epoch, start_epoch + 250):
 
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
 
@@ -231,5 +243,18 @@ for epoch in range(250):
         client_gateways, server_gateways = get_gw(
             adj_matrix, n_clients, n_servers)
 
-torch.save(agent.state_dict(), "./agent_weights.pth")
+torch.save({
+    'agent_state_dict': agent.state_dict(),
+    'optimizer_state_dict': agent.optimizer.state_dict(),
+    'epoch': epoch + 1,
+    'loss_history': loss_history,
+    'qos_history': qos_history,
+    'energy_history': energy_history,
+    'ratio_history': ratio_history,
+    'block_avg_loss': block_avg_loss,
+    'block_fails_count': block_fails_count,
+    'block_avg_energy': block_avg_energy,
+    'block_avg_qos': block_avg_qos,
+    'block_avg_r': block_avg_r
+}, "./agent_weights.pth")
 print('\n\n', '-'*50, ' Saved ', '-'*50, '\n\n')
