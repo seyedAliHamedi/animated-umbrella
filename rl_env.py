@@ -90,12 +90,12 @@ class NetworkEnv:
         print(num_active_routers, num_path_routers)
         # Normalize energy
         # e_norm = e / 415000
-        e_norm = e / 1401250
+        e_norm = e / 517505
 
         if num_path_routers != 0:
             r = num_active_routers / num_path_routers
         else:
-            r = 0
+            r = 4.5
 
         # e_eff = e * (m + alpha * (r - 1))
         # e_eff /= 820000
@@ -112,7 +112,7 @@ class NetworkEnv:
             reward = -(n_failed / n_total)
         else:
             f = 0
-            reward = 100 * (1 - e_norm)
+            reward = 1 - e_norm
         return reward, f, r, e_norm
 
     def calculate_energy(self):

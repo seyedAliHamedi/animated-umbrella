@@ -58,8 +58,8 @@ class App:
         stack.Install(clients)
         stack.Install(servers)
 
-        print("Clients gateways:", self.client_gateways)
-        print("Servers gateways:", self.server_gateways)
+        print("Clients gateways:", self.client_gateways,
+              "Servers gateways:", self.server_gateways)
 
         links_types = distribute_values(
             self.links_type, self.n_clients + self.n_servers)

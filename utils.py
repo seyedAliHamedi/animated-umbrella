@@ -1,7 +1,9 @@
-import random
-import numpy as np
 import networkx as nx
-from networkx.algorithms.simple_paths import shortest_simple_paths
+import numpy as np
+import random
+from sim.utils import sample_data
+seed = 42
+random.seed(seed)
 
 
 def compute_fbc(adj_matrix, flows, K=2):
@@ -91,13 +93,30 @@ def get_gw(adj_matrix, n_clients, n_servers):
     return client_gateways, server_gateways
 
 
+def compute_gae(rewards, values, next_value):
+    gae = 0
+    returns = []
+    for step in reversed(range(len(rewards))):
+        delta = rewards[step] + 0.99 * \
+            next_value - values[step]
+        gae = delta + 0.99 * 0.95 * gae
+        returns.insert(0, gae + values[step])
+        next_value = values[step]
+    return returns
+
+
 def get_state(adj_matrix, client_gw, servers_gw, original):
     graph_metrics = collect_graph_metrics(
         adj_matrix, original, client_gw, servers_gw)
     all_node_state = []
     for node_idx in range(len(adj_matrix)):
         node_state = {
-            'is_client_server': 1 if node_idx in client_gw or node_idx in servers_gw else 0,
+            'is_client': 1 if node_idx in client_gw else 0,
+            'is_server': 1 if node_idx in servers_gw else 0,
+            "P_idle": sample_data['routers'][node_idx % len(sample_data["routers"])]["P_idle"] / sample_data['max_P_idle'],
+            "P_rx": sample_data['routers'][node_idx % len(sample_data["routers"])]["P_rx"] / sample_data['max_P_rx'],
+            "P_tx": sample_data['routers'][node_idx % len(sample_data["routers"])]["P_tx"] / sample_data['max_P_tx'],
+            "P_base": sample_data['routers'][node_idx % len(sample_data["routers"])]["P_base"] / sample_data['max_P_base'],
             'graph_metrics': {
                 'betweenness_centrality': {
                     'original': graph_metrics['betweenness_centrality']['original'].get(node_idx, 0),
