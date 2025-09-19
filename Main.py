@@ -10,7 +10,7 @@ from rl_env import NetworkEnv
 
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 
-agent = Agent(num_node_features=16, hidden_channels1=64, hidden_channels2=32)
+agent = Agent(num_node_features=18, hidden_channels1=64, hidden_channels2=32)
 torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=0.5)
 
 # original_adj_matrix = [

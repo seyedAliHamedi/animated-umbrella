@@ -59,9 +59,9 @@ class Agent(nn.Module):
                        7: sample_data["routers"][3], }
 
         all_routers = list(router_type.values())
-        max_p_idle, max_p_rx, max_p_tx, max_p_base = (
+        max_p_idle, max_p_rx, max_p_tx, max_p_base, max_queue, max_err = (
             max(router[key] for router in all_routers)
-            for key in ["P_idle", "P_rx", "P_tx", "P_base"]
+            for key in ["P_idle", "P_rx", "P_tx", "P_base", "Queue_size_packets", "Avg_loss_percent"]
         )
         # Pre-create edge list
         edge_list = []
@@ -77,7 +77,7 @@ class Agent(nn.Module):
 
         edge_index = torch.tensor(edge_list, dtype=torch.long).t().contiguous()
 
-        features = torch.zeros((num_nodes, 16), dtype=torch.float)
+        features = torch.zeros((num_nodes, 18), dtype=torch.float)
         for node_id in range(num_nodes):
             node_data = node_features_dict[node_id]
 
@@ -98,30 +98,37 @@ class Agent(nn.Module):
                     router_type[node_id]["P_tx"]) / max_p_tx
                 features[node_id, 6] = float(
                     router_type[node_id]["P_base"]) / max_p_base
+                features[node_id, 7] = float(
+                    router_type[node_id]["Queue_size_packets"]) / max_queue
+                features[node_id, 8] = float(
+                    router_type[node_id]["Avg_loss_percent"]) / max_err
+
             else:
                 features[node_id, 3] = 0.0
                 features[node_id, 4] = 0.0
                 features[node_id, 5] = 0.0
                 features[node_id, 6] = 0.0
+                features[node_id, 7] = 0.0
+                features[node_id, 8] = 0.0
 
             # RTT features (already normalized from collect_graph_metrics)
-            features[node_id, 7] = float(
-                node_data['graph_metrics'].get('avg_rtt_neigh', 0.5))
-            features[node_id, 8] = float(
-                node_data['graph_metrics'].get('min_rtt_neigh', 0.5))
             features[node_id, 9] = float(
-                node_data['graph_metrics'].get('max_rtt_neigh', 0.5))
+                node_data['graph_metrics'].get('avg_rtt_neigh', 0.5))
             features[node_id, 10] = float(
-                node_data['graph_metrics'].get('min_rtt_to_src', 1.0))
+                node_data['graph_metrics'].get('min_rtt_neigh', 0.5))
             features[node_id, 11] = float(
-                node_data['graph_metrics'].get('max_rtt_to_src', 1.0))
+                node_data['graph_metrics'].get('max_rtt_neigh', 0.5))
             features[node_id, 12] = float(
-                node_data['graph_metrics'].get('rtt_ratio_src', 1.0))
+                node_data['graph_metrics'].get('min_rtt_to_src', 1.0))
             features[node_id, 13] = float(
-                node_data['graph_metrics'].get('min_rtt_to_dst', 1.0))
+                node_data['graph_metrics'].get('max_rtt_to_src', 1.0))
             features[node_id, 14] = float(
-                node_data['graph_metrics'].get('max_rtt_to_dst', 1.0))
+                node_data['graph_metrics'].get('rtt_ratio_src', 1.0))
             features[node_id, 15] = float(
+                node_data['graph_metrics'].get('min_rtt_to_dst', 1.0))
+            features[node_id, 16] = float(
+                node_data['graph_metrics'].get('max_rtt_to_dst', 1.0))
+            features[node_id, 17] = float(
                 node_data['graph_metrics'].get('rtt_ratio_dst', 1.0))
 
         return Data(x=features, edge_index=edge_index)
