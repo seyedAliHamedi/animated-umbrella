@@ -63,7 +63,6 @@ class Monitor:
 
     def get_packet_logs(self):
         """Optimized packet log generation"""
-        # Calculate routing paths more efficiently
         routing_paths = []
         for i in range(self.app.n_clients):
             client_node = self.app.clients.Get(i)
@@ -72,26 +71,27 @@ class Monitor:
             server_idx = i % self.app.n_servers
             server_node = self.app.servers.Get(server_idx)
             server_id = server_node.GetId()
+            if len(self.all_paths)!= 0:
+                client_ip = self.node_to_ip[client_id][self.all_paths[0][0]]
+                server_ip = self.node_to_ip[server_id][self.all_paths[0][-1]]
 
-            client_ip = self.node_to_ip[client_id][0]
-            server_ip = self.node_to_ip[server_id][0]
+            # path = find_path(client_id, server_ip,
+            #                  self.routing_tables, self.ip_to_node)
 
-            path = find_path(client_id, server_ip,
-                             self.routing_tables, self.ip_to_node)
+            for path in self.all_paths:
+                if path:
+                    routing_paths.append({
+                        "src_ip": client_ip,
+                        "dest_ip": server_ip,
+                        "path": path
+                    })
 
-            if path:
-                routing_paths.append({
-                    "src_ip": client_ip,
-                    "dest_ip": server_ip,
-                    "path": path
-                })
-
-                reverse_path = path[::-1]  # More efficient reversal
-                routing_paths.append({
-                    "src_ip": server_ip,
-                    "dest_ip": client_ip,
-                    "path": reverse_path
-                })
+                    reverse_path = path[::-1]  # More efficient reversal
+                    routing_paths.append({
+                        "src_ip": server_ip,
+                        "dest_ip": client_ip,
+                        "path": reverse_path
+                    })
 
         paths_map = {(p["src_ip"], p["dest_ip"]): p["path"]
                      for p in routing_paths}

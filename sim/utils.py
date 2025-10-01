@@ -213,12 +213,10 @@ def find_path(start_node, dest_node, routing_tables, ip_to_node):
 
         if next_node in visited:
             return None
-
         path.append(next_node)
         visited.add(next_node)
         current_node = next_node
         max_hops -= 1
-
     return None
 
 

@@ -185,3 +185,4 @@ class Topology:
                     y += 1
 
         return routers, devices, internet, ip_interfaces
+    
