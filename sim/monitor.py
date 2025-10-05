@@ -72,8 +72,8 @@ class Monitor:
             server_node = self.app.servers.Get(server_idx)
             server_id = server_node.GetId()
             if len(self.all_paths)!= 0:
-                client_ip = self.node_to_ip[client_id][self.all_paths[0][0]]
-                server_ip = self.node_to_ip[server_id][self.all_paths[0][-1]]
+                client_ip = self.node_to_ip[client_id][self.all_paths[min(server_idx,len(self.all_paths)-1)][0]]
+                server_ip = self.node_to_ip[server_id][self.all_paths[min(server_idx,len(self.all_paths)-1)][-1]]
 
             # path = find_path(client_id, server_ip,
             #                  self.routing_tables, self.ip_to_node)
