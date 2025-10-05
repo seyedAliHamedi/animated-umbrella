@@ -7,9 +7,10 @@ import random
 from utils import *
 from agent import Agent
 from rl_env import NetworkEnv
+import time
 
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
-
+t = time.time()
 agent = Agent(num_node_features=18, hidden_channels1=64, hidden_channels2=32)
 torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=0.5)
 
@@ -134,7 +135,7 @@ if os.path.exists('./agent_weights.pth'):
     block_avg_qos = checkpoint['block_avg_qos']
     block_avg_r = checkpoint['block_avg_r']
 
-for epoch in range(start_epoch, start_epoch + 250):
+for epoch in range(start_epoch, start_epoch + 100):
 
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
 
@@ -175,12 +176,13 @@ for epoch in range(start_epoch, start_epoch + 250):
     # print("E", e)
     if ratio != 0:
         ratio_history.append(ratio)
-    agent.optimizer.zero_grad()
-    loss.backward()
-    agent.optimizer.step()
-    # if reward == -1 and len(list(nx.all_simple_paths(nx.from_numpy_array(
-    #         np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
-    #     print("="*20, " 1FAIL1 ", "="*20)
+    if fail and len(list(nx.all_simple_paths(nx.from_numpy_array(
+            np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
+        print("="*20, " 1FAIL1 ", "="*20)
+    else:
+        agent.optimizer.zero_grad()
+        loss.backward()
+        agent.optimizer.step()
 
     print(
         f"Epoch {epoch}, Reward: {reward}, Loss: {loss_value:.4f}, e: {e:.4f}, q: {q}, r: {ratio}")
@@ -258,3 +260,4 @@ torch.save({
     'block_avg_r': block_avg_r
 }, "./agent_weights.pth")
 print('\n\n', '-'*50, ' Saved ', '-'*50, '\n\n')
+print("HEHEHEHHEHEHEHEH", time.time()-t)

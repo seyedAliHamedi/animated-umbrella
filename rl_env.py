@@ -125,13 +125,15 @@ class NetworkEnv:
 
         if n_failed > 0:
             f = 1
-            reward = 1 - (n_failed / n_total) + 1e-6
-            # reward = -(n_failed / n_total)
+            # reward = 1 - (n_failed / n_total) + 1e-6
+            reward = -1 * (n_failed / n_total)
         else:
             f = 0
-            reward = 100 * ((1 - e_norm) + q)
+            # reward = 100 * ((1 - e_norm))
+            # reward = 1 * ((1 - e_norm) + q)
 
-            # reward = (q / (e_norm + 1e-6))
+            # reward = 100 * (q / (e_norm + 1e-6))
+            reward = np.exp(-e_norm)*np.exp(q)
             # reward = (1 / (e_norm + 1e-6))
             reward *= (1/r)
         return reward, f, r, e_norm

@@ -11,14 +11,15 @@ from sim.utils import sample_data
 
 
 class Agent(nn.Module):
-    def __init__(self, num_node_features, hidden_channels1, hidden_channels2, lr=0.001):
+    def __init__(self, num_node_features, hidden_channels1, hidden_channels2, lr=0.0005):
         super().__init__()
         self.conv1 = GATConv(num_node_features, hidden_channels1)
         # self.conv2 = GATConv(hidden_channels1, hidden_channels2)
         # self.conv3 = GATConv(hidden_channels1, hidden_channels2)
         # self.conv4 = GATConv(hidden_channels1, hidden_channels2)
         # self.conv5 = GATConv(hidden_channels1, hidden_channels2)
-        self.embed = nn.Linear(num_node_features, hidden_channels1)
+        self.embed1 = nn.Linear(num_node_features, hidden_channels1)
+        self.embed2 = nn.Linear(hidden_channels1, hidden_channels1)
         # self.nn1 = nn.Linear(hidden_channels1 * 2, 64)
         # self.nn2 = nn.Linear(128, 64)
         # self.nn2 = nn.Linear(64, 1)
@@ -31,7 +32,8 @@ class Agent(nn.Module):
         temp = x
         x = F.relu(self.conv1(x, edge_index))
         # x = F.relu(self.conv2(x, edge_index))
-        temp = self.embed(temp)
+        temp = self.embed1(temp)
+        temp = self.embed2(temp)
         x = torch.cat([x, temp], dim=1)
         x = self.nn(x)
         # x = self.nn2(x)
@@ -138,8 +140,8 @@ class Agent(nn.Module):
         logits = self(data)
         p = torch.sigmoid(logits)
         p = torch.clamp(p, 1e-6, 1 - 1e-6)
-        if random.random() < 0.1:
-            actions = torch.bernoulli(torch.ones_like(p) * 0.5)
-        else:
-            actions = torch.bernoulli(p)
+        # if random.random() < 0.1:
+        #     actions = torch.bernoulli(torch.ones_like(p) * 0.5)
+        # else:
+        actions = torch.bernoulli(p)
         return actions, p, logits
