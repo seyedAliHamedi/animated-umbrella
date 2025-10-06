@@ -72,28 +72,84 @@ class Topology:
         # ────────────────────────────────────────────────────────────────
         # 0)  Explicit link table  ➜  put it once near your class __init__
         # ────────────────────────────────────────────────────────────────
+        # LINK_TABLE = [
+        #     #  i, j,   type,  rate,     delay, queue_pkts,  err_rate
+        #     # ---------- PATH-1  (fast / premium QoS) ----------
+        #     (0, 1, 'p2p',  '10Gbps',  '1ms',   1000, 0.0),
+        #     (1, 2, 'p2p',  '10Gbps',  '1ms',   1000, 0.0),
+        #     (2, 3, 'p2p',  '10Gbps',  '1ms',   1000, 0.0),
+
+        #     # ---------- PATH-2  (balanced) ----------
+        #     (0, 6, 'p2p',  '10Mbps',   '2ms',    500, 0.0),
+        #     (6, 7, 'p2p',  '10Mbps',   '2ms',    500, 0.0),
+        #     (7, 3, 'p2p',  '10Mbps',   '2ms',    500, 0.0),
+
+        #     # ---------- PATH-3  (low-energy / weak QoS) ----------
+        #     (0, 4, 'csma', '100Kbps', '5ms',    200, 0.0),
+        #     (4, 5, 'csma', '100Kbps', '5ms',    200, 0.0),
+        #     (5, 3, 'csma', '100Kbps', '5ms',    200, 0.0),
+
+        #     # ---------- bridging / redundancy ----------
+        #     (1, 6, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
+        #     (2, 7, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
+        #     (4, 6, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
+        #     (5, 7, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
+        # ]
+        # Node index → name
+        # 0 Hiroshima, 1 Sakyo, 2 Dojima, 3 Nara, 4 Komatso, 5 NTT Otemachi,
+        # 6 Tsukuba, 7 KDDI Otemachi, 8 Akihabara, 9 Nezu, 10 Yogami,
+        # 11 Hiyoshi, 12 Fujisawa
+
+        # Delays are one-way propagation in milliseconds (ms).
+        # QUEUE is packets; computed as min( BDP_packets(rate, delay, MTU=1500B), min(endpoint_queue_sizes) )
+
         LINK_TABLE = [
-            #  i, j,   type,  rate,     delay, queue_pkts,  err_rate
-            # ---------- PATH-1  (fast / premium QoS) ----------
-            (0, 1, 'p2p',  '10Gbps',  '1ms',   1000, 0.0),
-            (1, 2, 'p2p',  '10Gbps',  '1ms',   1000, 0.0),
-            (2, 3, 'p2p',  '10Gbps',  '1ms',   1000, 0.0),
+            #  i,  j,   type,  rate,      delay,    queue_pkts, err_rate
+            (0,  2,  'p2p', '100Mbps',  '1.60ms',
+             13,        0.0),  # Hiroshima–Dojima
+            (1,  2,  'p2p', '100Mbps',  '0.25ms',
+             2,        0.0),  # Sakyo–Dojima
+            (1,  3,  'p2p', '100Mbps',  '0.20ms',
+             1,        0.0),  # Sakyo–Nara
 
-            # ---------- PATH-2  (balanced) ----------
-            (0, 6, 'p2p',  '10Mbps',   '2ms',    500, 0.0),
-            (6, 7, 'p2p',  '10Mbps',   '2ms',    500, 0.0),
-            (7, 3, 'p2p',  '10Mbps',   '2ms',    500, 0.0),
+            (2,  3,  'p2p', '10Gbps',   '0.20ms',
+             166,        0.0),  # Dojima–Nara
+            (2,  4,  'p2p', '100Gbps',  '1.30ms',
+             10833,        0.0),  # Dojima–Komatsu
+            (2,  5,  'p2p', '100Gbps',  '2.20ms',
+             18333,        0.0),  # Dojima–Fujisawa
+            (2,  9,  'p2p', '10Gbps',   '2.50ms',
+             2083,        0.0),  # Dojima–Tsukuba
 
-            # ---------- PATH-3  (low-energy / weak QoS) ----------
-            (0, 4, 'csma', '100Kbps', '5ms',    200, 0.0),
-            (4, 5, 'csma', '100Kbps', '5ms',    200, 0.0),
-            (5, 3, 'csma', '100Kbps', '5ms',    200, 0.0),
+            (3,  5,  'p2p', '10Gbps',   '2.25ms',
+             1875,        0.0),  # Nara–Fujisawa
+            (3, 12,  'p2p', '10Gbps',   '2.25ms',
+             1875,        0.0),  # Nara–KDDI Otemachi
 
-            # ---------- bridging / redundancy ----------
-            (1, 6, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
-            (2, 7, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
-            (4, 6, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
-            (5, 7, 'p2p',  '100Kbps',   '3ms',    500, 0.0),
+            (4,  5,  'p2p', '100Gbps',  '1.75ms',
+             14583,        0.0),  # Komatsu–Fujisawa
+
+            (5,  6,  'p2p', '10Gbps',   '0.10ms',
+             83,        0.0),  # Fujisawa–Hiyoshi
+            (5,  7,  'p2p', '150Gbps',  '0.12ms',
+             1500,        0.0),  # Fujisawa–Yagami
+            (5, 10,  'p2p', '10Gbps',   '0.30ms',
+             249,        0.0),  # Fujisawa–Akihabara
+            (5, 12,  'p2p', '10Gbps',   '0.275ms',
+             229,        0.0),  # Fujisawa–KDDI Otemachi
+
+            (7,  8,  'p2p', '150Gbps',  '0.175ms',
+             2187,        0.0),  # Yagami–Nezu
+            (7,  9,  'p2p', '10Gbps',   '0.50ms',
+             416,        0.0),  # Yagami–Tsukuba
+
+            (9, 10,  'p2p', '100Gbps',  '0.275ms',
+             2291,        0.0),  # Tsukuba–Akihabara
+
+            (10, 11, 'p2p', '10Gbps',   '0.02ms',
+             16,        0.0),  # Akihabara–NTT Otemachi
+            (10, 12, 'p2p', '100Gbps',  '0.02ms',
+             166,        0.0),  # Akihabara–KDDI Otemachi
         ]
 
         # Build a quick look-up dictionary:  edge_key -> (type, rate, delay, queue, err)
@@ -185,4 +241,3 @@ class Topology:
                     y += 1
 
         return routers, devices, internet, ip_interfaces
-    

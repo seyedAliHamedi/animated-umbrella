@@ -124,6 +124,75 @@ sample_data = {
             "sla_bw_mbps": 5.0    # “use whatever is left”; 5 Mb s-¹ nominal floor
         }
     },
+    "mawi_q_list": {
+        "Interactive_Web": {
+            "max_packets": [1000000, 45000000],
+            "packet_size": [300, 1400],
+            "data_rate": [0.5, 500.0],
+            "score_th": 0.82,
+            "w_l": 0.20,
+            "w_j": 0.10,
+            "w_d": 0.40,
+            "w_b": 0.30,
+            "p": 0.80,
+
+            "sla_delay": 0.120,
+            "sla_jitter": 0.050,
+            "sla_loss": 0.015,
+            "sla_bw_mbps": 2.0
+        },
+
+        "Streaming_Media": {
+            "max_packets": [3000000, 50000000],
+            "packet_size": [900, 1500],
+            "data_rate": [5.0, 900.0],
+            "score_th": 0.76,
+            "w_l": 0.20,
+            "w_j": 0.10,
+            "w_d": 0.10,
+            "w_b": 0.60,
+            "p": 0.65,
+
+            "sla_delay": 1.000,
+            "sla_jitter": 0.100,
+            "sla_loss": 0.020,
+            "sla_bw_mbps": 8.0
+        },
+
+        "Background_Sync": {
+            "max_packets": [5000000, 90000000],
+            "packet_size": [800, 1500],
+            "data_rate": [10.0, 1300.0],
+            "score_th": 0.68,
+            "w_l": 0.10,
+            "w_j": 0.05,
+            "w_d": 0.10,
+            "w_b": 0.75,
+            "p": 0.35,
+
+            "sla_delay": 2.000,
+            "sla_jitter": 1.000,
+            "sla_loss": 0.030,
+            "sla_bw_mbps": 20.0
+        },
+
+        "Real_Time_Interactive": {
+            "max_packets": [100000, 20000000],
+            "packet_size": [60, 1200],
+            "data_rate": [0.05, 80.0],
+            "score_th": 0.90,
+            "w_l": 0.15,
+            "w_j": 0.30,
+            "w_d": 0.50,
+            "w_b": 0.05,
+            "p": 1.00,
+
+            "sla_delay": 0.080,
+            "sla_jitter": 0.020,
+            "sla_loss": 0.005,
+            "sla_bw_mbps": 1.0
+        }
+    },
     "routers": {
         0: {'name': 'Cisco ASR 9904', 'P_idle': 4.0, 'P_rx': 35.0, 'P_tx': 35.0, 'P_base': 1150.0, 'Queue_size_packets': 833000,  'Avg_loss_percent': 0.0001},
         1: {'name': 'Cisco ASR 1001-X', 'P_idle': 0.75, 'P_rx': 7.0, 'P_tx': 5.0, 'P_base': 175.0, 'Queue_size_packets': 44700,   'Avg_loss_percent': 0.0002},
@@ -145,6 +214,110 @@ sample_data = {
         17: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5, 'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001}
     },
 
+    "mawi_routers": {
+        0: {'name': 'Vyatta VC6.3 (Software Router)', 'P_idle': 1.0, 'P_rx': 5.0, 'P_tx': 5.0,
+            'P_base': 150.0, 'Queue_size_packets': 100000, 'Avg_loss_percent': 0.0005, 'city_name': 'Hiroshima'},
+
+        1: {'name': 'Alaxala AX3630S-24T', 'P_idle': 0.5, 'P_rx': 6.0, 'P_tx': 6.0,
+            'P_base': 120.0, 'Queue_size_packets': 21000, 'Avg_loss_percent': 0.0008, 'city_name': 'Sakyo'},
+
+        2: {'name': 'Cisco CRS-1', 'P_idle': 8.0, 'P_rx': 35.0, 'P_tx': 35.0,
+            'P_base': 2500.0, 'Queue_size_packets': 1000000, 'Avg_loss_percent': 0.0001, 'city_name': 'Dojima'},
+
+        3: {'name': 'Juniper MX960', 'P_idle': 5.0, 'P_rx': 17.5, 'P_tx': 17.5,
+            'P_base': 1350.0, 'Queue_size_packets': 833000, 'Avg_loss_percent': 0.0001, 'city_name': 'Dojima'},
+
+        4: {'name': 'Juniper MX240', 'P_idle': 2.5, 'P_rx': 10.0, 'P_tx': 10.0,
+            'P_base': 650.0, 'Queue_size_packets': 833000, 'Avg_loss_percent': 0.0001, 'city_name': 'Nara'},
+
+        5: {'name': 'Juniper MX240', 'P_idle': 2.5, 'P_rx': 10.0, 'P_tx': 10.0,
+            'P_base': 650.0, 'Queue_size_packets': 833000, 'Avg_loss_percent': 0.0001, 'city_name': 'Nara'},
+
+        6: {'name': 'Juniper MX240', 'P_idle': 2.5, 'P_rx': 10.0, 'P_tx': 10.0,
+            'P_base': 650.0, 'Queue_size_packets': 833000, 'Avg_loss_percent': 0.0001, 'city_name': 'Komatsu'},
+
+        7: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+            'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'Fujisawa'},
+
+        8: {'name': 'Cisco Catalyst 9500', 'P_idle': 1.5, 'P_rx': 11.5, 'P_tx': 11.5,
+            'P_base': 110.0, 'Queue_size_packets': 21300, 'Avg_loss_percent': 0.0008, 'city_name': 'Fujisawa'},
+
+        9: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+            'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'Yagami'},
+
+        10: {'name': 'Arista DCS-7124S', 'P_idle': 1.0, 'P_rx': 6.0, 'P_tx': 6.0,
+             'P_base': 120.0, 'Queue_size_packets': 12000, 'Avg_loss_percent': 0.0010, 'city_name': 'Yagami'},
+
+        11: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+             'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'Nezu'},
+
+        12: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+             'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'Nezu'},
+
+        13: {'name': 'Extreme MLXe-16', 'P_idle': 4.0, 'P_rx': 18.0, 'P_tx': 18.0,
+             'P_base': 900.0, 'Queue_size_packets': 800000, 'Avg_loss_percent': 0.0003, 'city_name': 'Tsukuba'},
+
+        14: {'name': 'Cisco Nexus 9300 (9236C)', 'P_idle': 3.0, 'P_rx': 17.5, 'P_tx': 17.5,
+             'P_base': 200.0, 'Queue_size_packets': 26600, 'Avg_loss_percent': 0.0010, 'city_name': 'Tsukuba'},
+
+        15: {'name': 'Cisco Nexus 9300 (9236C)', 'P_idle': 3.0, 'P_rx': 17.5, 'P_tx': 17.5,
+             'P_base': 200.0, 'Queue_size_packets': 26600, 'Avg_loss_percent': 0.0010, 'city_name': 'Akihabara'},
+        # --- Tokyo core sites (assumed profile for simulation) ---
+        16: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+             'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001,
+             'city_name': 'NTT Otemachi'},
+
+        17: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+             'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001,
+             'city_name': 'KDDI Otemachi'},
+
+        # --- Hiyoshi is served by Yagami core; add an alias entry so it appears in your model ---
+        18: {'name': 'Huawei NE40E-X8A (via Yagami core)', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+             'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001,
+             'city_name': 'Hiyoshi'}
+    },
+    "mawi_routers_one_per_city": {
+        0:  {'name': 'Vyatta VC6.3 (Software Router)', 'P_idle': 1.0, 'P_rx': 5.0, 'P_tx': 5.0,
+             'P_base': 150.0, 'Queue_size_packets': 100000, 'Avg_loss_percent': 0.0005, 'city_name': 'Hiroshima'},
+
+        1:  {'name': 'Alaxala AX3630S-24T', 'P_idle': 0.5, 'P_rx': 6.0, 'P_tx': 6.0,
+             'P_base': 120.0, 'Queue_size_packets': 21000, 'Avg_loss_percent': 0.0008, 'city_name': 'Sakyo'},
+
+        2:  {'name': 'Juniper MX960', 'P_idle': 5.0, 'P_rx': 17.5, 'P_tx': 17.5,
+             'P_base': 1350.0, 'Queue_size_packets': 833000, 'Avg_loss_percent': 0.0001, 'city_name': 'Dojima'},
+
+        3:  {'name': 'Juniper MX240', 'P_idle': 2.5, 'P_rx': 10.0, 'P_tx': 10.0,
+             'P_base': 650.0, 'Queue_size_packets': 833000, 'Avg_loss_percent': 0.0001, 'city_name': 'Nara'},
+
+        4:  {'name': 'Juniper MX240', 'P_idle': 2.5, 'P_rx': 10.0, 'P_tx': 10.0,
+             'P_base': 650.0, 'Queue_size_packets': 833000, 'Avg_loss_percent': 0.0001, 'city_name': 'Komatsu'},
+
+        5: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+            'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'NTT Otemachi'},
+
+        6:  {'name': 'Extreme MLXe-16', 'P_idle': 4.0, 'P_rx': 18.0, 'P_tx': 18.0,
+             'P_base': 900.0, 'Queue_size_packets': 800000, 'Avg_loss_percent': 0.0003, 'city_name': 'Tsukuba'},
+
+        7: {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+            'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'KDDI Otemachi'},
+
+        8: {'name': 'Cisco Nexus 9300 (9236C)', 'P_idle': 3.0, 'P_rx': 17.5, 'P_tx': 17.5,
+            'P_base': 200.0, 'Queue_size_packets': 26600, 'Avg_loss_percent': 0.0010, 'city_name': 'Akihabara'},
+
+        9:  {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+             'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'Nezu'},
+
+        10:  {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+              'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'Yagami'},
+
+        11:  {'name': 'Huawei NE40E-X8A (via Yagami core)', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+              'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'Hiyoshi'},
+
+        12:  {'name': 'Huawei NE40E-X8A', 'P_idle': 6.5, 'P_rx': 32.5, 'P_tx': 32.5,
+              'P_base': 4100.0, 'Queue_size_packets': 1667000, 'Avg_loss_percent': 0.0001, 'city_name': 'Fujisawa'}
+
+
+    },
     "app_duration": 100,
     "app_start_time": 10,
 

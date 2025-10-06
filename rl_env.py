@@ -47,14 +47,20 @@ class NetworkEnv:
         #                     3: sample_data["routers"][8],
         #                     4: sample_data["routers"][12],
         #                     5: sample_data["routers"][12], }
-        self.router_type = {0: sample_data["routers"][4],
-                            1: sample_data["routers"][7],
-                            2: sample_data["routers"][13],
-                            3: sample_data["routers"][8],
-                            4: sample_data["routers"][4],
-                            5: sample_data["routers"][6],
-                            6: sample_data["routers"][1],
-                            7: sample_data["routers"][3], }
+
+        # self.router_type = {0: sample_data["routers"][4],
+        #                     1: sample_data["routers"][7],
+        #                     2: sample_data["routers"][13],
+        #                     3: sample_data["routers"][8],
+        #                     4: sample_data["routers"][4],
+        #                     5: sample_data["routers"][6],
+        #                     6: sample_data["routers"][1],
+        #                     7: sample_data["routers"][3], }
+
+        self.router_type = {
+            i: sample_data["mawi_routers_one_per_city"][i]
+            for i in range(len(adj_matrix))
+        }
 
     def setup_environment(self):
         self.topology = Topology(adj_matrix=self.adj_matrix)
@@ -105,9 +111,11 @@ class NetworkEnv:
         print(num_active_routers, num_path_routers)
         # Normalize energy
         # e_norm = e / 560750
-        e_norm = e / 583500
+        # e_norm = e / 583500  # latest
         # e_norm = e / 415000
         # e_norm = e / 1401250
+
+        e_norm = e / 1431000  # mawi
 
         if num_path_routers != 0:
             r = num_active_routers / num_path_routers
@@ -135,7 +143,8 @@ class NetworkEnv:
             # reward = 100 * (q / (e_norm + 1e-6))
             reward = np.exp(-e_norm)*np.exp(q)
             # reward = (1 / (e_norm + 1e-6))
-            reward *= (1/r)
+            # reward *= (1/r)
+            reward *= np.exp(1-r)
         return reward, f, r, e_norm
 
     def calculate_energy(self):

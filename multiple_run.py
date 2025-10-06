@@ -2,7 +2,7 @@ import os
 import subprocess
 import time
 
-n = 100
+n = 60
 if os.path.exists("./agent_weights.pth"):
     os.remove("./agent_weights.pth")
 

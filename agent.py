@@ -41,24 +41,25 @@ class Agent(nn.Module):
         return x
 
     def dict_to_data(self, adj_matrix, node_features_dict):
-        # router_type = {
-        #     i: sample_data["routers"][i % len(sample_data["routers"])]
-        #     for i in range(len(adj_matrix))
-        # }
+        router_type = {
+            i: sample_data["mawi_routers_one_per_city"][i]
+            for i in range(len(adj_matrix))
+        }
         # router_type = {0: sample_data["routers"][4],
         #                1: sample_data["routers"][9],
         #                2: sample_data["routers"][1],
         #                3: sample_data["routers"][8],
         #                4: sample_data["routers"][12],
         #                5: sample_data["routers"][12]}
-        router_type = {0: sample_data["routers"][4],
-                       1: sample_data["routers"][7],
-                       2: sample_data["routers"][13],
-                       3: sample_data["routers"][8],
-                       4: sample_data["routers"][4],
-                       5: sample_data["routers"][6],
-                       6: sample_data["routers"][1],
-                       7: sample_data["routers"][3], }
+
+        # router_type = {0: sample_data["routers"][4],
+        #                1: sample_data["routers"][7],
+        #                2: sample_data["routers"][13],
+        #                3: sample_data["routers"][8],
+        #                4: sample_data["routers"][4],
+        #                5: sample_data["routers"][6],
+        #                6: sample_data["routers"][1],
+        #                7: sample_data["routers"][3], }
 
         all_routers = list(router_type.values())
         max_p_idle, max_p_rx, max_p_tx, max_p_base, max_queue, max_err = (

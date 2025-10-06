@@ -180,7 +180,7 @@ def extract_rtt_features_from_table(rtt_table, adj_matrix, gateways=None, fbc_sc
     fbc_scores : dict
         Flow Betweenness Centrality scores for each node
     fbc_threshold : float
-        Threshold for FBC - nodes with FBC <= threshold get penalty values
+        Threshold for FBC - nodes with FBC <= threshold get penalty values (-1)
     norm_mode : int
         0 = No normalization
         1 = Min-Max normalization
@@ -260,8 +260,9 @@ def extract_rtt_features_from_table(rtt_table, adj_matrix, gateways=None, fbc_sc
                     features[node]['rtt_ratio_src'] = min_rtt_src / \
                         max_rtt_src if max_rtt_src > 0 else 1.0
                 else:
-                    features[node]['min_rtt_to_src'] = 0.0 if is_source_gateway else 1000.0
-                    features[node]['max_rtt_to_src'] = 0.0 if is_source_gateway else 1000.0
+                    # Use -1 as penalty marker instead of 1000
+                    features[node]['min_rtt_to_src'] = 0.0 if is_source_gateway else -1.0
+                    features[node]['max_rtt_to_src'] = 0.0 if is_source_gateway else -1.0
                     features[node]['rtt_ratio_src'] = 1.0
 
             # Calculate destination gateway features
@@ -285,19 +286,20 @@ def extract_rtt_features_from_table(rtt_table, adj_matrix, gateways=None, fbc_sc
                     features[node]['rtt_ratio_dst'] = min_rtt_dst / \
                         max_rtt_dst if max_rtt_dst > 0 else 1.0
                 else:
-                    features[node]['min_rtt_to_dst'] = 0.0 if is_dest_gateway else 1000.0
-                    features[node]['max_rtt_to_dst'] = 0.0 if is_dest_gateway else 1000.0
+                    # Use -1 as penalty marker instead of 1000
+                    features[node]['min_rtt_to_dst'] = 0.0 if is_dest_gateway else -1.0
+                    features[node]['max_rtt_to_dst'] = 0.0 if is_dest_gateway else -1.0
                     features[node]['rtt_ratio_dst'] = 1.0
 
-            # Apply FBC threshold penalties
+            # Apply FBC threshold penalties (using -1)
             if fbc_scores is not None:
                 node_fbc = fbc_scores.get(node, 0.0)
                 if node_fbc <= fbc_threshold and not (is_source_gateway or is_dest_gateway):
-                    features[node]['min_rtt_to_src'] = 1000.0
-                    features[node]['max_rtt_to_src'] = 1000.0
+                    features[node]['min_rtt_to_src'] = -1.0
+                    features[node]['max_rtt_to_src'] = -1.0
                     features[node]['rtt_ratio_src'] = 1.0
-                    features[node]['min_rtt_to_dst'] = 1000.0
-                    features[node]['max_rtt_to_dst'] = 1000.0
+                    features[node]['min_rtt_to_dst'] = -1.0
+                    features[node]['max_rtt_to_dst'] = -1.0
                     features[node]['rtt_ratio_dst'] = 1.0
 
     # Apply normalization if requested
@@ -333,7 +335,7 @@ def normalize_rtt_features(features, fbc_threshold=0, mode=1, timeout_ms=1000.0)
 
     if mode == 0:
         # Min-Max Normalization Mode
-        # Collect all values for normalization (excluding None and penalty values)
+        # Collect all values for normalization (excluding None and penalty values -1)
         all_avg_neigh = []
         all_min_neigh = []
         all_max_neigh = []
@@ -351,9 +353,9 @@ def normalize_rtt_features(features, fbc_threshold=0, mode=1, timeout_ms=1000.0)
             if f['max_rtt_neigh'] is not None:
                 all_max_neigh.append(f['max_rtt_neigh'])
 
-            # Gateway features (source and dest)
+            # Gateway features (source and dest) - exclude penalty values (-1)
             for key in ['min_rtt_to_src', 'max_rtt_to_src', 'min_rtt_to_dst', 'max_rtt_to_dst']:
-                if key in f and f[key] is not None and f[key] < 1000:
+                if key in f and f[key] is not None and f[key] != -1.0:
                     all_min_gw.append(
                         f[key]) if 'min' in key else all_max_gw.append(f[key])
 
@@ -426,14 +428,17 @@ def normalize_rtt_features(features, fbc_threshold=0, mode=1, timeout_ms=1000.0)
             if 'min_rtt_to_src' in f:
                 # Source gateway features
                 if f['min_rtt_to_src'] == 0.0 and f['max_rtt_to_src'] == 0.0:
+                    # Node is a source gateway
                     norm_f['min_rtt_to_src'] = 0.0
                     norm_f['max_rtt_to_src'] = 0.0
                     norm_f['rtt_ratio_src'] = 1.0
-                elif f['min_rtt_to_src'] >= 1000:
-                    norm_f['min_rtt_to_src'] = 1.0
-                    norm_f['max_rtt_to_src'] = 1.0
-                    norm_f['rtt_ratio_src'] = 1.0
+                elif f['min_rtt_to_src'] == -1.0:
+                    # Penalty value - keep as -1
+                    norm_f['min_rtt_to_src'] = -1.0
+                    norm_f['max_rtt_to_src'] = -1.0
+                    norm_f['rtt_ratio_src'] = -1.0
                 else:
+                    # Normal RTT value - normalize
                     norm_f['min_rtt_to_src'] = f['min_rtt_to_src'] / \
                         max_gw_overall
                     norm_f['max_rtt_to_src'] = f['max_rtt_to_src'] / \
@@ -444,14 +449,17 @@ def normalize_rtt_features(features, fbc_threshold=0, mode=1, timeout_ms=1000.0)
             if 'min_rtt_to_dst' in f:
                 # Destination gateway features
                 if f['min_rtt_to_dst'] == 0.0 and f['max_rtt_to_dst'] == 0.0:
+                    # Node is a destination gateway
                     norm_f['min_rtt_to_dst'] = 0.0
                     norm_f['max_rtt_to_dst'] = 0.0
                     norm_f['rtt_ratio_dst'] = 1.0
-                elif f['min_rtt_to_dst'] >= 1000:
-                    norm_f['min_rtt_to_dst'] = 1.0
-                    norm_f['max_rtt_to_dst'] = 1.0
-                    norm_f['rtt_ratio_dst'] = 1.0
+                elif f['min_rtt_to_dst'] == -1.0:
+                    # Penalty value - keep as -1
+                    norm_f['min_rtt_to_dst'] = -1.0
+                    norm_f['max_rtt_to_dst'] = -1.0
+                    norm_f['rtt_ratio_dst'] = -1.0
                 else:
+                    # Normal RTT value - normalize
                     norm_f['min_rtt_to_dst'] = f['min_rtt_to_dst'] / \
                         max_gw_overall
                     norm_f['max_rtt_to_dst'] = f['max_rtt_to_dst'] / \
@@ -505,12 +513,12 @@ def get_state(adj_matrix, client_gw, servers_gw, original):
                 'avg_rtt_neigh': graph_metrics['rtt_features'].get(node_idx, {}).get('avg_rtt_neigh', 1),
                 'min_rtt_neigh': graph_metrics['rtt_features'].get(node_idx, {}).get('min_rtt_neigh', 1),
                 'max_rtt_neigh': graph_metrics['rtt_features'].get(node_idx, {}).get('max_rtt_neigh', 1),
-                'min_rtt_to_src': graph_metrics['rtt_features'].get(node_idx, {}).get('min_rtt_to_src', 1.0),
-                'max_rtt_to_src': graph_metrics['rtt_features'].get(node_idx, {}).get('max_rtt_to_src', 1.0),
-                'rtt_ratio_src': graph_metrics['rtt_features'].get(node_idx, {}).get('rtt_ratio_src', 1.0),
-                'min_rtt_to_dst': graph_metrics['rtt_features'].get(node_idx, {}).get('min_rtt_to_dst', 1.0),
-                'max_rtt_to_dst': graph_metrics['rtt_features'].get(node_idx, {}).get('max_rtt_to_dst', 1.0),
-                'rtt_ratio_dst': graph_metrics['rtt_features'].get(node_idx, {}).get('rtt_ratio_dst', 1.0),
+                'min_rtt_to_src': graph_metrics['rtt_features'].get(node_idx, {}).get('min_rtt_to_src', -1.0),
+                'max_rtt_to_src': graph_metrics['rtt_features'].get(node_idx, {}).get('max_rtt_to_src', -1.0),
+                'rtt_ratio_src': graph_metrics['rtt_features'].get(node_idx, {}).get('rtt_ratio_src', -1.0),
+                'min_rtt_to_dst': graph_metrics['rtt_features'].get(node_idx, {}).get('min_rtt_to_dst', -1.0),
+                'max_rtt_to_dst': graph_metrics['rtt_features'].get(node_idx, {}).get('max_rtt_to_dst', -1.0),
+                'rtt_ratio_dst': graph_metrics['rtt_features'].get(node_idx, {}).get('rtt_ratio_dst', -1.0),
             }
         }
         all_node_state.append(node_state)

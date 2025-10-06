@@ -151,8 +151,9 @@ class App:
 
     def setup_client(self, client_idx, client, server):
         # q_type = random.choice(list(sample_data["q_list"].keys()))
-        q_type = "voice"
-        q_config = sample_data["q_list"][q_type]
+        # q_type = "voice"
+        q_type = "Interactive_Web"
+        q_config = sample_data["mawi_q_list"][q_type]
         max_packets = random.randint(*q_config["max_packets"])
         min_size, max_size = q_config["packet_size"]
         start = min_size + (8 - min_size %
