@@ -32,8 +32,8 @@ class Agent(nn.Module):
         temp = x
         x = F.relu(self.conv1(x, edge_index))
         # x = F.relu(self.conv2(x, edge_index))
-        temp = self.embed1(temp)
-        temp = self.embed2(temp)
+        temp = F.relu(self.embed1(temp))
+        temp = F.relu(self.embed2(temp))
         x = torch.cat([x, temp], dim=1)
         x = self.nn(x)
         # x = self.nn2(x)

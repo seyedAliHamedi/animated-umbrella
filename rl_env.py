@@ -139,12 +139,14 @@ class NetworkEnv:
             f = 0
             # reward = 100 * ((1 - e_norm))
             # reward = 1 * ((1 - e_norm) + q)
-
-            # reward = 100 * (q / (e_norm + 1e-6))
-            reward = np.exp(-e_norm)*np.exp(q)
-            # reward = (1 / (e_norm + 1e-6))
-            # reward *= (1/r)
-            reward *= np.exp(1-r)
+            if num_active_routers == len(self.active_routers) and r != 1:
+                reward = -1
+            else:
+                # reward = 100 * (q / (e_norm + 1e-6))
+                reward = np.exp(-e_norm)*np.exp(q)
+                # reward = (1 / (e_norm + 1e-6))
+                # reward *= (1/r)
+                reward *= np.exp(1-r)
         return reward, f, r, e_norm
 
     def calculate_energy(self):
@@ -180,7 +182,7 @@ class NetworkEnv:
         Q = []
         for flow_id, flow in self.app.monitor.flow_info.items():
             q_type = flow["q_type"]
-            cfg = sample_data["q_list"][q_type]
+            cfg = sample_data["mawi_q_list"][q_type]
 
             n_tx, n_rx = flow["tx_packets"], flow["rx_packets"]
             if n_tx == 0:                               # noise / empty flow
