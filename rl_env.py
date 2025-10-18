@@ -14,18 +14,22 @@ class NetworkEnv:
     def __init__(self,
                  adj_matrix,
                  n_clients,
+                           conf,
+                           n_apps,
                  original_adj_matrix,
                  n_servers,
                  client_gateways,
                  server_gateways,
                  ip_to_node,
                  node_to_ip,
-                 simulation_duration=100,
+                 simulation_duration=10,
+       
                  ):
 
         self.adj_matrix = adj_matrix
         self.simulation_duration = simulation_duration
-
+        self.conf = conf
+        self.n_apps=n_apps
         self.n_clients = n_clients
         self.n_servers = n_servers
         self.original_adj_matrix = original_adj_matrix
@@ -35,7 +39,9 @@ class NetworkEnv:
         self.inter_info = {}
         self.ip_to_node = ip_to_node
         self.node_to_ip = node_to_ip
+        self.apps=[]
         self.setup_environment()
+
 
         # self.router_type = {
         #     i: sample_data["routers"][i % len(sample_data["routers"])]
@@ -72,42 +78,45 @@ class NetworkEnv:
             row_sum = sum(self.adj_matrix[i])
             self.active_routers.append(1 if row_sum > 0 else 0)
             self.active_links[i] = int(row_sum)
+        for i in range(self.n_apps):
+            a=App(self.topology, client_gateways=[self.client_gateways[i]], server_gateways=[self.server_gateways[i]], n_clients=1, n_servers=1, app_start_time=40,
+                        app_duration=self.simulation_duration,configurations=self.conf,app_index=i)
+            self.apps.append(a)
 
-        self.app = App(self.topology, client_gateways=self.client_gateways, server_gateways=self.server_gateways, app_interval=1, n_clients=self.n_clients, n_servers=self.n_servers, app_start_time=40,
-                       app_duration=self.simulation_duration)
+            self.apps[i].monitor = Monitor(self.apps[i].topology, self.apps[i])
+            self.apps[i].monitor.ip_to_node = self.ip_to_node
+            self.apps[i].monitor.node_to_ip = self.node_to_ip
 
-        self.app.monitor = Monitor(self.app.topology, self.app)
-        self.app.monitor.ip_to_node = self.ip_to_node
-        self.app.monitor.node_to_ip = self.node_to_ip
+            mobility = ns.MobilityHelper()
+            mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
+            mobility.Install(self.apps[i].topology.nodes)
+            mobility.Install(self.apps[i].clients)
+            mobility.Install(self.apps[i].servers)
 
-        mobility = ns.MobilityHelper()
-        mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
-        mobility.Install(self.app.topology.nodes)
-        mobility.Install(self.app.clients)
-        mobility.Install(self.app.servers)
-
-        anim = self.app.monitor.setup_animation(self.app.animFile)
-        self.app.monitor.setup_packet_log()
-        self.app.monitor.setup_flow_monitor()
+            # anim = self.apps[i].monitor.setup_animation(self.apps[i].animFile)
+            self.apps[i].monitor.setup_packet_log()
+            self.apps[i].monitor.setup_flow_monitor()
 
     def step(self):
         self.run_simulation(self.simulation_duration)
+        
         e = self.calculate_energy()
         q = self.calculate_qos()
         reward, f, r, e_eff = self.calculate_reward(e, q)
         return None, reward, f, r, e_eff, q
 
     def run_simulation(self, duration):
-        ns.Simulator.Stop(ns.Seconds(duration))
-        ns.Simulator.Run()
-        self.app.monitor.trace_routes()
-        self.app.monitor.get_packet_logs()
-        self.app.monitor.collect_flow_stats(
-            app_port=self.app.app_port, filter_noise=True, q=True)
+        for i in range(self.n_apps):
+            ns.Simulator.Stop(ns.Seconds(duration))
+            ns.Simulator.Run()
+            self.apps[i].monitor.trace_routes()
+            self.apps[i].monitor.get_packet_logs()
+            self.apps[i].monitor.collect_flow_stats(
+                app_port=self.apps[i].app_port, filter_noise=True, q=True)
 
     def calculate_reward(self, e, q, m=0.2, alpha=3):
-        num_active_routers = sum(self.active_routers)
-        num_path_routers = sum(self.app.monitor.path_routers)
+        num_active_routers = sum(self.active_routers) * len(self.apps)
+        num_path_routers = sum( sum(app.monitor.path_routers) for app in self.apps)
         print(num_active_routers, num_path_routers)
         # Normalize energy
         # e_norm = e / 560750
@@ -126,10 +135,11 @@ class NetworkEnv:
         # e_eff /= 820000
 
         # Calculate success rate
-        n_total = sum(info["max_packets"]
-                      for info in self.app.client_info.values())
-        n_failed = sum(info["failed"]
-                       for info in self.app.client_info.values())
+        for app in self.apps:
+            n_total = sum(info["max_packets"]
+                        for info in app.client_info.values())
+            n_failed = sum(info["failed"]
+                        for info in app.client_info.values())
 
         if n_failed > 0:
             f = 1
@@ -178,57 +188,60 @@ class NetworkEnv:
         return total_e
 
     def calculate_qos(self):
-        W = []
-        Q = []
-        for flow_id, flow in self.app.monitor.flow_info.items():
-            q_type = flow["q_type"]
-            cfg = sample_data["mawi_q_list"][q_type]
+        s=0
+        for app in self.apps:
+            W = []
+            Q = []
+            for flow_id, flow in app.monitor.flow_info.items():
+                q_type = flow["q_type"]
+                cfg = sample_data["mawi_q_list"][q_type]
 
-            n_tx, n_rx = flow["tx_packets"], flow["rx_packets"]
-            if n_tx == 0:                               # noise / empty flow
-                continue
+                n_tx, n_rx = flow["tx_packets"], flow["rx_packets"]
+                if n_tx == 0:                               # noise / empty flow
+                    continue
 
-            w_b = cfg["w_b"]
-            w_j = cfg["w_j"]
-            w_d = cfg["w_d"]
-            w_l = cfg["w_l"]
+                w_b = cfg["w_b"]
+                w_j = cfg["w_j"]
+                w_d = cfg["w_d"]
+                w_l = cfg["w_l"]
 
-            p = cfg["p"]
-            w = n_rx * p
-            W.append(w)
+                p = cfg["p"]
+                w = n_rx * p
+                W.append(w)
 
-            l = flow["lost_packets"] / n_tx if n_tx > 0 else 0
-            l = min(1.0, l / cfg["sla_loss"])
-            # d = flow["total_delay"]
-            # j = flow["total_jitter"]
+                l = flow["lost_packets"] / n_tx if n_tx > 0 else 0
+                l = min(1.0, l / cfg["sla_loss"])
+                # d = flow["total_delay"]
+                # j = flow["total_jitter"]
 
-            d = min(1.0, flow["mean_delay"] / cfg["sla_delay"])
-            j = min(1.0, flow["mean_jitter"] / cfg["sla_jitter"])
+                d = min(1.0, flow["mean_delay"] / cfg["sla_delay"])
+                j = min(1.0, flow["mean_jitter"] / cfg["sla_jitter"])
 
-            # # Throughput term is optional: only if goodput is recorded & weight > 0
-            # if cfg["w_b"] > 0.0 and "goodput" in flow:
-            #     b_norm = min(1.0, flow["goodput"] / cfg["sla_bw_mbps"])
-            # else:
-            #     b_norm = 1.0
+                # # Throughput term is optional: only if goodput is recorded & weight > 0
+                # if cfg["w_b"] > 0.0 and "goodput" in flow:
+                #     b_norm = min(1.0, flow["goodput"] / cfg["sla_bw_mbps"])
+                # else:
+                #     b_norm = 1.0
 
-            q = 1 - (w_j * j + w_d * d + w_l * l)
-            if q < 0.5:
-                print(f"l: {l}, d: {d}, j: {j}")
-        #     q = 1.0 - (
-        #     cfg["w_d"] * d +
-        #     cfg["w_j"] * j +
-        #     cfg["w_l"] * l +
-        #     cfg["w_b"] * (1.0 - b)
-        # )
-            # q = max(0.0, min(1.0, q))
-            Q.append(q)
+                q = 1 - (w_j * j + w_d * d + w_l * l)
+                if q < 0.5:
+                    print(f"l: {l}, d: {d}, j: {j}")
+            #     q = 1.0 - (
+            #     cfg["w_d"] * d +
+            #     cfg["w_j"] * j +
+            #     cfg["w_l"] * l +
+            #     cfg["w_b"] * (1.0 - b)
+            # )
+                # q = max(0.0, min(1.0, q))
+                Q.append(q)
 
-        total_weight = sum(W)
-        if total_weight == 0:
-            return 0
+            total_weight = sum(W)
+            if total_weight == 0:
+                return 0
 
-        weighted_qos = sum(w * q for w, q in zip(W, Q)) / total_weight
-        return weighted_qos
+            weighted_qos = sum(w * q for w, q in zip(W, Q)) / total_weight
+            s+=weighted_qos
+        return s
 
     def collect_edge_features(self):
         # Optimized packet processing without pandas in hot loop

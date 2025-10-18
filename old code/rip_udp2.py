@@ -214,7 +214,7 @@ for node_id, ips in ip_addresses.items():
     print(f"Node {node_id}: {', '.join(ips)}")
 print(30*"--")
 print("Setting up energy models for routers...")
-energyHelper = ns.BasicEnergySourceHelper()
+energyHelper = ns.energy.BasicEnergySourceHelper()
 energyHelper.Set("BasicEnergySourceInitialEnergyJ", ns.DoubleValue(1.0))
 energySources = energyHelper.Install(all_nodes)
 

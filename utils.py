@@ -98,14 +98,18 @@ def changeAdj(actions, original_adj_matrix):
 
 
 def get_gw(adj_matrix, n_clients, n_servers):
-    available_gateways = list(range(len(adj_matrix)))
-
-    client_gateways = random.sample(available_gateways, n_clients)
-    remaining_gateways = [
-        gw for gw in available_gateways if gw not in client_gateways]
-    server_gateways = random.sample(remaining_gateways, n_servers)
-
-    return client_gateways, server_gateways
+    n = len(adj_matrix)
+    m = n_clients 
+    if m > n or (n <= 1 and m > 0):
+        return [], []
+    
+    nodes = list(range(n))
+    random.shuffle(nodes)
+    
+    clients_gw = [nodes[i] for i in range(m)]
+    servers_gw = [nodes[(i + 1) % n] for i in range(m)]
+    
+    return clients_gw, servers_gw
 
 
 # Global variable to store RTT table - loaded once

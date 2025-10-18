@@ -208,7 +208,7 @@ class Monitor:
             server_idx = i % self.app.n_servers
             server_node = self.app.servers.Get(server_idx)
             server_id = server_node.GetId()
-
+            print(self.app.client_gateways,i)
             client = self.app.client_gateways[i]
             server = self.app.server_gateways[server_idx]
             path = find_path(client, server,

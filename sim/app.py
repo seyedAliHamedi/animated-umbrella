@@ -1,6 +1,7 @@
 from ns import ns
 import os
 import sys
+import pandas as pd
 import random
 
 
@@ -11,13 +12,16 @@ class App:
     def __init__(self, topology,
                  client_gateways,
                  server_gateways,
+                 configurations,
+                 app_index,
+
                  n_servers=sample_data['app_n_servers'], n_clients=sample_data['app_n_clients'],
                  links_type=sample_data['app_links_type'], links_rate=sample_data['app_links_rate'],
                  links_delay=sample_data['app_links_delay'], app_type=sample_data['app_type'],
                  app_max_packets=sample_data['app_max_packets'], app_interval=sample_data['app_interval'],
                  app_packet_size=sample_data['app_packet_size'], app_start_time=sample_data['app_start_time'],
                  app_duration=sample_data['app_duration'], tcp_app_data_rate=sample_data['tcp_app_data_rate'],
-                 app_port=sample_data['app_port'], animFile=sample_data['app_animation_file']):
+                 app_port=sample_data['app_port'], animFile=sample_data['app_animation_file'],):
         self.topology = topology
         self.n_servers = n_servers
         self.n_clients = n_clients
@@ -39,6 +43,9 @@ class App:
         self.server_gateways = server_gateways
         self.clients_ip = []
         self.clients, self.servers, self.servers_ip = self.initialize_client_server()
+  
+        self.configurations = configurations
+        self.app_index=app_index
 
         self.install_app()
 
@@ -127,76 +134,60 @@ class App:
         return clients, servers, servers_ip
 
     def install_app(self):
-        for i in range(self.n_servers):
-            self.setup_server(self.servers.Get(i))
+       
+        self.setup_server(self.servers.Get(0))
 
-        for i in range(self.n_clients):
-            client = self.clients.Get(i)
-            server = self.servers_ip[i % self.n_servers]
-            self.setup_client(i, client, server)
+        client = self.clients.Get(0) 
+        server = self.servers_ip[0]
+
+        self.setup_client(self.app_index, client, server)
+
+
 
     def setup_server(self, server):
         if self.app_type == "udp_echo":
             udp_echo_server = ns.UdpEchoServerHelper(self.app_port)
             server_app = udp_echo_server.Install(server)
-        elif self.app_type == "tcp_echo":
-            localAddress = ns.InetSocketAddress(
-                ns.Ipv4Address.GetAny(), self.app_port).ConvertTo()
-            tcp_server = ns.PacketSinkHelper(
-                "ns3::TcpSocketFactory", localAddress)
-            server_app = tcp_server.Install(server)
 
         server_app.Start(ns.Seconds(self.app_start_time))
-        server_app.Stop(ns.Seconds(self.app_start_time + self.app_duration))
+        server_app.Stop(ns.Seconds(self.app_start_time) + ns.Minutes(self.app_duration))
 
     def setup_client(self, client_idx, client, server):
-        # q_type = random.choice(list(sample_data["q_list"].keys()))
-        # q_type = "voice"
-        q_type = "Interactive_Web"
+
+        q_type = self.configurations[f'F{client_idx+1}/q_type']
         q_config = sample_data["mawi_q_list"][q_type]
-        max_packets = random.randint(*q_config["max_packets"])
-        min_size, max_size = q_config["packet_size"]
-        start = min_size + (8 - min_size %
-                            8) if min_size % 8 != 0 else min_size
-        end = max_size - (max_size % 8)
-        packet_size = random.randrange(start, end + 1, 8)
-        client_ip = str(self.clients_ip[client_idx].GetAddress(0)).strip()
+        max_packets = int(self.configurations[f'F{client_idx+1}/n_packets'])
+        interval = self.configurations[f'F{client_idx+1}/interval']
+        packet_size = int(self.configurations[f'F{client_idx+1}/Avg_packet_size'])
+        client_ip = str(self.clients_ip[0].GetAddress(0)).strip()
         server_ip = str(server.GetAddress(0, 0)).strip()
 
-        # print(f"Client {client_idx} src_ip: {client_ip}, dst ip: {server_ip}")
+        print(f"Client {client_idx} src_ip: {client_ip}, dst ip: {server_ip} ,qtype {q_type} \n")
 
         self.client_info[client.GetId()] = {
             "q_type": q_type,
             "max_packets": max_packets,
             "packet_size": packet_size,
+            "interval":interval,
+            "q_config":q_config,
             "failed": 0,
             "is_clientServer": 1,
             "src_ip": client_ip,
             "dest_ip": server_ip
         }
         server_ip = server.GetAddress(0, 0).ConvertTo()
-        # print(f"q_type: {client.GetId()}, max_packets: {max_packets}, packet_size: {packet_size}")
+     
 
         if self.app_type == "udp_echo":
             echo_client = ns.UdpEchoClientHelper(server_ip, self.app_port)
             echo_client.SetAttribute(
                 "MaxPackets", ns.UintegerValue(max_packets))
             echo_client.SetAttribute(
-                "Interval", ns.TimeValue(ns.Seconds(self.app_interval)))
+                "Interval", ns.TimeValue(ns.Seconds(interval)))
             echo_client.SetAttribute(
                 "PacketSize", ns.UintegerValue(packet_size))
-        elif self.app_type == "tcp_echo":
-            echo_client = ns.OnOffHelper("ns3::TcpSocketFactory",
-                                         ns.Address(ns.InetSocketAddress(server.GetAddress(0, 0), self.app_port).ConvertTo()))
-            echo_client.SetAttribute("OnTime", ns.StringValue(
-                "ns3::ConstantRandomVariable[Constant=1]"))
-            echo_client.SetAttribute("OffTime", ns.StringValue(
-                "ns3::ConstantRandomVariable[Constant=0]"))
-            echo_client.SetAttribute("DataRate", ns.DataRateValue(
-                ns.DataRate(self.tcp_app_data_rate)))
-            echo_client.SetAttribute(
-                "PacketSize", ns.UintegerValue(self.app_packet_size))
+ 
 
         client_app = echo_client.Install(client)
         client_app.Start(ns.Seconds(self.app_start_time))
-        client_app.Stop(ns.Seconds(self.app_start_time + self.app_duration))
+        client_app.Stop(ns.Seconds(self.app_start_time) + ns.Minutes(self.app_duration))

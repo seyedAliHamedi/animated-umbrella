@@ -1,6 +1,11 @@
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 import subprocess
 import os
 import torch
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from ns import ns
 import random
@@ -8,6 +13,8 @@ from utils import *
 from agent import Agent
 from rl_env import NetworkEnv
 import time
+import pandas as pd
+
 
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 t = time.time()
@@ -112,14 +119,28 @@ original_adj_matrix = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],  # 11 Hiyoshi
     [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0],  # 12 Fujisawa
 ]
+def process_row(row):
+    non_fx = ['date', 'time', 'timestamp', 'Total/T', 'Total/P']
+    sfxs = ['/T', '/P', '/Avg_packet_size', '/n_packets', '/interval', '/q_type', '_ips']
+    v_idx = [int(re.search(r'\d+', c).group()) for c in sorted([c for c in row.index if re.match(r'F\d+/T', c)], key=lambda x: int(re.search(r'\d+', x).group())) if row.get(c, 0) != 0]
+    fx_data = {f'F{n_i}{s}': row[f'F{o_i}{s}'] for n_i, o_i in enumerate(v_idx, 1) for s in sfxs if f'F{o_i}{s}' in row}
+    return pd.Series({**row[non_fx].to_dict(), **fx_data}), len(v_idx)
 
 adj_matrix = original_adj_matrix.copy()
-
-n_clients = 1
-n_servers = 1
+conf = pd.read_csv("./t/mawi_monthly_csvs/final/MAWI-WIDE_2023-2025.csv")
+row=conf.iloc[0]
+fx_t_columns = [col for col in conf.columns if col.startswith('F') and col.endswith('/T')]
+row, non_zero_count = process_row(conf.iloc[0])
+print("/"*20)
+print(row)
+print("/"*20)
+n_clients = non_zero_count
+n_servers = non_zero_count
 
 client_gateways, server_gateways = get_gw(adj_matrix, n_clients, n_servers)
+print(non_zero_count)
 print("client gw: ", client_gateways)
+print("server gw: ", server_gateways)
 
 ip_to_node, node_to_ip = generate_ip_node_mappings(
     original_adj_matrix, n_clients, n_servers
@@ -172,6 +193,8 @@ for epoch in range(start_epoch, start_epoch + 100):
         server_gateways=server_gateways,
         ip_to_node=ip_to_node,
         node_to_ip=node_to_ip,
+        conf = row,
+        n_apps=non_zero_count,
     )
 
     metrics, reward, fail, ratio, e, q = env.step()
@@ -259,6 +282,13 @@ for epoch in range(start_epoch, start_epoch + 100):
     if env is not None:
         ns.Simulator.Destroy()
         env = None
+        adj_matrix = original_adj_matrix.copy()
+        row=conf.iloc[epoch+1]   
+
+        non_zero_count = sum(1 for col in fx_t_columns if row1[col] != 0)
+        n_clients = non_zero_count
+        n_servers = non_zero_count
+
         client_gateways, server_gateways = get_gw(
             adj_matrix, n_clients, n_servers)
 
