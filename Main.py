@@ -285,7 +285,7 @@ for epoch in range(start_epoch, start_epoch + 100):
         adj_matrix = original_adj_matrix.copy()
         row=conf.iloc[epoch+1]   
 
-        non_zero_count = sum(1 for col in fx_t_columns if row1[col] != 0)
+        non_zero_count = sum(1 for col in fx_t_columns if row[col] != 0)
         n_clients = non_zero_count
         n_servers = non_zero_count
 

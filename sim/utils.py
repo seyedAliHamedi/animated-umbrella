@@ -409,20 +409,19 @@ def parse_routes_manually(file_path):
             node_id = int(node_id)
             time = int(time)
 
-            if 30 < time < 40:
-                if node_id not in routing_tables:
-                    routing_tables[node_id] = {}
+            if node_id not in routing_tables:
+                routing_tables[node_id] = {}
 
-                for line in info.split('\n'):
-                    line = line.strip()
-                    if line and not line.startswith('Node:') and not line.startswith('Destination'):
-                        parts = line.split()
-                        if len(parts) >= 3:
-                            dest_net = parts[0]
-                            gateway = parts[1]
+            for line in info.split('\n'):
+                line = line.strip()
+                if line and not line.startswith('Node:') and not line.startswith('Destination'):
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        dest_net = parts[0]
+                        gateway = parts[1]
 
-                            if gateway != '0.0.0.0' and gateway != 'Genmask':
-                                routing_tables[node_id][dest_net] = gateway
+                        if gateway != '0.0.0.0' and gateway != 'Genmask':
+                            routing_tables[node_id][dest_net] = gateway
 
     return routing_tables
 

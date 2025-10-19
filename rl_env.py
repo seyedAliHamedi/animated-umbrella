@@ -93,26 +93,52 @@ class NetworkEnv:
             mobility.Install(self.apps[i].clients)
             mobility.Install(self.apps[i].servers)
 
-            # anim = self.apps[i].monitor.setup_animation(self.apps[i].animFile)
+            
             self.apps[i].monitor.setup_packet_log()
             self.apps[i].monitor.setup_flow_monitor()
+        self.apps[0].monitor.setup_animation(self.apps[0].animFile)
 
     def step(self):
+        overall_start = time.time()
+
         self.run_simulation(self.simulation_duration)
-        
+        sim_elapsed = time.time() - overall_start
+        print(f"[timing] run_simulation: {sim_elapsed:.3f}s")
+
+        energy_start = time.time()
         e = self.calculate_energy()
+        print(f"[timing] calculate_energy: {time.time()-energy_start:.3f}s")
+
+        qos_start = time.time()
         q = self.calculate_qos()
+        print(f"[timing] calculate_qos: {time.time()-qos_start:.3f}s")
+
+        reward_start = time.time()
         reward, f, r, e_eff = self.calculate_reward(e, q)
+        print(f"[timing] calculate_reward: {time.time()-reward_start:.3f}s")
+        print(f"[timing] step_total: {time.time()-overall_start:.3f}s")
         return None, reward, f, r, e_eff, q
 
     def run_simulation(self, duration):
         for i in range(self.n_apps):
+            sim_start = time.time()
             ns.Simulator.Stop(ns.Seconds(duration))
             ns.Simulator.Run()
-            self.apps[i].monitor.trace_routes()
-            self.apps[i].monitor.get_packet_logs()
-            self.apps[i].monitor.collect_flow_stats(
+            print(f"[timing] Simulator.Run app {i}: {time.time()-sim_start:.3f}s")
+
+            monitor = self.apps[i].monitor
+            trace_start = time.time()
+            monitor.trace_routes()
+            print(f"[timing] trace_routes app {i}: {time.time()-trace_start:.3f}s")
+
+            packets_start = time.time()
+            monitor.get_packet_logs()
+            print(f"[timing] get_packet_logs app {i}: {time.time()-packets_start:.3f}s")
+
+            flow_start = time.time()
+            monitor.collect_flow_stats(
                 app_port=self.apps[i].app_port, filter_noise=True, q=True)
+            print(f"[timing] collect_flow_stats app {i}: {time.time()-flow_start:.3f}s")
 
     def calculate_reward(self, e, q, m=0.2, alpha=3):
         num_active_routers = sum(self.active_routers) * len(self.apps)

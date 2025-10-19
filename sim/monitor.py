@@ -1,6 +1,7 @@
 from ns import ns
 
 import math
+import time
 import cppyy
 import csv
 from sim.utils import *
@@ -31,17 +32,21 @@ class Monitor:
         self.path_routers = [0] * self.topology.N_routers
 
     def setup_animation(self, anim_file=sample_data['xml_animation_file'], enable_packet_metadata=True):
+        start_time = time.time()
         self.anim = ns.AnimationInterface('/dev/null')
-        self.anim.EnableIpv4RouteTracking(
-            sample_data['routing_table_file'], ns.Seconds(30), ns.Seconds(40))
+        self.anim.EnableIpv4RouteTracking(sample_data['routing_table_file'], ns.Seconds(30), ns.Seconds(30))
+        print(f"[timing] monitor.setup_animation: {time.time()-start_time:.3f}s")
         return self.anim
 
     def setup_flow_monitor(self):
+        start_time = time.time()
         self.flow_helper = ns.FlowMonitorHelper()
         self.flow_monitor = self.flow_helper.InstallAll()
+        print(f"[timing] monitor.setup_flow_monitor: {time.time()-start_time:.3f}s")
         return self.flow_monitor
 
     def setup_packet_log(self):
+        start_time = time.time()
         global cpp_code_loaded
         if not cpp_code_loaded:
             cppyy.cppdef(sample_data['cpp_code_f'])
@@ -60,8 +65,11 @@ class Monitor:
                 ipv4.TraceConnectWithoutContext("Tx", tx_callback)
 
         self.packet_module = module
+        print(f"[timing] monitor.setup_packet_log: {time.time()-start_time:.3f}s")
 
     def get_packet_logs(self):
+        import time
+        start_time = time.time()
         """Optimized packet log generation"""
         routing_paths = []
         for i in range(self.app.n_clients):
@@ -86,7 +94,7 @@ class Monitor:
                         "path": path
                     })
 
-                    reverse_path = path[::-1]  # More efficient reversal
+                    reverse_path = path[::-1]  
                     routing_paths.append({
                         "src_ip": server_ip,
                         "dest_ip": client_ip,
@@ -159,6 +167,8 @@ class Monitor:
                 writer.writerows(csv_data)
 
         module.ClearPacketData()
+        import time
+        print(f"[timing] monitor.get_packet_logs: {time.time()-start_time:.3f}s")
 
     def get_node_ips_by_id(self):
         node_ips = {}
@@ -196,7 +206,7 @@ class Monitor:
         return node_ips
 
     def trace_routes(self):
-
+        start_time = time.time()
         routing_tables = parse_routes_manually(
             sample_data['routing_table_file'])
         self.routing_tables = routing_tables
@@ -208,7 +218,7 @@ class Monitor:
             server_idx = i % self.app.n_servers
             server_node = self.app.servers.Get(server_idx)
             server_id = server_node.GetId()
-            print(self.app.client_gateways,i)
+            # print(self.app.client_gateways,i)
             client = self.app.client_gateways[i]
             server = self.app.server_gateways[server_idx]
             path = find_path(client, server,
@@ -216,6 +226,7 @@ class Monitor:
             if path is None:
                 path = find_path(server, client,
                                  routing_tables, self.ip_to_node,)
+            # print(routing_tables)
             print(path)
             if path:
                 self.all_paths.append(path)
@@ -232,8 +243,10 @@ class Monitor:
 
         self.path_routers = [1 if i in used_routers else 0 for i in range(
             self.app.topology.N_routers)]
+        print(f"[timing] monitor.trace_routes: {time.time()-start_time:.3f}s")
 
     def collect_flow_stats(self, stats_file=sample_data['flow_stats_file'], app_port=None, filter_noise=True, q=False):
+        start_time = time.time()
         self.flow_monitor.CheckForLostPackets()
         classifier = self.flow_helper.GetClassifier()
 
@@ -275,3 +288,4 @@ class Monitor:
                     "total_jitter": total_jitter,
                     "q_type": q_type
                 }
+        print(f"[timing] monitor.collect_flow_stats: {time.time()-start_time:.3f}s")

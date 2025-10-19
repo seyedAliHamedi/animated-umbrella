@@ -157,7 +157,7 @@ class App:
         q_type = self.configurations[f'F{client_idx+1}/q_type']
         q_config = sample_data["mawi_q_list"][q_type]
         max_packets = int(self.configurations[f'F{client_idx+1}/n_packets'])
-        interval = self.configurations[f'F{client_idx+1}/interval']
+        interval = int(self.configurations[f'F{client_idx+1}/interval']*1e6)
         packet_size = int(self.configurations[f'F{client_idx+1}/Avg_packet_size'])
         client_ip = str(self.clients_ip[0].GetAddress(0)).strip()
         server_ip = str(server.GetAddress(0, 0)).strip()
@@ -183,7 +183,7 @@ class App:
             echo_client.SetAttribute(
                 "MaxPackets", ns.UintegerValue(max_packets))
             echo_client.SetAttribute(
-                "Interval", ns.TimeValue(ns.Seconds(interval)))
+                "Interval", ns.TimeValue(ns.MicroSeconds(interval)))
             echo_client.SetAttribute(
                 "PacketSize", ns.UintegerValue(packet_size))
  
