@@ -1,10 +1,38 @@
-from ns import ns
 import re
 import os
 import csv
 import cppyy
 import random
 import json
+import contextlib
+from ns import ns
+
+
+@contextlib.contextmanager
+def suppress_cpp_output(suppress_stdout=True, suppress_stderr=True):
+    """Temporarily mute C/C++ output streams."""
+    targets = []
+    if suppress_stdout:
+        targets.append(1)
+    if suppress_stderr:
+        targets.append(2)
+
+    if not targets:
+        yield
+        return
+
+    devnull_fd = os.open(os.devnull, os.O_WRONLY)
+    saved = []
+    try:
+        for fd in targets:
+            saved.append((fd, os.dup(fd)))
+            os.dup2(devnull_fd, fd)
+        yield
+    finally:
+        for fd, saved_fd in saved:
+            os.dup2(saved_fd, fd)
+            os.close(saved_fd)
+        os.close(devnull_fd)
 
 
 sample_data = {

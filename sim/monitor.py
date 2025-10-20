@@ -1,3 +1,6 @@
+
+
+
 from ns import ns
 
 import math
@@ -15,9 +18,9 @@ cpp_code_loaded = False
 
 class Monitor:
 
-    def __init__(self, topology=None, app=None):
+    def __init__(self, topology=None, apps=None):
         self.topology = topology
-        self.app = app
+        self.apps = apps
 
         self.flow_monitor = None
         self.flow_helper = None
@@ -33,8 +36,20 @@ class Monitor:
 
     def setup_animation(self, anim_file=sample_data['xml_animation_file'], enable_packet_metadata=True):
         start_time = time.time()
-        self.anim = ns.AnimationInterface('/dev/null')
-        self.anim.EnableIpv4RouteTracking(sample_data['routing_table_file'], ns.Seconds(30), ns.Seconds(30))
+        try:
+            with suppress_cpp_output():
+                self.anim = ns.AnimationInterface('/dev/null')
+                if hasattr(self.anim, "SetMaxPktsPerTraceFile"):
+                    self.anim.SetMaxPktsPerTraceFile(0x7fffffff)
+                if enable_packet_metadata and hasattr(self.anim, "EnablePacketMetadata"):
+                    self.anim.EnablePacketMetadata(True)
+                self.anim.EnableIpv4RouteTracking(
+                    sample_data['routing_table_file'], ns.Seconds(30), ns.Seconds(30)
+                )
+        except Exception as exc:
+           
+            print(f"[warn] monitor.setup_animation skipped: {exc}")
+            self.anim = None
         print(f"[timing] monitor.setup_animation: {time.time()-start_time:.3f}s")
         return self.anim
 
@@ -49,7 +64,8 @@ class Monitor:
         start_time = time.time()
         global cpp_code_loaded
         if not cpp_code_loaded:
-            cppyy.cppdef(sample_data['cpp_code_f'])
+            with suppress_cpp_output():
+                cppyy.cppdef(sample_data['cpp_code_f'])
             cpp_code_loaded = True
         module = cppyy.gbl
 
@@ -72,19 +88,20 @@ class Monitor:
         start_time = time.time()
         """Optimized packet log generation"""
         routing_paths = []
-        for i in range(self.app.n_clients):
-            client_node = self.app.clients.Get(i)
+        for i in range(len(self.apps)):
+            client_node = self.apps[i].clients.Get(0)
             client_id = client_node.GetId()
 
-            server_idx = i % self.app.n_servers
-            server_node = self.app.servers.Get(server_idx)
+            server_node = self.apps[i].servers.Get(0)
             server_id = server_node.GetId()
-            if len(self.all_paths)!= 0:
-                client_ip = self.node_to_ip[client_id][self.all_paths[min(server_idx,len(self.all_paths)-1)][0]]
-                server_ip = self.node_to_ip[server_id][self.all_paths[min(server_idx,len(self.all_paths)-1)][-1]]
+            # print(self.all_paths)
+            if len(self.all_paths)== 0:
+                continue
+            client_ip = self.node_to_ip[client_id][self.all_paths[0][0]]
+            server_ip = self.node_to_ip[server_id][self.all_paths[0][-1]]
 
-            # path = find_path(client_id, server_ip,
-            #                  self.routing_tables, self.ip_to_node)
+            path = find_path(client_id, server_ip,
+                             self.routing_tables, self.ip_to_node)
 
             for path in self.all_paths:
                 if path:
@@ -174,17 +191,14 @@ class Monitor:
         node_ips = {}
         all_nodes = []
 
-        if self.app and hasattr(self.app, 'clients'):
-            for i in range(self.app.clients.GetN()):
-                all_nodes.append(self.app.clients.Get(i))
+        for i in range(len(self.apps)):
+            all_nodes.append(self.apps[i].clients.Get(0))
 
-        if self.topology and hasattr(self.topology, 'nodes'):
-            for i in range(self.topology.nodes.GetN()):
-                all_nodes.append(self.topology.nodes.Get(i))
+        for i in range(self.topology.nodes.GetN()):
+            all_nodes.append(self.topology.nodes.Get(i))
 
-        if self.app and hasattr(self.app, 'servers'):
-            for i in range(self.app.servers.GetN()):
-                all_nodes.append(self.app.servers.Get(i))
+        for i in range(len(self.apps)):
+            all_nodes.append(self.apps[i].servers.Get(0))
 
         for node in all_nodes:
             node_id = node.GetId()
@@ -211,39 +225,53 @@ class Monitor:
             sample_data['routing_table_file'])
         self.routing_tables = routing_tables
         used_routers = set()
-        for i in range(self.app.n_clients):
-            client_node = self.app.clients.Get(i)
+        for i in range(len(self.apps)):
+            client_node = self.apps[i].clients.Get(0)
             client_id = client_node.GetId()
 
-            server_idx = i % self.app.n_servers
-            server_node = self.app.servers.Get(server_idx)
-            server_id = server_node.GetId()
-            # print(self.app.client_gateways,i)
-            client = self.app.client_gateways[i]
-            server = self.app.server_gateways[server_idx]
+            
+         
+            client = self.apps[i].client_gateways[0]
+            server = self.apps[i].server_gateways[0]
             path = find_path(client, server,
                              routing_tables, self.ip_to_node,)
             if path is None:
                 path = find_path(server, client,
                                  routing_tables, self.ip_to_node,)
-            # print(routing_tables)
-            print(path)
+         
+            print("PATH ___",path)
             if path:
                 self.all_paths.append(path)
 
-                # Extract only router nodes from the path
-                # Exclude first node (client) and last node (server)
+              
                 for node_id in path:
-                    # Check if this node is actually a router
-                    if node_id < self.app.topology.N_routers:
+                  
+                    if node_id < self.topology.N_routers:
                         used_routers.add(node_id)
 
             if not path:
-                self.app.client_info[client_id]["failed"] = self.app.client_info[client_id]["max_packets"]
+                self.apps[i].client_info[client_id]["failed"] = self.apps[i].client_info[client_id]["max_packets"]
 
         self.path_routers = [1 if i in used_routers else 0 for i in range(
-            self.app.topology.N_routers)]
+            self.topology.N_routers)]
         print(f"[timing] monitor.trace_routes: {time.time()-start_time:.3f}s")
+
+    def _resolve_flow_q_type(self, src_ip, dst_ip, src_port, dst_port):
+
+        for app in self.apps:
+            for client_info in app.client_info.values():
+                client_src = client_info.get("src_ip")
+                client_dst = client_info.get("dest_ip")
+                if client_src == src_ip and client_dst == dst_ip:
+                    return client_info.get("q_type")
+                if client_src == dst_ip and client_dst == src_ip:
+                    return client_info.get("q_type")
+
+            if app.app_port in (src_port, dst_port) and app.client_info:
+                first_info = next(iter(app.client_info.values()))
+                return first_info.get("q_type")
+
+        return None
 
     def collect_flow_stats(self, stats_file=sample_data['flow_stats_file'], app_port=None, filter_noise=True, q=False):
         start_time = time.time()
@@ -252,6 +280,7 @@ class Monitor:
 
         for flow_id, flowStats in self.flow_monitor.GetFlowStats():
             flowClass = classifier.FindFlow(flow_id)
+            
 
             if filter_noise and flowStats.rxPackets < 3:
                 continue
@@ -267,13 +296,16 @@ class Monitor:
             total_jitter = flowStats.jitterSum.GetSeconds()
             mean_jitter = total_jitter / rx_packets if rx_packets > 0 else 0
 
-            # Match q_type more efficiently
-            q_type = "NA"
-            for info in self.app.client_info.values():
-                if ((info["src_ip"] == src_ip and info["dest_ip"] == dst_ip) or
-                        (info["src_ip"] == dst_ip and info["dest_ip"] == src_ip)):
-                    q_type = info["q_type"]
-                    break
+            print(flow_id)
+            q_type = self._resolve_flow_q_type(
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                src_port=int(flowClass.sourcePort),
+                dst_port=int(flowClass.destinationPort),
+            )
+
+            if q_type is None:
+                continue
 
             if q:
                 self.flow_info[flow_id] = {

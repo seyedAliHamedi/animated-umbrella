@@ -1,6 +1,6 @@
 import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 import subprocess
 import os
 import torch
@@ -119,6 +119,8 @@ original_adj_matrix = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],  # 11 Hiyoshi
     [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0],  # 12 Fujisawa
 ]
+[1,2,3,4]
+
 def process_row(row):
     non_fx = ['date', 'time', 'timestamp', 'Total/T', 'Total/P']
     sfxs = ['/T', '/P', '/Avg_packet_size', '/n_packets', '/interval', '/q_type', '_ips']
@@ -131,9 +133,6 @@ conf = pd.read_csv("./t/mawi_monthly_csvs/final/MAWI-WIDE_2023-2025.csv")
 row=conf.iloc[0]
 fx_t_columns = [col for col in conf.columns if col.startswith('F') and col.endswith('/T')]
 row, non_zero_count = process_row(conf.iloc[0])
-print("/"*20)
-print(row)
-print("/"*20)
 n_clients = non_zero_count
 n_servers = non_zero_count
 
@@ -143,7 +142,7 @@ print("client gw: ", client_gateways)
 print("server gw: ", server_gateways)
 
 ip_to_node, node_to_ip = generate_ip_node_mappings(
-    original_adj_matrix, n_clients, n_servers
+    original_adj_matrix, len(adj_matrix), len(adj_matrix)
 )
 
 loss_history = []

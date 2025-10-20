@@ -83,20 +83,21 @@ class NetworkEnv:
                         app_duration=self.simulation_duration,configurations=self.conf,app_index=i)
             self.apps.append(a)
 
-            self.apps[i].monitor = Monitor(self.apps[i].topology, self.apps[i])
-            self.apps[i].monitor.ip_to_node = self.ip_to_node
-            self.apps[i].monitor.node_to_ip = self.node_to_ip
+        self.monitor = Monitor(self.topology, self.apps)
+        self.monitor.ip_to_node = self.ip_to_node
+        self.monitor.node_to_ip = self.node_to_ip
 
-            mobility = ns.MobilityHelper()
-            mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
-            mobility.Install(self.apps[i].topology.nodes)
-            mobility.Install(self.apps[i].clients)
-            mobility.Install(self.apps[i].servers)
+        mobility = ns.MobilityHelper()
+        mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
+        mobility.Install(self.topology.nodes)
+        [mobility.Install(app.clients.Get(0)) for app in self.apps ]
+        [mobility.Install(app.servers.Get(0)) for app in self.apps ]
 
-            
-            self.apps[i].monitor.setup_packet_log()
-            self.apps[i].monitor.setup_flow_monitor()
-        self.apps[0].monitor.setup_animation(self.apps[0].animFile)
+
+        
+        self.monitor.setup_packet_log()
+        self.monitor.setup_flow_monitor()
+        self.monitor.setup_animation(self.apps[0].animFile)
 
     def step(self):
         overall_start = time.time()
@@ -120,29 +121,30 @@ class NetworkEnv:
         return None, reward, f, r, e_eff, q
 
     def run_simulation(self, duration):
-        for i in range(self.n_apps):
-            sim_start = time.time()
-            ns.Simulator.Stop(ns.Seconds(duration))
-            ns.Simulator.Run()
-            print(f"[timing] Simulator.Run app {i}: {time.time()-sim_start:.3f}s")
+        i=0
+        sim_start = time.time()
+        ns.Simulator.Stop(ns.Seconds(duration))
+        ns.Simulator.Run()
+        print(f"[timing] Simulator.Run app {i}: {time.time()-sim_start:.3f}s")
 
-            monitor = self.apps[i].monitor
-            trace_start = time.time()
-            monitor.trace_routes()
-            print(f"[timing] trace_routes app {i}: {time.time()-trace_start:.3f}s")
+        monitor = self.monitor
+        trace_start = time.time()
+        monitor.trace_routes()
+        print(f"[timing] trace_routes app {i}: {time.time()-trace_start:.3f}s")
 
-            packets_start = time.time()
-            monitor.get_packet_logs()
-            print(f"[timing] get_packet_logs app {i}: {time.time()-packets_start:.3f}s")
+        packets_start = time.time()
+        monitor.get_packet_logs()
+        print(f"[timing] get_packet_logs app {i}: {time.time()-packets_start:.3f}s")
 
-            flow_start = time.time()
-            monitor.collect_flow_stats(
-                app_port=self.apps[i].app_port, filter_noise=True, q=True)
-            print(f"[timing] collect_flow_stats app {i}: {time.time()-flow_start:.3f}s")
+        flow_start = time.time()
+        monitor.collect_flow_stats(
+            app_port=self.apps[i].app_port, filter_noise=True, q=True)
+        print(f"[timing] collect_flow_stats app {i}: {time.time()-flow_start:.3f}s")
+      
 
     def calculate_reward(self, e, q, m=0.2, alpha=3):
         num_active_routers = sum(self.active_routers) * len(self.apps)
-        num_path_routers = sum( sum(app.monitor.path_routers) for app in self.apps)
+        num_path_routers = sum(self.monitor.path_routers)
         print(num_active_routers, num_path_routers)
         # Normalize energy
         # e_norm = e / 560750
@@ -156,6 +158,7 @@ class NetworkEnv:
             r = num_active_routers / num_path_routers
         else:
             r = 0
+
 
         # e_eff = e * (m + alpha * (r - 1))
         # e_eff /= 820000
@@ -214,60 +217,59 @@ class NetworkEnv:
         return total_e
 
     def calculate_qos(self):
-        s=0
-        for app in self.apps:
-            W = []
-            Q = []
-            for flow_id, flow in app.monitor.flow_info.items():
-                q_type = flow["q_type"]
-                cfg = sample_data["mawi_q_list"][q_type]
 
-                n_tx, n_rx = flow["tx_packets"], flow["rx_packets"]
-                if n_tx == 0:                               # noise / empty flow
-                    continue
+        W = []
+        Q = []
+        for flow_id, flow in self.monitor.flow_info.items():
+            q_type = flow["q_type"]
+            cfg = sample_data["mawi_q_list"][q_type]
 
-                w_b = cfg["w_b"]
-                w_j = cfg["w_j"]
-                w_d = cfg["w_d"]
-                w_l = cfg["w_l"]
+            n_tx, n_rx = flow["tx_packets"], flow["rx_packets"]
+            if n_tx == 0:                               # noise / empty flow
+                continue
 
-                p = cfg["p"]
-                w = n_rx * p
-                W.append(w)
+            w_b = cfg["w_b"]
+            w_j = cfg["w_j"]
+            w_d = cfg["w_d"]
+            w_l = cfg["w_l"]
 
-                l = flow["lost_packets"] / n_tx if n_tx > 0 else 0
-                l = min(1.0, l / cfg["sla_loss"])
-                # d = flow["total_delay"]
-                # j = flow["total_jitter"]
+            p = cfg["p"]
+            w = n_rx * p
+            W.append(w)
 
-                d = min(1.0, flow["mean_delay"] / cfg["sla_delay"])
-                j = min(1.0, flow["mean_jitter"] / cfg["sla_jitter"])
+            l = flow["lost_packets"] / n_tx if n_tx > 0 else 0
+            l = min(1.0, l / cfg["sla_loss"])
+            # d = flow["total_delay"]
+            # j = flow["total_jitter"]
 
-                # # Throughput term is optional: only if goodput is recorded & weight > 0
-                # if cfg["w_b"] > 0.0 and "goodput" in flow:
-                #     b_norm = min(1.0, flow["goodput"] / cfg["sla_bw_mbps"])
-                # else:
-                #     b_norm = 1.0
+            d = min(1.0, flow["mean_delay"] / cfg["sla_delay"])
+            j = min(1.0, flow["mean_jitter"] / cfg["sla_jitter"])
 
-                q = 1 - (w_j * j + w_d * d + w_l * l)
-                if q < 0.5:
-                    print(f"l: {l}, d: {d}, j: {j}")
-            #     q = 1.0 - (
-            #     cfg["w_d"] * d +
-            #     cfg["w_j"] * j +
-            #     cfg["w_l"] * l +
-            #     cfg["w_b"] * (1.0 - b)
-            # )
-                # q = max(0.0, min(1.0, q))
-                Q.append(q)
+            # # Throughput term is optional: only if goodput is recorded & weight > 0
+            # if cfg["w_b"] > 0.0 and "goodput" in flow:
+            #     b_norm = min(1.0, flow["goodput"] / cfg["sla_bw_mbps"])
+            # else:
+            #     b_norm = 1.0
 
-            total_weight = sum(W)
-            if total_weight == 0:
-                return 0
+            q = 1 - (w_j * j + w_d * d + w_l * l)
+            if q < 0.5:
+                print(f"l: {l}, d: {d}, j: {j}")
+        #     q = 1.0 - (
+        #     cfg["w_d"] * d +
+        #     cfg["w_j"] * j +
+        #     cfg["w_l"] * l +
+        #     cfg["w_b"] * (1.0 - b)
+        # )
+            # q = max(0.0, min(1.0, q))
+            Q.append(q)
 
-            weighted_qos = sum(w * q for w, q in zip(W, Q)) / total_weight
-            s+=weighted_qos
-        return s
+        total_weight = sum(W)
+        if total_weight == 0:
+            return 0
+
+        weighted_qos = sum(w * q for w, q in zip(W, Q)) / total_weight
+
+        return weighted_qos
 
     def collect_edge_features(self):
         # Optimized packet processing without pandas in hot loop
