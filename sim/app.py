@@ -138,16 +138,29 @@ class App:
         return clients, servers, servers_ip
 
     def install_app(self):
-       
         self.setup_server(self.servers.Get(0))
 
-        client = self.clients.Get(0) 
+        client = self.clients.Get(0)
         server = self.servers_ip[0]
 
         self.setup_client(self.app_index, client, server)
 
+    def _seconds_to_ns3_time(self, seconds):
+        # Pick the coarsest ns-3 time unit that keeps the count >= 1
+        units = (
+            ("Seconds", ns.Seconds, 1.0),
+            ("MilliSeconds", ns.MilliSeconds, 1e-3),
+            ("MicroSeconds", ns.MicroSeconds, 1e-6),
+            ("NanoSeconds", ns.NanoSeconds, 1e-9),
+        )
 
+        for unit_name, unit_ctor, scale in units:
+            scaled_value = seconds / scale
+            if scaled_value >= 1 or unit_name == "NanoSeconds":
+                rounded_value = max(1, int(round(scaled_value)))
+                return unit_ctor(rounded_value), rounded_value, unit_name
 
+        return ns.NanoSeconds(1), 1, "NanoSeconds"
     def setup_server(self, server):
         if self.app_type == "udp_echo":
             udp_echo_server = ns.UdpEchoServerHelper(self.app_port)
@@ -157,18 +170,16 @@ class App:
         server_app.Stop(ns.Seconds(self.app_start_time) + ns.Minutes(self.app_duration))
 
     def setup_client(self, client_idx, client, server):
-        t=self.configurations[f'F{client_idx+1}/T'] / 10
-        p=self.configurations[f'F{client_idx+1}/P'] / 10
+        t=self.configurations[f'F{client_idx+1}/T'] / 500
+        p=self.configurations[f'F{client_idx+1}/P'] / 500
 
         avg_packet_size = ((t*1e6)/(p*1e3))/8   
         n_packets=  self.app_duration * 60*p*1e3
         interval = 1/(p*1e3)
-        
-        
         q_type = self.configurations[f'F{client_idx+1}/q_type']
         q_config = sample_data["mawi_q_list"][q_type]
         max_packets = int(n_packets)
-        interval = int(interval*1e7)
+        interval = int(interval*1e6)
         packet_size = int(avg_packet_size)
         client_ip = str(self.clients_ip[0].GetAddress(0)).strip()
         server_ip = str(server.GetAddress(0, 0)).strip()
