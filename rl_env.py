@@ -22,7 +22,7 @@ class NetworkEnv:
                  server_gateways,
                  ip_to_node,
                  node_to_ip,
-                 simulation_duration=10,
+                 simulation_duration,
        
                  ):
 
@@ -123,7 +123,7 @@ class NetworkEnv:
     def run_simulation(self, duration):
         i=0
         sim_start = time.time()
-        ns.Simulator.Stop(ns.Seconds(duration))
+        ns.Simulator.Stop(ns.Minutes(duration))
         ns.Simulator.Run()
         print(f"[timing] Simulator.Run app {i}: {time.time()-sim_start:.3f}s")
 

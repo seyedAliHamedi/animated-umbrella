@@ -119,7 +119,6 @@ original_adj_matrix = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],  # 11 Hiyoshi
     [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0],  # 12 Fujisawa
 ]
-[1,2,3,4]
 
 def process_row(row):
     non_fx = ['date', 'time', 'timestamp', 'Total/T', 'Total/P']
@@ -172,6 +171,8 @@ if os.path.exists('./agent_weights.pth'):
     block_avg_qos = checkpoint['block_avg_qos']
     block_avg_r = checkpoint['block_avg_r']
 
+
+SIMULATION_TIME=1
 for epoch in range(start_epoch, start_epoch + 100):
 
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
@@ -179,11 +180,12 @@ for epoch in range(start_epoch, start_epoch + 100):
     m = get_state(adj_matrix, client_gateways,
                   server_gateways, original_adj_matrix)
     actions, p, logits = agent.get_action(m, adj_matrix)
+    actions = torch.zeros((len(adj_matrix)))
 
     adj_matrix = changeAdj(actions, original_adj_matrix)
 
     env = NetworkEnv(
-        simulation_duration=50,
+        simulation_duration=SIMULATION_TIME,
         adj_matrix=adj_matrix,
         original_adj_matrix=original_adj_matrix,
         n_clients=n_clients,
