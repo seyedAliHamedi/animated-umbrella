@@ -152,7 +152,7 @@ class NetworkEnv:
         # e_norm = e / 415000
         # e_norm = e / 1401250
 
-        e_norm = e / 1431000  # mawi
+        e_norm = e / 1717200  # mawi
 
         if num_path_routers != 0:
             r = num_active_routers / num_path_routers
@@ -190,7 +190,7 @@ class NetworkEnv:
 
     def calculate_energy(self):
         total_e = 0
-        sim_duration = self.simulation_duration
+        sim_duration = self.simulation_duration * 60
         for i in range(self.topology.N_routers):
             if self.active_routers[i] == 0:
                 continue
@@ -237,6 +237,8 @@ class NetworkEnv:
             w = n_rx * p
             W.append(w)
 
+
+            
             l = flow["lost_packets"] / n_tx if n_tx > 0 else 0
             l = min(1.0, l / cfg["sla_loss"])
             # d = flow["total_delay"]

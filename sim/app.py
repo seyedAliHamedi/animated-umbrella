@@ -88,6 +88,9 @@ class App:
                     "DataRate", ns.StringValue(links_rate[i]))
                 link.SetChannelAttribute(
                     "Delay", ns.StringValue(link_delays[i]))
+                link.SetQueue("ns3::DropTailQueue",
+                                  "MaxSize",
+                                  ns.QueueSizeValue(ns.QueueSize(f"{10000}p")))
             elif links_types[i] == "csma":
                 link = ns.CsmaHelper()
                 link.SetChannelAttribute(
@@ -155,9 +158,9 @@ class App:
 
     def setup_client(self, client_idx, client, server):
         t=self.configurations[f'F{client_idx+1}/T'] / 10
-        p=self.configurations[f'F{client_idx+1}/P']
+        p=self.configurations[f'F{client_idx+1}/P'] / 10
 
-        avg_packet_size = ((t*1e6)/(p*1e3))/8
+        avg_packet_size = ((t*1e6)/(p*1e3))/8   
         n_packets=  self.app_duration * 60*p*1e3
         interval = 1/(p*1e3)
         

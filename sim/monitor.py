@@ -296,7 +296,7 @@ class Monitor:
             total_jitter = flowStats.jitterSum.GetSeconds()
             mean_jitter = total_jitter / rx_packets if rx_packets > 0 else 0
 
-            print(flow_id)
+            print("AAAAAA ",rx_packets,tx_packets,tx_packets-rx_packets)          
             q_type = self._resolve_flow_q_type(
                 src_ip=src_ip,
                 dst_ip=dst_ip,

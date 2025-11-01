@@ -136,7 +136,7 @@ n_clients = non_zero_count
 n_servers = non_zero_count
 
 client_gateways, server_gateways = get_gw(adj_matrix, n_clients, n_servers)
-print(non_zero_count)
+
 print("client gw: ", client_gateways)
 print("server gw: ", server_gateways)
 
@@ -173,7 +173,7 @@ if os.path.exists('./agent_weights.pth'):
 
 
 SIMULATION_TIME=1
-for epoch in range(start_epoch, start_epoch + 100):
+for epoch in range(start_epoch, start_epoch + 1000):
 
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
 

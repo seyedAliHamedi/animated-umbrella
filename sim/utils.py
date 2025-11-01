@@ -62,9 +62,9 @@ sample_data = {
 
     "app_n_servers": 4,
     "app_n_clients": 5,
-    "app_links_type": ['csma', 'p2p'],
-    "app_links_rate": ['5Mbps', '10Mbps', '1Mbps'],
-    "app_links_delay": ['5ms', '10ms', '10ms',],
+    "app_links_type": [ 'p2p'],
+    "app_links_rate": ['100Gbps'],
+    "app_links_delay": ['0.2ms',],
     "app_type": "udp_echo",
     "app_max_packets": 10000,
     "app_interval": 1,
@@ -496,37 +496,49 @@ sample_data['cpp_code_f'] = '''
         uint16_t destPort = 0;
         
         Ptr<Packet> copy = packet->Copy();
+        if (!copy) {
+            return;
+        }
         uint16_t offset = 0;
         
-        if (copy->PeekHeader(ipHeader)) {
-            if (copy->RemoveHeader(ipHeader)) {
-                // Efficiently convert IPs to strings
-                Ipv4Address srcAddr = ipHeader.GetSource();
-                std::ostringstream ossSrc;
-                srcAddr.Print(ossSrc);
-                srcIP = ossSrc.str();
-                
-                Ipv4Address destAddr = ipHeader.GetDestination();
-                std::ostringstream ossDst;
-                destAddr.Print(ossDst);
-                destIP = ossDst.str();
-                
-                offset = ipHeader.GetFragmentOffset();
-                uint8_t protocol = ipHeader.GetProtocol();
-                
-                if (protocol == 6) { // TCP
-                    if (copy->PeekHeader(tcpHeader)) {
-                        destPort = tcpHeader.GetDestinationPort();
-                        packetType = "TCP";
-                    }
-                }
-                else if (protocol == 17) { // UDP
-                    if (copy->PeekHeader(udpHeader)) {
-                        destPort = udpHeader.GetDestinationPort();
-                        packetType = "UDP";
-                    }
-                }
+        if (!copy->PeekHeader(ipHeader)) {
+            return;
+        }
+        if (copy->GetSize() < ipHeader.GetSerializedSize()) {
+            return;
+        }
+        if (!copy->RemoveHeader(ipHeader)) {
+            return;
+        }
+        
+        // Efficiently convert IPs to strings
+        Ipv4Address srcAddr = ipHeader.GetSource();
+        std::ostringstream ossSrc;
+        srcAddr.Print(ossSrc);
+        srcIP = ossSrc.str();
+        
+        Ipv4Address destAddr = ipHeader.GetDestination();
+        std::ostringstream ossDst;
+        destAddr.Print(ossDst);
+        destIP = ossDst.str();
+        
+        offset = ipHeader.GetFragmentOffset();
+        uint8_t protocol = ipHeader.GetProtocol();
+        
+        if (protocol == 6) { // TCP
+            if (copy->GetSize() >= tcpHeader.GetSerializedSize() && copy->PeekHeader(tcpHeader)) {
+                destPort = tcpHeader.GetDestinationPort();
             }
+            packetType = "TCP";
+        }
+        else if (protocol == 17) { // UDP
+            if (copy->GetSize() >= udpHeader.GetSerializedSize() && copy->PeekHeader(udpHeader)) {
+                destPort = udpHeader.GetDestinationPort();
+            }
+            packetType = "UDP";
+        }
+        else {
+            return;
         }
         
         // Store packet info efficiently
