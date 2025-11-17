@@ -5,6 +5,7 @@ from ns import ns
 
 import math
 import time
+import os
 import cppyy
 import csv
 from sim.utils import *
@@ -12,6 +13,9 @@ from sim.utils import *
 
 import xml.etree.ElementTree as ET
 from pathlib import Path
+
+# Get timing flag from environment
+SHOW_TIMING = bool(int(os.environ.get("SHOW_TIMING", "1")))
 
 cpp_code_loaded = False
 
@@ -21,6 +25,10 @@ class Monitor:
     def __init__(self, topology=None, apps=None):
         self.topology = topology
         self.apps = apps
+
+        # Create required directories if they don't exist
+        os.makedirs("./sim/monitor/logs", exist_ok=True)
+        os.makedirs("./sim/monitor/xml", exist_ok=True)
 
         self.flow_monitor = None
         self.flow_helper = None
@@ -47,17 +55,19 @@ class Monitor:
                     sample_data['routing_table_file'], ns.Seconds(30), ns.Seconds(30)
                 )
         except Exception as exc:
-           
+
             print(f"[warn] monitor.setup_animation skipped: {exc}")
             self.anim = None
-        print(f"[timing] monitor.setup_animation: {time.time()-start_time:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] monitor.setup_animation: {time.time()-start_time:.3f}s")
         return self.anim
 
     def setup_flow_monitor(self):
         start_time = time.time()
         self.flow_helper = ns.FlowMonitorHelper()
         self.flow_monitor = self.flow_helper.InstallAll()
-        print(f"[timing] monitor.setup_flow_monitor: {time.time()-start_time:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] monitor.setup_flow_monitor: {time.time()-start_time:.3f}s")
         return self.flow_monitor
 
     def setup_packet_log(self):
@@ -81,7 +91,8 @@ class Monitor:
                 ipv4.TraceConnectWithoutContext("Tx", tx_callback)
 
         self.packet_module = module
-        print(f"[timing] monitor.setup_packet_log: {time.time()-start_time:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] monitor.setup_packet_log: {time.time()-start_time:.3f}s")
 
     def get_packet_logs(self):
         import time
@@ -185,7 +196,8 @@ class Monitor:
 
         module.ClearPacketData()
         import time
-        print(f"[timing] monitor.get_packet_logs: {time.time()-start_time:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] monitor.get_packet_logs: {time.time()-start_time:.3f}s")
 
     def get_node_ips_by_id(self):
         node_ips = {}
@@ -238,8 +250,8 @@ class Monitor:
             if path is None:
                 path = find_path(server, client,
                                  routing_tables, self.ip_to_node,)
-         
-            print("PATH ___",path)
+
+            # print("PATH ___",path)
             if path:
                 self.all_paths.append(path)
 
@@ -254,7 +266,8 @@ class Monitor:
 
         self.path_routers = [1 if i in used_routers else 0 for i in range(
             self.topology.N_routers)]
-        print(f"[timing] monitor.trace_routes: {time.time()-start_time:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] monitor.trace_routes: {time.time()-start_time:.3f}s")
 
     def _resolve_flow_q_type(self, src_ip, dst_ip, src_port, dst_port):
 
@@ -296,7 +309,7 @@ class Monitor:
             total_jitter = flowStats.jitterSum.GetSeconds()
             mean_jitter = total_jitter / rx_packets if rx_packets > 0 else 0
 
-            print("AAAAAA ",rx_packets,tx_packets,tx_packets-rx_packets)          
+            # print("AAAAAA ",rx_packets,tx_packets,tx_packets-rx_packets)
             q_type = self._resolve_flow_q_type(
                 src_ip=src_ip,
                 dst_ip=dst_ip,
@@ -320,4 +333,5 @@ class Monitor:
                     "total_jitter": total_jitter,
                     "q_type": q_type
                 }
-        print(f"[timing] monitor.collect_flow_stats: {time.time()-start_time:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] monitor.collect_flow_stats: {time.time()-start_time:.3f}s")

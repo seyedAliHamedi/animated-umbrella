@@ -1,4 +1,5 @@
 import time
+import os
 from ns import ns
 import numpy as np
 import pandas as pd
@@ -7,6 +8,9 @@ from sim.utils import *
 from sim.app import App
 from sim.monitor import Monitor
 from sim.topology import Topology
+
+# Get timing flag from environment
+SHOW_TIMING = bool(int(os.environ.get("SHOW_TIMING", "1")))
 
 
 class NetworkEnv:
@@ -104,20 +108,24 @@ class NetworkEnv:
 
         self.run_simulation(self.simulation_duration)
         sim_elapsed = time.time() - overall_start
-        print(f"[timing] run_simulation: {sim_elapsed:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] run_simulation: {sim_elapsed:.3f}s")
 
         energy_start = time.time()
         e = self.calculate_energy()
-        print(f"[timing] calculate_energy: {time.time()-energy_start:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] calculate_energy: {time.time()-energy_start:.3f}s")
 
         qos_start = time.time()
         q = self.calculate_qos()
-        print(f"[timing] calculate_qos: {time.time()-qos_start:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] calculate_qos: {time.time()-qos_start:.3f}s")
 
         reward_start = time.time()
         reward, f, r, e_eff = self.calculate_reward(e, q)
-        print(f"[timing] calculate_reward: {time.time()-reward_start:.3f}s")
-        print(f"[timing] step_total: {time.time()-overall_start:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] calculate_reward: {time.time()-reward_start:.3f}s")
+            print(f"[timing] step_total: {time.time()-overall_start:.3f}s")
         return None, reward, f, r, e_eff, q
 
     def run_simulation(self, duration):
@@ -125,27 +133,31 @@ class NetworkEnv:
         sim_start = time.time()
         ns.Simulator.Stop(ns.Minutes(duration))
         ns.Simulator.Run()
-        print(f"[timing] Simulator.Run app {i}: {time.time()-sim_start:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] Simulator.Run app {i}: {time.time()-sim_start:.3f}s")
 
         monitor = self.monitor
         trace_start = time.time()
         monitor.trace_routes()
-        print(f"[timing] trace_routes app {i}: {time.time()-trace_start:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] trace_routes app {i}: {time.time()-trace_start:.3f}s")
 
         packets_start = time.time()
         monitor.get_packet_logs()
-        print(f"[timing] get_packet_logs app {i}: {time.time()-packets_start:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] get_packet_logs app {i}: {time.time()-packets_start:.3f}s")
 
         flow_start = time.time()
         monitor.collect_flow_stats(
             app_port=self.apps[i].app_port, filter_noise=True, q=True)
-        print(f"[timing] collect_flow_stats app {i}: {time.time()-flow_start:.3f}s")
+        if SHOW_TIMING:
+            print(f"[timing] collect_flow_stats app {i}: {time.time()-flow_start:.3f}s")
       
 
     def calculate_reward(self, e, q, m=0.2, alpha=3):
         num_active_routers = sum(self.active_routers) * len(self.apps)
         num_path_routers = sum(self.monitor.path_routers)
-        print(num_active_routers, num_path_routers)
+        # print(num_active_routers, num_path_routers)
         # Normalize energy
         # e_norm = e / 560750
         # e_norm = e / 583500  # latest
@@ -254,8 +266,8 @@ class NetworkEnv:
             #     b_norm = 1.0
 
             q = 1 - (w_j * j + w_d * d + w_l * l)
-            if q < 0.5:
-                print(f"l: {l}, d: {d}, j: {j}")
+            # if q < 0.5:
+            #     print(f"l: {l}, d: {d}, j: {j}")
         #     q = 1.0 - (
         #     cfg["w_d"] * d +
         #     cfg["w_j"] * j +

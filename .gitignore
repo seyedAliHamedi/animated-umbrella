@@ -4,8 +4,13 @@ __pycache__/
 *$py.class
 t/
 
-## CUstom
+## Custom
 sim/monitor/
+
+# Large data files
+MAWI-WIDE_2023-2025.csv
+TL_MAWI-WIDE_2023-2025.csv
+*.csv.backup
 
 # C extensions
 *.so

@@ -1,22 +1,30 @@
+import os
 import warnings
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-import subprocess
-import os
-import torch
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from ns import ns
-import random
-from utils import *
-from agent import Agent
-from rl_env import NetworkEnv
-import time
-import pandas as pd
-
+# ============================================================
+# CONFIGURATION FLAGS (must be set BEFORE other imports)
+# ============================================================
+SHOW_TIMING = False
+# ============================================================
 
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
+os.environ["SHOW_TIMING"] = str(int(SHOW_TIMING))  # Export for other modules
+
+# Now safe to import modules that depend on environment variables
+import pandas as pd
+import time
+from rl_env import NetworkEnv
+from agent import Agent
+from utils import *
+import random
+from ns import ns
+import matplotlib.pyplot as plt
+import matplotlib
+import torch
+import subprocess
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+matplotlib.use('Agg')
 t = time.time()
 agent = Agent(num_node_features=18, hidden_channels1=64, hidden_channels2=32)
 torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=0.5)
@@ -120,25 +128,32 @@ original_adj_matrix = [
     [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0],  # 12 Fujisawa
 ]
 
+
 def process_row(row):
     non_fx = ['date', 'time', 'timestamp', 'Total/T', 'Total/P']
-    sfxs = ['/T', '/P', '/Avg_packet_size', '/n_packets', '/interval', '/q_type', '_ips']
-    v_idx = [int(re.search(r'\d+', c).group()) for c in sorted([c for c in row.index if re.match(r'F\d+/T', c)], key=lambda x: int(re.search(r'\d+', x).group())) if row.get(c, 0) != 0]
-    fx_data = {f'F{n_i}{s}': row[f'F{o_i}{s}'] for n_i, o_i in enumerate(v_idx, 1) for s in sfxs if f'F{o_i}{s}' in row}
+    sfxs = ['/T', '/P', '/Avg_packet_size',
+            '/n_packets', '/interval', '/q_type', '_ips']
+    v_idx = [int(re.search(r'\d+', c).group()) for c in sorted([c for c in row.index if re.match(
+        r'F\d+/T', c)], key=lambda x: int(re.search(r'\d+', x).group()))
+        if row.get(c, 0) != 0 and row.get(c.replace('/T', '/P'), 0) != 0]
+    fx_data = {f'F{n_i}{s}': row[f'F{o_i}{s}'] for n_i, o_i in enumerate(
+        v_idx, 1) for s in sfxs if f'F{o_i}{s}' in row}
     return pd.Series({**row[non_fx].to_dict(), **fx_data}), len(v_idx)
 
+
 adj_matrix = original_adj_matrix.copy()
-conf = pd.read_csv("./t/mawi_monthly_csvs/final/MAWI-WIDE_2023-2025.csv")
-row=conf.iloc[0]
-fx_t_columns = [col for col in conf.columns if col.startswith('F') and col.endswith('/T')]
+conf = pd.read_csv("./TL_MAWI-WIDE_2023-2025.csv")
+row = conf.iloc[0]
+fx_t_columns = [col for col in conf.columns if col.startswith(
+    'F') and col.endswith('/T')]
 row, non_zero_count = process_row(conf.iloc[0])
 n_clients = non_zero_count
 n_servers = non_zero_count
 
 client_gateways, server_gateways = get_gw(adj_matrix, n_clients, n_servers)
 
-print("client gw: ", client_gateways)
-print("server gw: ", server_gateways)
+# print("client gw: ", client_gateways)
+# print("server gw: ", server_gateways)
 
 ip_to_node, node_to_ip = generate_ip_node_mappings(
     original_adj_matrix, len(adj_matrix), len(adj_matrix)
@@ -172,8 +187,8 @@ if os.path.exists('./agent_weights.pth'):
     block_avg_r = checkpoint['block_avg_r']
 
 
-SIMULATION_TIME=1
-for epoch in range(start_epoch, start_epoch + 1000):
+SIMULATION_TIME = 1
+for epoch in range(start_epoch, start_epoch + 100):
 
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
 
@@ -194,7 +209,7 @@ for epoch in range(start_epoch, start_epoch + 1000):
         server_gateways=server_gateways,
         ip_to_node=ip_to_node,
         node_to_ip=node_to_ip,
-        conf = row,
+        conf=row,
         n_apps=non_zero_count,
     )
 
@@ -219,7 +234,8 @@ for epoch in range(start_epoch, start_epoch + 1000):
         ratio_history.append(ratio)
     if fail and len(list(nx.all_simple_paths(nx.from_numpy_array(
             np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
-        print("="*20, " 1FAIL1 ", "="*20)
+        # print("="*20, " 1FAIL1 ", "="*20)
+        pass
     else:
         agent.optimizer.zero_grad()
         loss.backward()
@@ -227,8 +243,8 @@ for epoch in range(start_epoch, start_epoch + 1000):
 
     print(
         f"Epoch {epoch}, Reward: {reward}, Loss: {loss_value:.4f}, e: {e:.4f}, q: {q}, r: {ratio}")
-    print("Sigmoid probabilities:", p.view(-1))
-    print("Sampled actions:", actions.view(-1))
+    # print("Sigmoid probabilities:", p.view(-1))
+    # print("Sampled actions:", actions.view(-1))
 
     if (epoch + 1) % 100 == 0:
         recent_losses = loss_history[-100:]
@@ -284,9 +300,7 @@ for epoch in range(start_epoch, start_epoch + 1000):
         ns.Simulator.Destroy()
         env = None
         adj_matrix = original_adj_matrix.copy()
-        row=conf.iloc[epoch+1]   
-
-        non_zero_count = sum(1 for col in fx_t_columns if row[col] != 0)
+        row, non_zero_count = process_row(conf.iloc[epoch+1])
         n_clients = non_zero_count
         n_servers = non_zero_count
 
@@ -307,5 +321,5 @@ torch.save({
     'block_avg_qos': block_avg_qos,
     'block_avg_r': block_avg_r
 }, "./agent_weights.pth")
-print('\n\n', '-'*50, ' Saved ', '-'*50, '\n\n')
-print("HEHEHEHHEHEHEHEH", time.time()-t)
+# print('\n\n', '-'*50, ' Saved ', '-'*50, '\n\n')
+# print("HEHEHEHHEHEHEHEH", time.time()-t)
