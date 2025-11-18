@@ -141,7 +141,7 @@ def process_row(row):
 
 
 adj_matrix = original_adj_matrix.copy()
-conf = pd.read_csv("./TL_MAWI-WIDE_2023-2025.csv")
+conf = pd.read_csv("./timestamps/TL_MAWI-WIDE_2023-2025.csv")
 row = conf.iloc[0]
 fx_t_columns = [col for col in conf.columns if col.startswith(
     'F') and col.endswith('/T')]
@@ -194,7 +194,6 @@ for epoch in range(start_epoch, start_epoch + 100):
     m = get_state(adj_matrix, client_gateways,
                   server_gateways, original_adj_matrix)
     actions, p, logits = agent.get_action(m, adj_matrix)
-    actions = torch.zeros((len(adj_matrix)))
 
     adj_matrix = changeAdj(actions, original_adj_matrix)
 
@@ -213,7 +212,28 @@ for epoch in range(start_epoch, start_epoch + 100):
     )
 
     metrics, reward, fail, ratio, e, q = env.step()
+    if fail and len(list(nx.all_simple_paths(nx.from_numpy_array(
+        np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
+        print("="*20, " SIM FAIL ", "="*20)
+        ns.Simulator.Destroy()
+        # adj_matrix = original_adj_matrix.copy()
+        # row, non_zero_count = process_row(conf.iloc[epoch+1])
+        # while non_zero_count == 0:
+        #     epoch += 1
+        #     print("Redundant row")
+        #     row, non_zero_count = process_row(conf.iloc[epoch+1])
+        
+        # n_clients = non_zero_count
+        # n_servers = non_zero_count
+
+        # client_gateways, server_gateways = get_gw(
+        #     adj_matrix, n_clients, n_servers)
+        continue
+    elif fail:
+        print("REAL FAIL")
+
     fails += fail
+    print(fails)
 
     log_prob = torch.log(p) * actions + torch.log(1-p) * (1-actions)
     entropy = - (p * torch.log(p + 1e-8) + (1 - p)
@@ -231,14 +251,10 @@ for epoch in range(start_epoch, start_epoch + 100):
     # print("E", e)
     if ratio != 0:
         ratio_history.append(ratio)
-    if fail and len(list(nx.all_simple_paths(nx.from_numpy_array(
-            np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
-        # print("="*20, " 1FAIL1 ", "="*20)
-        pass
-    else:
-        agent.optimizer.zero_grad()
-        loss.backward()
-        agent.optimizer.step()
+
+    agent.optimizer.zero_grad()
+    loss.backward()
+    agent.optimizer.step()
 
     print(
         f"Epoch {epoch}, Reward: {reward}, Loss: {loss_value:.4f}, e: {e:.4f}, q: {q}, r: {ratio}")
@@ -300,6 +316,11 @@ for epoch in range(start_epoch, start_epoch + 100):
         env = None
         adj_matrix = original_adj_matrix.copy()
         row, non_zero_count = process_row(conf.iloc[epoch+1])
+        while non_zero_count == 0:
+            epoch += 1
+            print("Redundant row")
+            row, non_zero_count = process_row(conf.iloc[epoch+1])
+        
         n_clients = non_zero_count
         n_servers = non_zero_count
 
