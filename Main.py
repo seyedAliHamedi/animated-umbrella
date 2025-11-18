@@ -167,6 +167,11 @@ block_fails_count = []
 block_avg_energy = []
 block_avg_qos = []
 block_avg_r = []
+block_losses = []  
+block_energies = []
+block_qos = []
+block_ratios = []
+successful_epochs_in_block = 0
 fails = 0
 start_epoch = 0
 
@@ -187,7 +192,7 @@ if os.path.exists('./agent_weights.pth'):
 
 
 SIMULATION_TIME = 1
-for epoch in range(start_epoch, start_epoch + 100):
+for epoch in range(start_epoch, start_epoch + 1000):
 
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
 
@@ -216,18 +221,6 @@ for epoch in range(start_epoch, start_epoch + 100):
         np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
         print("="*20, " SIM FAIL ", "="*20)
         ns.Simulator.Destroy()
-        # adj_matrix = original_adj_matrix.copy()
-        # row, non_zero_count = process_row(conf.iloc[epoch+1])
-        # while non_zero_count == 0:
-        #     epoch += 1
-        #     print("Redundant row")
-        #     row, non_zero_count = process_row(conf.iloc[epoch+1])
-        
-        # n_clients = non_zero_count
-        # n_servers = non_zero_count
-
-        # client_gateways, server_gateways = get_gw(
-        #     adj_matrix, n_clients, n_servers)
         continue
     elif fail:
         print("REAL FAIL")
@@ -243,43 +236,40 @@ for epoch in range(start_epoch, start_epoch + 100):
     loss_value = loss.item()
 
     loss_history.append(loss_value)
-    # print("fail: ", fail)
-    # if fail != 0:
+    block_losses.append(loss_value)
+    
     energy_history.append(e)
+    block_energies.append(e)
+    
     qos_history.append(q)
-    # print("Q", q)
-    # print("E", e)
+    block_qos.append(q)
+    
     if ratio != 0:
         ratio_history.append(ratio)
+        block_ratios.append(ratio)
 
     agent.optimizer.zero_grad()
     loss.backward()
     agent.optimizer.step()
-
+    
+    successful_epochs_in_block += 1
     print(
         f"Epoch {epoch}, Reward: {reward}, Loss: {loss_value:.4f}, e: {e:.4f}, q: {q}, r: {ratio}")
     # print("Sigmoid probabilities:", p.view(-1))
     # print("Sampled actions:", actions.view(-1))
 
-    if (epoch + 1) % 100 == 0:
-        recent_losses = loss_history[-100:]
-        recent_energy = energy_history[-100:]
-        recent_qos = qos_history[-100:]
-        recent_ratios = ratio_history[-100:]
-
-        avg_loss = sum(recent_losses) / 100.0
-        # fails = sum(1 for L in recent_losses if L < 0)
-
-        avg_energy = sum(recent_energy) / 100.0
-        avg_qos = sum(recent_qos) / 100.0
-        avg_r = sum(recent_ratios) / 100.0
+    if successful_epochs_in_block >= 100:
+        avg_loss = sum(block_losses) / len(block_losses)
+        avg_energy = sum(block_energies) / len(block_energies)
+        avg_qos = sum(block_qos) / len(block_qos)
+        avg_r = sum(block_ratios) / len(block_ratios) if block_ratios else 0
 
         block_avg_loss.append(avg_loss)
         block_fails_count.append(fails)
-        fails = 0
         block_avg_energy.append(avg_energy)
         block_avg_qos.append(avg_qos)
         block_avg_r.append(avg_r)
+
 
         x = [(i+1) * 100 for i in range(len(block_avg_loss))]
 
@@ -310,6 +300,12 @@ for epoch in range(start_epoch, start_epoch + 100):
 
         plt.savefig('results.png')
         plt.close()
+        block_losses = []
+        block_energies = []
+        block_qos = []
+        block_ratios = []
+        successful_epochs_in_block = 0
+        fails = 0
 
     if env is not None:
         ns.Simulator.Destroy()
