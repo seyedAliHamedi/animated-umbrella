@@ -172,8 +172,8 @@ class App:
                         ns.Minutes(self.app_duration))
 
     def setup_client(self, client_idx, client, server):
-        t = self.configurations[f'F{client_idx+1}/T'] / 10000
-        p = self.configurations[f'F{client_idx+1}/P'] / 10000
+        t = self.configurations[f'F{client_idx+1}/T'] / 100000
+        p = self.configurations[f'F{client_idx+1}/P'] / 100000
 
         avg_packet_size = ((t*1e6)/(p*1e3))/8
         n_packets = self.app_duration * 60*p*1e3

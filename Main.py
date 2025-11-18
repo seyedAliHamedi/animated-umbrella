@@ -11,18 +11,17 @@ os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 os.environ["SHOW_TIMING"] = str(int(SHOW_TIMING))  # Export for other modules
 
 # Now safe to import modules that depend on environment variables
-import pandas as pd
-import time
-from rl_env import NetworkEnv
-from agent import Agent
-from utils import *
-import random
-from ns import ns
-import matplotlib.pyplot as plt
-import matplotlib
-import torch
 import subprocess
-
+import torch
+import matplotlib
+import matplotlib.pyplot as plt
+from ns import ns
+import random
+from utils import *
+from agent import Agent
+from rl_env import NetworkEnv
+import time
+import pandas as pd
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 matplotlib.use('Agg')
 t = time.time()
@@ -322,4 +321,4 @@ torch.save({
     'block_avg_r': block_avg_r
 }, "./agent_weights.pth")
 # print('\n\n', '-'*50, ' Saved ', '-'*50, '\n\n')
-# print("HEHEHEHHEHEHEHEH", time.time()-t)
+print("HEHEHEHHEHEHEHEH", time.time()-t)

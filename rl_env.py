@@ -18,8 +18,8 @@ class NetworkEnv:
     def __init__(self,
                  adj_matrix,
                  n_clients,
-                           conf,
-                           n_apps,
+                 conf,
+                 n_apps,
                  original_adj_matrix,
                  n_servers,
                  client_gateways,
@@ -27,13 +27,13 @@ class NetworkEnv:
                  ip_to_node,
                  node_to_ip,
                  simulation_duration,
-       
+
                  ):
 
         self.adj_matrix = adj_matrix
         self.simulation_duration = simulation_duration
         self.conf = conf
-        self.n_apps=n_apps
+        self.n_apps = n_apps
         self.n_clients = n_clients
         self.n_servers = n_servers
         self.original_adj_matrix = original_adj_matrix
@@ -43,9 +43,8 @@ class NetworkEnv:
         self.inter_info = {}
         self.ip_to_node = ip_to_node
         self.node_to_ip = node_to_ip
-        self.apps=[]
+        self.apps = []
         self.setup_environment()
-
 
         # self.router_type = {
         #     i: sample_data["routers"][i % len(sample_data["routers"])]
@@ -83,8 +82,8 @@ class NetworkEnv:
             self.active_routers.append(1 if row_sum > 0 else 0)
             self.active_links[i] = int(row_sum)
         for i in range(self.n_apps):
-            a=App(self.topology, client_gateways=[self.client_gateways[i]], server_gateways=[self.server_gateways[i]], n_clients=1, n_servers=1, app_start_time=40,
-                        app_duration=self.simulation_duration,configurations=self.conf,app_index=i)
+            a = App(self.topology, client_gateways=[self.client_gateways[i]], server_gateways=[self.server_gateways[i]], n_clients=1, n_servers=1, app_start_time=40,
+                    app_duration=self.simulation_duration, configurations=self.conf, app_index=i)
             self.apps.append(a)
 
         self.monitor = Monitor(self.topology, self.apps)
@@ -94,11 +93,9 @@ class NetworkEnv:
         mobility = ns.MobilityHelper()
         mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel")
         mobility.Install(self.topology.nodes)
-        [mobility.Install(app.clients.Get(0)) for app in self.apps ]
-        [mobility.Install(app.servers.Get(0)) for app in self.apps ]
+        [mobility.Install(app.clients.Get(0)) for app in self.apps]
+        [mobility.Install(app.servers.Get(0)) for app in self.apps]
 
-
-        
         self.monitor.setup_packet_log()
         self.monitor.setup_flow_monitor()
         self.monitor.setup_animation(self.apps[0].animFile)
@@ -114,7 +111,8 @@ class NetworkEnv:
         energy_start = time.time()
         e = self.calculate_energy()
         if SHOW_TIMING:
-            print(f"[timing] calculate_energy: {time.time()-energy_start:.3f}s")
+            print(
+                f"[timing] calculate_energy: {time.time()-energy_start:.3f}s")
 
         qos_start = time.time()
         q = self.calculate_qos()
@@ -124,39 +122,45 @@ class NetworkEnv:
         reward_start = time.time()
         reward, f, r, e_eff = self.calculate_reward(e, q)
         if SHOW_TIMING:
-            print(f"[timing] calculate_reward: {time.time()-reward_start:.3f}s")
+            print(
+                f"[timing] calculate_reward: {time.time()-reward_start:.3f}s")
             print(f"[timing] step_total: {time.time()-overall_start:.3f}s")
         return None, reward, f, r, e_eff, q
 
     def run_simulation(self, duration):
-        i=0
+        i = 0
         sim_start = time.time()
         ns.Simulator.Stop(ns.Minutes(duration))
         ns.Simulator.Run()
         if SHOW_TIMING:
-            print(f"[timing] Simulator.Run app {i}: {time.time()-sim_start:.3f}s")
+            print(
+                f"[timing] Simulator.Run app {i}: {time.time()-sim_start:.3f}s")
 
         monitor = self.monitor
         trace_start = time.time()
         monitor.trace_routes()
         if SHOW_TIMING:
-            print(f"[timing] trace_routes app {i}: {time.time()-trace_start:.3f}s")
+            print(
+                f"[timing] trace_routes app {i}: {time.time()-trace_start:.3f}s")
 
         packets_start = time.time()
         monitor.get_packet_logs()
         if SHOW_TIMING:
-            print(f"[timing] get_packet_logs app {i}: {time.time()-packets_start:.3f}s")
+            print(
+                f"[timing] get_packet_logs app {i}: {time.time()-packets_start:.3f}s")
 
         flow_start = time.time()
         monitor.collect_flow_stats(
             app_port=self.apps[i].app_port, filter_noise=True, q=True)
         if SHOW_TIMING:
-            print(f"[timing] collect_flow_stats app {i}: {time.time()-flow_start:.3f}s")
-      
+            print(
+                f"[timing] collect_flow_stats app {i}: {time.time()-flow_start:.3f}s")
 
     def calculate_reward(self, e, q, m=0.2, alpha=3):
-        num_active_routers = sum(self.active_routers) * len(self.apps)
+        num_active_routers = sum(self.active_routers)
+
         num_path_routers = sum(self.monitor.path_routers)
+        print(F"n_a: {num_active_routers}, n_p: {num_path_routers}")
         # print(num_active_routers, num_path_routers)
         # Normalize energy
         # e_norm = e / 560750
@@ -171,16 +175,15 @@ class NetworkEnv:
         else:
             r = 0
 
-
         # e_eff = e * (m + alpha * (r - 1))
         # e_eff /= 820000
 
         # Calculate success rate
         for app in self.apps:
             n_total = sum(info["max_packets"]
-                        for info in app.client_info.values())
+                          for info in app.client_info.values())
             n_failed = sum(info["failed"]
-                        for info in app.client_info.values())
+                           for info in app.client_info.values())
 
         if n_failed > 0:
             f = 1
@@ -249,8 +252,6 @@ class NetworkEnv:
             w = n_rx * p
             W.append(w)
 
-
-            
             l = flow["lost_packets"] / n_tx if n_tx > 0 else 0
             l = min(1.0, l / cfg["sla_loss"])
             # d = flow["total_delay"]
