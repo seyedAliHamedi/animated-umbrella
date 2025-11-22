@@ -160,8 +160,6 @@ class NetworkEnv:
         num_active_routers = sum(self.active_routers)
 
         num_path_routers = sum(self.monitor.path_routers)
-        print
-        print(F"n_a: {num_active_routers}, n_p: {num_path_routers}")
         # print(num_active_routers, num_path_routers)
         # Normalize energy
         # e_norm = e / 560750

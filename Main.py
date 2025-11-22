@@ -1,28 +1,32 @@
-import os
-import warnings
-
 # ============================================================
 # CONFIGURATION FLAGS (must be set BEFORE other imports)
 # ============================================================
+import os
+import warnings
+
 SHOW_TIMING = False
+FILTER_TRAFFIC_LEVELS = False  # Enable/disable traffic level filtering
+TRAFFIC_LEVELS = [1,2,3,4]  # Configure which traffic levels to simulate (only used if FILTER_TRAFFIC_LEVELS is True)
 # ============================================================
 
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
 os.environ["SHOW_TIMING"] = str(int(SHOW_TIMING))  # Export for other modules
 
 # Now safe to import modules that depend on environment variables
-import subprocess
-import torch
-import matplotlib
-import matplotlib.pyplot as plt
-from ns import ns
-import random
-from utils import *
-from agent import Agent
-from rl_env import NetworkEnv
-import time
-import pandas as pd
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+import pandas as pd
+import time
+from rl_env import NetworkEnv
+from agent import Agent
+from utils import *
+import random
+from ns import ns
+import matplotlib.pyplot as plt
+import matplotlib
+import torch
+import subprocess
+
 matplotlib.use('Agg')
 t = time.time()
 agent = Agent(num_node_features=18, hidden_channels1=64, hidden_channels2=32)
@@ -129,7 +133,7 @@ original_adj_matrix = [
 
 
 def process_row(row):
-    non_fx = ['date', 'time', 'timestamp', 'Total/T', 'Total/P']
+    non_fx = ['date', 'time', 'timestamp', 'Total/T', 'Total/P', 'traffic_level']
     sfxs = ['/T', '/P', '/Avg_packet_size',
             '/n_packets', '/interval', '/q_type', '_ips']
     v_idx = [int(re.search(r'\d+', c).group()) for c in sorted([c for c in row.index if re.match(
@@ -141,7 +145,14 @@ def process_row(row):
 
 
 adj_matrix = original_adj_matrix.copy()
-conf = pd.read_csv("./timestamps/TL_MAWI-WIDE_2023-2025.csv")
+# conf = pd.read_csv("./timestamps/TL_MAWI-WIDE_2023-2025.csv")
+conf = pd.read_csv("./timestamps/TL_MAWI_balanced.csv")
+# Filter to only include rows with specified traffic levels (if enabled)
+if FILTER_TRAFFIC_LEVELS:
+    conf = conf[conf['traffic_level'].isin(TRAFFIC_LEVELS)].reset_index(drop=True)
+    print(f"Filtered dataset to {len(conf)} rows with traffic levels: {TRAFFIC_LEVELS}")
+else:
+    print(f"Using full dataset with {len(conf)} rows (no traffic level filtering)")
 row = conf.iloc[0]
 fx_t_columns = [col for col in conf.columns if col.startswith(
     'F') and col.endswith('/T')]
@@ -167,7 +178,7 @@ block_fails_count = []
 block_avg_energy = []
 block_avg_qos = []
 block_avg_r = []
-block_losses = []  
+block_losses = []
 block_energies = []
 block_qos = []
 block_ratios = []
@@ -192,7 +203,7 @@ if os.path.exists('./agent_weights.pth'):
 
 
 SIMULATION_TIME = 1
-for epoch in range(start_epoch, start_epoch + 1000):
+for epoch in range(start_epoch, start_epoch + 100):
 
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
 
@@ -218,15 +229,14 @@ for epoch in range(start_epoch, start_epoch + 1000):
 
     metrics, reward, fail, ratio, e, q = env.step()
     if fail and len(list(nx.all_simple_paths(nx.from_numpy_array(
-        np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
-        print("="*20, " SIM FAIL ", "="*20)
+            np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
+        print("="*20, f" SIM FAIL TL: {row.get('traffic_level', 'N/A')} ", "="*20)
         ns.Simulator.Destroy()
         continue
     elif fail:
         print("REAL FAIL")
 
     fails += fail
-    print(fails)
 
     log_prob = torch.log(p) * actions + torch.log(1-p) * (1-actions)
     entropy = - (p * torch.log(p + 1e-8) + (1 - p)
@@ -237,13 +247,13 @@ for epoch in range(start_epoch, start_epoch + 1000):
 
     loss_history.append(loss_value)
     block_losses.append(loss_value)
-    
+
     energy_history.append(e)
     block_energies.append(e)
-    
+
     qos_history.append(q)
     block_qos.append(q)
-    
+
     if ratio != 0:
         ratio_history.append(ratio)
         block_ratios.append(ratio)
@@ -251,10 +261,10 @@ for epoch in range(start_epoch, start_epoch + 1000):
     agent.optimizer.zero_grad()
     loss.backward()
     agent.optimizer.step()
-    
+
     successful_epochs_in_block += 1
     print(
-        f"Epoch {epoch}, Reward: {reward}, Loss: {loss_value:.4f}, e: {e:.4f}, q: {q}, r: {ratio}")
+        f"Epoch {epoch}, Reward: {reward}, Loss: {loss_value:.4f}, e: {e:.4f}, q: {q}, r: {ratio}, f: {int(fail)}, TL: {row.get('traffic_level', 'N/A')}")
     # print("Sigmoid probabilities:", p.view(-1))
     # print("Sampled actions:", actions.view(-1))
 
@@ -269,7 +279,6 @@ for epoch in range(start_epoch, start_epoch + 1000):
         block_avg_energy.append(avg_energy)
         block_avg_qos.append(avg_qos)
         block_avg_r.append(avg_r)
-
 
         x = [(i+1) * 100 for i in range(len(block_avg_loss))]
 
@@ -311,12 +320,14 @@ for epoch in range(start_epoch, start_epoch + 1000):
         ns.Simulator.Destroy()
         env = None
         adj_matrix = original_adj_matrix.copy()
-        row, non_zero_count = process_row(conf.iloc[epoch+1])
+        # Use modulo to cycle through filtered dataset
+        next_row_idx = (epoch + 1) % len(conf)
+        row, non_zero_count = process_row(conf.iloc[next_row_idx])
         while non_zero_count == 0:
-            epoch += 1
+            next_row_idx = (next_row_idx + 1) % len(conf)
             print("Redundant row")
-            row, non_zero_count = process_row(conf.iloc[epoch+1])
-        
+            row, non_zero_count = process_row(conf.iloc[next_row_idx])
+
         n_clients = non_zero_count
         n_servers = non_zero_count
 
