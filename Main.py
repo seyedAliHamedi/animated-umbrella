@@ -6,7 +6,7 @@ import warnings
 
 SHOW_TIMING = False
 FILTER_TRAFFIC_LEVELS = False  # Enable/disable traffic level filtering
-TRAFFIC_LEVELS = [1,2,3,4]  # Configure which traffic levels to simulate (only used if FILTER_TRAFFIC_LEVELS is True)
+TRAFFIC_LEVELS = [4]  # Configure which traffic levels to simulate (only used if FILTER_TRAFFIC_LEVELS is True)
 # ============================================================
 
 os.environ["CPPYY_UNCAUGHT_QUIET"] = "1"
@@ -232,6 +232,21 @@ for epoch in range(start_epoch, start_epoch + 100):
             np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
         print("="*20, f" SIM FAIL TL: {row.get('traffic_level', 'N/A')} ", "="*20)
         ns.Simulator.Destroy()
+        
+        # Advance to next row to avoid infinite loop
+        adj_matrix = original_adj_matrix.copy()
+        next_row_idx = (epoch + 1) % len(conf)
+        row, non_zero_count = process_row(conf.iloc[next_row_idx])
+        while non_zero_count == 0:
+            next_row_idx = (next_row_idx + 1) % len(conf)
+            print("Redundant row")
+            row, non_zero_count = process_row(conf.iloc[next_row_idx])
+        
+        # Update clients/servers for new row
+        n_clients = non_zero_count
+        n_servers = non_zero_count
+        client_gateways, server_gateways = get_gw(adj_matrix, n_clients, n_servers)
+        
         continue
     elif fail:
         print("REAL FAIL")

@@ -12,7 +12,7 @@ def generate_balanced_csv(
     output_csv_path: str = "./timestamps/TL_MAWI_balanced.csv",
     total_epochs: int = 10000,
     block_size: int = 100,
-    traffic_distribution: Dict[int, float] = {1: 0.6, 2: 0.2, 3: 0.1, 4: 0.1}
+    traffic_distribution: Dict[int, float] = {1: 0.4, 2: 0.2, 3: 0.2, 4: 0.1, 5: 0.1}
 ):
     """
     Generate a balanced CSV with specified traffic level distribution per block.
@@ -132,10 +132,11 @@ if __name__ == "__main__":
     TOTAL_EPOCHS = 10000
     BLOCK_SIZE = 100
     TRAFFIC_DISTRIBUTION = {
-        1: 0.6,  
-        2: 0.20,  
-        3: 0.1, 
-        4: 0.1   
+        1: 0.4,   # 50% traffic level 1
+        2: 0.2,   # 20% traffic level 2
+        3: 0.10,  # 15% traffic level 3
+        4: 0.05,   # 10% traffic level 4
+        5: 0.25   # 5% traffic level 5
     }
     
     # Generate balanced CSV
