@@ -1,0 +1,28 @@
+{
+  "Interactive_Web": {
+    "n_flows": 6.0,
+    "n_packets": 154.0,
+    "avg_packet_size": 6134.525043722909,
+    "packet_rate": 1.0
+  },
+  "Streaming_Media": {
+    "n_flows": 2.0,
+    "n_packets": 88.0,
+    "avg_packet_size": 4751.840772265168,
+    "packet_rate": 1.0
+  },
+  "Background_Sync": {
+    "n_flows": 3.0,
+    "n_packets": 358.0,
+    "avg_packet_size": 4544.976414254279,
+    "packet_rate": 1.0
+  },
+  "Real_Time_Interactive": {
+    "n_flows": 4.0,
+    "n_packets": 55.0,
+    "avg_packet_size": 3310.7205447396163,
+    "packet_rate": 1.0
+  },
+  "max_total_packets": 352.0,
+  "max_strictness": 12.5
+}

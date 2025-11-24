@@ -165,8 +165,11 @@ class Topology:
         router_degrees = [sum(self.adj_matrix[i]) for i in range(self.N_routers)]
 
         # Queue per interface = total queue / number of interfaces
+        # Handle isolated nodes (degree 0) by using full queue size
         router_queue_per_interface = {
             i: router_specs[i]["Queue_size_packets"] // router_degrees[i]
+            if router_degrees[i] > 0
+            else router_specs[i]["Queue_size_packets"]
             for i in range(self.N_routers)
         }
 

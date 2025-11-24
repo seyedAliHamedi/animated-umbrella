@@ -1,12 +1,27 @@
 # Network Optimization Architecture
 
 ## Table of Contents
-1. [Current Implementation](#current-implementation)
-2. [Proposed Traffic-Aware Extensions](#proposed-traffic-aware-extensions)
+1. [Overview](#overview)
+2. [Base Implementation](#base-implementation)
+3. [Traffic-Aware Extensions](#traffic-aware-extensions)
+4. [Training Infrastructure](#training-infrastructure)
 
 ---
 
-# Current Implementation
+# Overview
+
+This project implements a **Traffic-Aware Reinforcement Learning agent** that optimizes network topology by selectively deactivating routers to minimize energy consumption while maintaining Quality of Service (QoS). The system uses **Graph Attention Networks (GAT)** with **cross-attention over traffic features** to make topology decisions informed by both graph structure and traffic characteristics.
+
+**Key Features:**
+- Graph Neural Network (GAT) for topology understanding
+- Cross-attention mechanism for traffic-aware decision making
+- Multi-objective optimization (energy, QoS, efficiency)
+- NS-3 packet-level simulation for realistic validation
+- Real-world MAWI traffic data integration
+
+---
+
+# Base Implementation
 
 ## Objective
 
@@ -185,28 +200,21 @@ loss = -Σ(log_prob × reward) - entropy_weight × Σ(entropy)
 
 ---
 
-## Current Limitations
+# Traffic-Aware Extensions
 
-1. **Traffic-blind**: The model doesn't know upcoming traffic characteristics
-2. **QoS-agnostic**: All traffic treated equally regardless of QoS type requirements
-3. **Static optimization**: Same topology for all traffic levels (can't adapt to load)
-4. **No load balancing awareness**: Doesn't understand that high traffic benefits from multiple paths
+## Motivation & Implementation
 
----
+The base model optimizes topology based only on **structure** (graph metrics, router specs). The traffic-aware extension addresses these limitations by:
 
-# Proposed Traffic-Aware Extensions
+1. **Prioritizing QoS types**: Real-time traffic receives different treatment than bulk transfer
+2. **Adapting to traffic load**: High traffic → distribute across paths; Low traffic → minimize active routers
+3. **Understanding traffic requirements**: Different SLAs drive different routing strategies
 
-## Motivation
-
-The current model optimizes topology based only on **structure** (graph metrics, router specs). It cannot:
-
-1. **Prioritize QoS types**: Real-time traffic needs different paths than bulk transfer
-2. **Adapt to traffic load**: High traffic → distribute across multiple paths; Low traffic → minimize active routers
-3. **Understand traffic requirements**: Different SLAs require different routing strategies
+**Status**: ✅ **IMPLEMENTED** - The TrafficAwareAgent is the default agent used in training (`USE_TRAFFIC_AWARE = True` in Main.py)
 
 ---
 
-## Proposed Architecture: Dual Pipeline with Cross-Attention
+## Architecture: Dual Pipeline with Cross-Attention
 
 ### High-Level Design
 
@@ -327,7 +335,7 @@ Node 7: [0.1, 0.1, 0.7, 0.1]  → "Node 7 matters for QoS type 2 (bulk transfer)
 
 ---
 
-## Proposed PyTorch Implementation
+## PyTorch Implementation
 
 ```python
 class TrafficAwareAgent(nn.Module):
@@ -453,14 +461,36 @@ class TrafficAwareAgent(nn.Module):
 
 ---
 
-## Adaptive Reward (Complementary Change)
+## Data Flow & Integration
+
+### Traffic Feature Extraction
+
+Traffic features are extracted from the MAWI CSV at each episode:
+
+```python
+# In Main.py training loop
+flows_by_qos = extract_flows_by_qos(row, client_gateways, server_gateways)
+traffic_features = get_traffic_features(row, traffic_norm_constants, qos_profiles)
+actions, p, logits, attn_weights = agent.get_action(m, adj_matrix, traffic_features)
+```
+
+### Normalization Constants
+
+Traffic features are normalized using pre-computed 99th percentile values:
+- **File**: `traffic_norm_constants.json`
+- **Auto-generation**: If missing, automatically computed from CSV via `compute_traffic_norm_constants()`
+- **Consistency**: Same normalization across all training runs
+
+---
+
+## Adaptive Reward (Not Yet Implemented)
 
 ### Motivation
-Current reward penalizes extra routers uniformly. But:
+Current reward penalizes extra routers uniformly. Future extension:
 - **High traffic** → extra routers help with load distribution
 - **Low traffic** → extra routers waste energy
 
-### Proposed Modification
+### Proposed Future Modification
 
 ```python
 def calculate_reward(self, e, q, traffic_intensity):
@@ -489,60 +519,161 @@ def calculate_reward(self, e, q, traffic_intensity):
 
 ---
 
-## Training Pipeline Changes
+## Training Pipeline
 
-### Before (Current)
+### Current Implementation (Traffic-Aware)
 ```python
-state = get_state(adj_matrix, client_gws, server_gws)
-actions, probs, logits = agent.get_action(state, adj_matrix)
-```
+# Extract traffic features grouped by QoS type
+flows_by_qos = extract_flows_by_qos(row, client_gateways, server_gateways)
 
-### After (Traffic-Aware)
-```python
-# Collect state
-graph_data = get_graph_data(adj_matrix, client_gws, server_gws)
-traffic_data = get_traffic_features(upcoming_flows)  # NEW
+# Get node features with per-QoS flow betweenness centrality
+state = get_state(adj_matrix, client_gws, server_gws, original_adj, flows_by_qos)
 
-# Get action with traffic context
-actions, probs, logits, attn_weights = agent.get_action(graph_data, traffic_data)
+# Get traffic features (normalized)
+traffic_features = get_traffic_features(row, traffic_norm_constants, qos_profiles)
 
-# Optional: log attention for interpretability
-log_attention_weights(attn_weights, epoch)
+# Agent decision with cross-attention
+actions, probs, logits, attn_weights = agent.get_action(state, adj_matrix, traffic_features)
+
+# Attention weights [N × 4] show which QoS types influence each node
 ```
 
 ---
 
-## Summary of Changes
+## Implementation Summary
 
-| Component | Current | Proposed |
-|-----------|---------|----------|
-| **Input** | Graph features only | Graph + Traffic features |
+| Component | Base Agent | Traffic-Aware Agent (Current) |
+|-----------|------------|-------------------------------|
+| **Input** | Graph features (18D) | Graph features (22D) + Traffic features (4×8) |
 | **Architecture** | GAT + MLP | GAT + Traffic Encoder + Cross-Attention + MLP |
-| **Output** | Actions | Actions + Attention weights |
-| **Reward** | Fixed r penalty | Traffic-adaptive r penalty |
-| **Interpretability** | Limited | Attention shows QoS-node relationships |
+| **Node Features** | 18 features | 22 features (18 + 4 per-QoS FBC) |
+| **Output** | Actions [N] | Actions [N] + Attention weights [N×4] |
+| **Interpretability** | Limited | Attention reveals QoS-node relationships |
+| **Traffic Awareness** | None | Per-QoS type traffic characteristics |
 
 ---
 
-## Open Questions (To Resolve Before Implementation)
+## Design Decisions
 
-1. **Traffic data source**: Where do traffic features come from?
-   - Fixed config in `sample_data`?
-   - Sampled/varied per episode?
-   - From MAWI CSV?
+1. **Traffic data source**: **MAWI CSV** (`TL_MAWI_balanced.csv`)
+   - Real-world traffic patterns from MAWI-WIDE measurements
+   - Traffic features extracted per-episode from CSV rows
+   - Balanced distribution across traffic levels
 
-2. **Timing**: Is traffic known before agent decides (forecast) or revealed during simulation?
+2. **Timing**: **Known beforehand**
+   - Agent sees upcoming traffic characteristics before topology decisions
+   - Realistic for scheduled/predictable traffic scenarios
+   - Enables informed, traffic-aware routing decisions
 
-3. **What varies per episode?**
-   - Number of flows per QoS type?
-   - Packet sizes and intervals?
-   - QoS weights and SLAs (probably fixed)?
+3. **What varies per episode**:
+   - ✅ **Number of flows per QoS type** - read from MAWI CSV
+   - ✅ **Packet sizes and intervals** - read from MAWI CSV
+   - ✅ **Traffic level** - varies across CSV rows
+   - ❌ **QoS weights and SLAs** - **Fixed** (constant QoS profiles from `sim/utils.py`)
+
+4. **Normalization**:
+   - Traffic features normalized using 99th percentile values
+   - Constants pre-computed from full MAWI CSV
+   - Stored in `traffic_norm_constants.json` for consistency
+
+---
+
+# Training Infrastructure
+
+## Multi-Run Training System
+
+Training uses `multiple_run.py` to execute consecutive 100-epoch runs:
+- Deletes checkpoint at start for fresh training
+- Runs `Main.py` repeatedly (default: 60 runs = 6000 epochs)
+- Each run loads checkpoint from previous run
+- Continuous learning across multiple training sessions
+
+## Checkpoint System
+
+**File**: `agent_weights.pth`
+
+**Contents**:
+```python
+{
+    'agent_state_dict': ...,
+    'optimizer_state_dict': ...,
+    'epoch': last_epoch + 1,
+    'loss_history': [...],
+    'qos_history': [...],
+    'energy_history': [...],
+    'ratio_history': [...],
+    'block_avg_loss': [...],      # Averages per 100-epoch block
+    'block_fails_count': [...],
+    'block_avg_energy': [...],
+    'block_avg_qos': [...],
+    'block_avg_r': [...]
+}
+```
+
+## Failure Handling
+
+### SIM FAIL (Simulation Crash)
+- **Cause**: Disconnected topology, NS-3 routing failure
+- **Behavior**:
+  - Prints debug message if occurs at epoch X99
+  - Skips metric recording (no data added to block)
+  - Advances to next traffic configuration
+  - Continues training without disruption
+
+### REAL FAIL (Packet Loss)
+- **Cause**: Packets fail to reach destination despite valid paths
+- **Behavior**:
+  - Records metrics with penalty reward
+  - Adds to block averages (included in training)
+  - Agent learns to avoid these configurations
+
+### Block Saving Logic
+
+**Normal case** (successful epoch X99):
+```python
+if (epoch + 1) % 100 == 0 and block_losses:
+    # Calculate averages, save block, plot
+```
+
+**SIM FAIL case** (failed epoch X99):
+```python
+# After loop ends:
+if block_losses:
+    # Save incomplete block with accumulated data
+    # Ensures no blocks are lost due to final epoch failure
+```
+
+**Key fix**: Blocks are saved even when the last epoch (X99) fails, preventing data loss.
+
+## Plotting & Visualization
+
+**File**: `results.png`
+
+**Format**: 5 subplots tracking metrics over 100-epoch blocks
+1. Average Loss (purple)
+2. Path Unreachability Count (blue)
+3. Average Energy (red)
+4. Average QoS (black)
+5. Average Router Ratio (green)
+
+**Update frequency**:
+- Every 100 epochs (end of each run)
+- On interrupted/crashed runs (saves partial progress)
+
+## Debug Output
+
+Training includes comprehensive debug logging:
+- `⚠️ DEBUG: SIM FAIL at last epoch of block!` - Critical failure at block boundary
+- `✓ DEBUG: Normal plot saved` - Successful block completion
+- `✓ DEBUG: Final plot saved` - Incomplete block saved after SIM FAIL
+- `✓ DEBUG: Checkpoint saved` - Confirms persistence
 
 ---
 
 ## Future Extensions
 
-1. **Temporal modeling**: Use RNN/Transformer to handle traffic sequences
-2. **Multi-step lookahead**: Consider future traffic windows
-3. **Hierarchical attention**: First attend to QoS types, then to specific flows
-4. **Graph-level traffic injection**: Add traffic as edge features (link utilization)
+1. **Adaptive reward**: Traffic-intensity-based r penalty (currently uniform)
+2. **Temporal modeling**: RNN/Transformer for traffic sequence handling
+3. **Multi-step lookahead**: Consider future traffic windows
+4. **Hierarchical attention**: Attend to QoS types, then specific flows
+5. **Edge-level traffic**: Add traffic as edge features (link utilization)

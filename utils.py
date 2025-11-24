@@ -4,6 +4,7 @@ import networkx as nx
 from networkx.algorithms.simple_paths import shortest_simple_paths
 import csv
 import re
+import pandas as pd
 
 
 def compute_fbc(adj_matrix, flows, K=2, normalise=True):
@@ -473,9 +474,9 @@ def normalize_rtt_features(features, fbc_threshold=0, mode=1, timeout_ms=1000.0)
     return normalized
 
 
-def get_state(adj_matrix, client_gw, servers_gw, original):
+def get_state(adj_matrix, client_gw, servers_gw, original, flows_by_qos=None):
     graph_metrics = collect_graph_metrics(
-        adj_matrix, original, client_gw, servers_gw)
+        adj_matrix, original, client_gw, servers_gw, flows_by_qos=flows_by_qos)
     all_node_state = []
     for node_idx in range(len(adj_matrix)):
         node_state = {
@@ -505,6 +506,11 @@ def get_state(adj_matrix, client_gw, servers_gw, original):
                     'original': graph_metrics['flow_betweenness_centrality']['original'].get(node_idx, 0),
                     'current': graph_metrics['flow_betweenness_centrality']['current'].get(node_idx, 0)
                 },
+                # Per-QoS FBC features (4 new features)
+                'fbc_Interactive_Web': graph_metrics['fbc_per_qos'].get('Interactive_Web', {}).get(node_idx, 0.0),
+                'fbc_Streaming_Media': graph_metrics['fbc_per_qos'].get('Streaming_Media', {}).get(node_idx, 0.0),
+                'fbc_Background_Sync': graph_metrics['fbc_per_qos'].get('Background_Sync', {}).get(node_idx, 0.0),
+                'fbc_Real_Time_Interactive': graph_metrics['fbc_per_qos'].get('Real_Time_Interactive', {}).get(node_idx, 0.0),
                 # Add RTT features
                 'avg_rtt_neigh': graph_metrics['rtt_features'].get(node_idx, {}).get('avg_rtt_neigh', 1),
                 'min_rtt_neigh': graph_metrics['rtt_features'].get(node_idx, {}).get('min_rtt_neigh', 1),
@@ -570,7 +576,7 @@ def generate_ip_node_mappings(adj_matrix, n_clients, n_servers):
     return ip_to_node, node_to_ip
 
 
-def collect_graph_metrics(adj_matrix, original_adj_matrix, client_gateways=None, server_gateways=None):
+def collect_graph_metrics(adj_matrix, original_adj_matrix, client_gateways=None, server_gateways=None, flows_by_qos=None):
     # Convert to numpy arrays once
     current_array = np.array(adj_matrix)
     original_array = np.array(original_adj_matrix)
@@ -596,7 +602,7 @@ def collect_graph_metrics(adj_matrix, original_adj_matrix, client_gateways=None,
             if client != server:  # Avoid self-loops
                 flows.append((client, server))
 
-    # Calculate FBC for both graphs
+    # Calculate FBC for both graphs (total across all flows)
     if flows:
         fbc_original = compute_fbc(original_adj_matrix, flows, K=2)
         fbc_current = compute_fbc(adj_matrix, flows, K=2)
@@ -604,6 +610,13 @@ def collect_graph_metrics(adj_matrix, original_adj_matrix, client_gateways=None,
         # If no flows provided, initialize with zeros
         fbc_original = {i: 0.0 for i in range(len(original_adj_matrix))}
         fbc_current = {i: 0.0 for i in range(len(adj_matrix))}
+
+    # Calculate per-QoS FBC (only for original topology - current changes each step)
+    if flows_by_qos is not None:
+        fbc_per_qos_original = compute_fbc_per_qos(original_adj_matrix, flows_by_qos, K=2)
+    else:
+        # Default: all zeros for each QoS type
+        fbc_per_qos_original = {qos: {i: 0.0 for i in range(len(original_adj_matrix))} for qos in QOS_TYPES}
 
     # Load RTT table and extract features
     rtt_table = load_rtt_table_from_csv('ping.csv')
@@ -659,6 +672,378 @@ def collect_graph_metrics(adj_matrix, original_adj_matrix, client_gateways=None,
             'original': fbc_original,
             'current': fbc_current
         },
+        'fbc_per_qos': fbc_per_qos_original,  # Per-QoS FBC scores
         'rtt_features': rtt_features  # Add RTT features to metrics
     }
     return metrics
+
+
+# =============================================================================
+# Traffic Feature Extraction for Traffic-Aware Agent
+# =============================================================================
+
+# QoS type mapping (must match mawi_q_list keys in sim/utils.py)
+QOS_TYPES = ['Interactive_Web', 'Streaming_Media', 'Background_Sync', 'Real_Time_Interactive']
+
+
+def compute_fbc_per_qos(adj_matrix, flows_by_qos, K=2):
+    """
+    Compute Flow Betweenness Centrality separately for each QoS type.
+
+    Parameters
+    ----------
+    adj_matrix : array-like (N×N)
+        Binary adjacency matrix.
+    flows_by_qos : dict {qos_type: [(src, dst), ...]}
+        Flows grouped by QoS type.
+    K : int
+        Allow paths up to (d_min + K) hops.
+
+    Returns
+    -------
+    dict {qos_type: {node: fbc_score}}
+        FBC scores per node for each QoS type.
+    """
+    fbc_per_qos = {}
+
+    for qos_type in QOS_TYPES:
+        flows = flows_by_qos.get(qos_type, [])
+        if flows:
+            fbc_per_qos[qos_type] = compute_fbc(adj_matrix, flows, K=K, normalise=True)
+        else:
+            # No flows of this type - all nodes get 0
+            N = len(adj_matrix)
+            fbc_per_qos[qos_type] = {i: 0.0 for i in range(N)}
+
+    return fbc_per_qos
+
+
+def extract_flows_by_qos(row, client_gateways, server_gateways):
+    """
+    Extract flows grouped by QoS type from a MAWI CSV row.
+
+    Parameters
+    ----------
+    row : pd.Series
+        Processed row from MAWI CSV (after process_row())
+    client_gateways : list
+        List of client gateway nodes
+    server_gateways : list
+        List of server gateway nodes
+
+    Returns
+    -------
+    dict {qos_type: [(src, dst), ...]}
+        Flows (as gateway pairs) grouped by QoS type.
+    """
+    flows_by_qos = {qos: [] for qos in QOS_TYPES}
+
+    # Find all flow columns
+    flow_cols = [c for c in row.index if c.startswith('F') and c.endswith('/T')]
+
+    for col in flow_cols:
+        flow_num = col.replace('/T', '')  # e.g., 'F1'
+        flow_idx = int(flow_num[1:]) - 1  # 'F1' -> 0, 'F2' -> 1, etc.
+
+        # Skip if flow index exceeds gateways
+        if flow_idx >= len(client_gateways) or flow_idx >= len(server_gateways):
+            continue
+
+        throughput = row.get(col, 0)
+        packets = row.get(f'{flow_num}/P', 0)
+
+        # Skip zero flows
+        if throughput == 0 or packets == 0:
+            continue
+
+        q_type_col = f'{flow_num}/q_type'
+        if q_type_col not in row.index:
+            continue
+
+        q_type = row[q_type_col]
+        if q_type not in QOS_TYPES:
+            continue
+
+        # Map flow to gateway pair
+        src_gw = client_gateways[flow_idx]
+        dst_gw = server_gateways[flow_idx % len(server_gateways)]
+
+        if src_gw != dst_gw:
+            flows_by_qos[q_type].append((src_gw, dst_gw))
+
+    return flows_by_qos
+
+
+def load_traffic_norm_constants(json_path='./traffic_norm_constants.json'):
+    """
+    Load pre-computed normalization constants from JSON file.
+
+    Parameters
+    ----------
+    json_path : str
+        Path to the JSON file with normalization constants
+
+    Returns
+    -------
+    dict : Normalization constants for each feature per QoS type
+    """
+    import json
+
+    with open(json_path, 'r') as f:
+        norm_constants = json.load(f)
+
+    return norm_constants
+
+
+def compute_traffic_norm_constants(csv_path, percentile=99):
+    """
+    Scan MAWI CSV once to compute normalization constants using percentile values.
+
+    Parameters
+    ----------
+    csv_path : str
+        Path to the MAWI CSV file (e.g., TL_MAWI_balanced.csv)
+    percentile : int
+        Percentile to use for normalization (default 99 to avoid outliers)
+
+    Returns
+    -------
+    dict : Normalization constants for each feature per QoS type
+    """
+    import pandas as pd
+
+    df = pd.read_csv(csv_path)
+
+    # Initialize collectors per QoS type
+    stats = {qos: {
+        'n_flows': [],
+        'n_packets': [],
+        'avg_packet_size': [],
+        'packet_rate': []
+    } for qos in QOS_TYPES}
+
+    # Also track total packets for traffic intensity calculation
+    total_packets_per_row = []
+
+    # Process each row
+    for idx, row in df.iterrows():
+        # Find all flow columns
+        flow_cols = [c for c in df.columns if c.startswith('F') and c.endswith('/T')]
+
+        # Count flows per QoS type for this row
+        qos_counts = {qos: 0 for qos in QOS_TYPES}
+        qos_packets = {qos: 0 for qos in QOS_TYPES}
+        qos_packet_sizes = {qos: [] for qos in QOS_TYPES}
+        qos_intervals = {qos: [] for qos in QOS_TYPES}
+
+        row_total_packets = 0
+
+        for col in flow_cols:
+            flow_num = col.replace('/T', '')  # e.g., 'F1'
+            throughput = row.get(col, 0)
+            packets = row.get(f'{flow_num}/P', 0)
+
+            # Skip zero/NaN flows
+            if pd.isna(throughput) or pd.isna(packets) or throughput == 0 or packets == 0:
+                continue
+
+            q_type_col = f'{flow_num}/q_type'
+            if q_type_col not in row:
+                continue
+
+            q_type = row[q_type_col]
+            if pd.isna(q_type) or q_type not in QOS_TYPES:
+                continue
+
+            qos_counts[q_type] += 1
+            qos_packets[q_type] += int(packets)
+            row_total_packets += int(packets)
+
+            # Packet size
+            pkt_size = row.get(f'{flow_num}/Avg_packet_size', 0)
+            if not pd.isna(pkt_size) and pkt_size > 0:
+                qos_packet_sizes[q_type].append(pkt_size)
+
+            # Interval (for packet rate)
+            interval = row.get(f'{flow_num}/interval', 0)
+            if not pd.isna(interval) and interval > 0:
+                qos_intervals[q_type].append(interval)
+
+        total_packets_per_row.append(row_total_packets)
+
+        # Aggregate stats for this row
+        for qos in QOS_TYPES:
+            if qos_counts[qos] > 0:
+                stats[qos]['n_flows'].append(qos_counts[qos])
+                stats[qos]['n_packets'].append(qos_packets[qos])
+
+                if qos_packet_sizes[qos]:
+                    stats[qos]['avg_packet_size'].append(np.mean(qos_packet_sizes[qos]))
+
+                if qos_intervals[qos]:
+                    # Packet rate = 1 / average_interval
+                    avg_interval = np.mean(qos_intervals[qos])
+                    if avg_interval > 0:
+                        stats[qos]['packet_rate'].append(1.0 / avg_interval)
+
+    # Compute percentile values for normalization
+    norm_constants = {}
+
+    for qos in QOS_TYPES:
+        norm_constants[qos] = {}
+        for feature in ['n_flows', 'n_packets', 'avg_packet_size', 'packet_rate']:
+            values = stats[qos][feature]
+            if values:
+                norm_constants[qos][feature] = float(np.percentile(values, percentile))
+            else:
+                # Default values if no data
+                norm_constants[qos][feature] = 1.0
+
+    # Add total packets normalization for traffic intensity
+    if total_packets_per_row:
+        norm_constants['max_total_packets'] = float(np.percentile(total_packets_per_row, percentile))
+    else:
+        norm_constants['max_total_packets'] = 1.0
+
+    # Add strictness normalization (max is 1/min_sla_delay)
+    # Real_Time_Interactive has sla_delay=0.080, so max strictness = 1/0.08 = 12.5
+    norm_constants['max_strictness'] = 12.5
+
+    return norm_constants
+
+
+def get_traffic_features(row, norm_constants, qos_profiles):
+    """
+    Extract normalized traffic features from a MAWI CSV row.
+
+    Parameters
+    ----------
+    row : pd.Series
+        Processed row from MAWI CSV (after process_row())
+    norm_constants : dict
+        Normalization constants from compute_traffic_norm_constants()
+    qos_profiles : dict
+        QoS profiles dict (mawi_q_list from sim/utils.py)
+
+    Returns
+    -------
+    torch.Tensor : [4, 8] tensor of normalized traffic features
+        Rows: QoS types (Interactive_Web, Streaming_Media, Background_Sync, Real_Time_Interactive)
+        Cols: n_flows, n_packets, avg_packet_size, packet_rate, w_delay, w_jitter, w_loss, strictness
+    """
+    import torch
+
+    # Initialize feature matrix [4 QoS types, 8 features]
+    features = torch.zeros(4, 8, dtype=torch.float32)
+
+    # Find all flow columns in this row
+    flow_cols = [c for c in row.index if c.startswith('F') and c.endswith('/T')]
+
+    # Aggregate per QoS type
+    qos_data = {qos: {
+        'n_flows': 0,
+        'n_packets': 0,
+        'packet_sizes': [],
+        'intervals': []
+    } for qos in QOS_TYPES}
+
+    for col in flow_cols:
+        flow_num = col.replace('/T', '')  # e.g., 'F1'
+        throughput = row.get(col, 0)
+        packets = row.get(f'{flow_num}/P', 0)
+
+        # Skip NaN or zero flows
+        if pd.isna(throughput) or pd.isna(packets) or throughput == 0 or packets == 0:
+            continue
+
+        q_type_col = f'{flow_num}/q_type'
+        if q_type_col not in row.index:
+            continue
+
+        q_type = row[q_type_col]
+        if q_type not in QOS_TYPES:
+            continue
+
+        qos_data[q_type]['n_flows'] += 1
+        qos_data[q_type]['n_packets'] += int(packets)
+
+        # Packet size
+        pkt_size = row.get(f'{flow_num}/Avg_packet_size', 0)
+        if not pd.isna(pkt_size) and pkt_size > 0:
+            qos_data[q_type]['packet_sizes'].append(pkt_size)
+
+        # Interval
+        interval = row.get(f'{flow_num}/interval', 0)
+        if not pd.isna(interval) and interval > 0:
+            qos_data[q_type]['intervals'].append(interval)
+
+    # Build feature tensor
+    for qos_idx, qos in enumerate(QOS_TYPES):
+        data = qos_data[qos]
+        qos_norm = norm_constants.get(qos, {})
+        qos_profile = qos_profiles.get(qos, {})
+
+        # Feature 0: n_flows (normalized)
+        max_flows = qos_norm.get('n_flows', 1.0)
+        features[qos_idx, 0] = min(1.0, data['n_flows'] / max_flows) if max_flows > 0 else 0.0
+
+        # Feature 1: n_packets (normalized)
+        max_packets = qos_norm.get('n_packets', 1.0)
+        features[qos_idx, 1] = min(1.0, data['n_packets'] / max_packets) if max_packets > 0 else 0.0
+
+        # Feature 2: avg_packet_size (normalized)
+        if data['packet_sizes']:
+            avg_pkt_size = np.mean(data['packet_sizes'])
+            max_pkt_size = qos_norm.get('avg_packet_size', 1500.0)
+            features[qos_idx, 2] = min(1.0, avg_pkt_size / max_pkt_size) if max_pkt_size > 0 else 0.0
+        else:
+            features[qos_idx, 2] = 0.0
+
+        # Feature 3: packet_rate (normalized)
+        if data['intervals']:
+            avg_interval = np.mean(data['intervals'])
+            packet_rate = 1.0 / avg_interval if avg_interval > 0 else 0.0
+            max_rate = qos_norm.get('packet_rate', 1.0)
+            features[qos_idx, 3] = min(1.0, packet_rate / max_rate) if max_rate > 0 else 0.0
+        else:
+            features[qos_idx, 3] = 0.0
+
+        # Feature 4: w_delay (already in [0, 1])
+        features[qos_idx, 4] = float(qos_profile.get('w_d', 0.0))
+
+        # Feature 5: w_jitter (already in [0, 1])
+        features[qos_idx, 5] = float(qos_profile.get('w_j', 0.0))
+
+        # Feature 6: w_loss (already in [0, 1])
+        features[qos_idx, 6] = float(qos_profile.get('w_l', 0.0))
+
+        # Feature 7: strictness = 1/sla_delay (normalized)
+        sla_delay = qos_profile.get('sla_delay', 1.0)
+        strictness = 1.0 / sla_delay if sla_delay > 0 else 0.0
+        max_strictness = norm_constants.get('max_strictness', 12.5)
+        features[qos_idx, 7] = min(1.0, strictness / max_strictness)
+
+    return features
+
+
+def compute_traffic_intensity(row, norm_constants):
+    """
+    Compute traffic intensity for adaptive reward calculation.
+
+    Parameters
+    ----------
+    row : pd.Series
+        Processed row from MAWI CSV
+    norm_constants : dict
+        Normalization constants
+
+    Returns
+    -------
+    float : Traffic intensity in [0, 1] range
+    """
+    # Sum all packets in this row
+    flow_cols = [c for c in row.index if c.startswith('F') and c.endswith('/P')]
+    total_packets = sum(row.get(col, 0) for col in flow_cols if row.get(col, 0) > 0)
+
+    max_packets = norm_constants.get('max_total_packets', 1.0)
+    return min(1.0, total_packets / max_packets) if max_packets > 0 else 0.0

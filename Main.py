@@ -18,18 +18,34 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import pandas as pd
 import time
 from rl_env import NetworkEnv
-from agent import Agent
-from utils import *
+from agent import Agent, TrafficAwareAgent
+from utils import (
+    get_state, changeAdj, get_gw, generate_ip_node_mappings,
+    extract_flows_by_qos, get_traffic_features, compute_traffic_intensity,
+    load_traffic_norm_constants, QOS_TYPES
+)
+from sim.utils import sample_data as sim_sample_data  # For QoS profiles
 import random
 from ns import ns
 import matplotlib.pyplot as plt
 import matplotlib
 import torch
 import subprocess
+import networkx as nx
+import numpy as np
+import re
 
 matplotlib.use('Agg')
 t = time.time()
-agent = Agent(num_node_features=18, hidden_channels1=64, hidden_channels2=32)
+
+
+USE_TRAFFIC_AWARE = True  # Set to False to use original Agent
+
+# 22 features: 18 original + 4 per-QoS FBC
+if USE_TRAFFIC_AWARE:
+    agent = TrafficAwareAgent(num_node_features=22, hidden=64, n_qos_types=4, traffic_feat_per_qos=8)
+else:
+    agent = Agent(num_node_features=22, hidden_channels1=64, hidden_channels2=32)
 torch.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=0.5)
 
 # original_adj_matrix = [
@@ -136,9 +152,13 @@ def process_row(row):
     non_fx = ['date', 'time', 'timestamp', 'Total/T', 'Total/P', 'traffic_level']
     sfxs = ['/T', '/P', '/Avg_packet_size',
             '/n_packets', '/interval', '/q_type', '_ips']
+
+    # Filter flows: exclude if T or P is NaN or zero
     v_idx = [int(re.search(r'\d+', c).group()) for c in sorted([c for c in row.index if re.match(
         r'F\d+/T', c)], key=lambda x: int(re.search(r'\d+', x).group()))
-        if row.get(c, 0) != 0 and row.get(c.replace('/T', '/P'), 0) != 0]
+        if not pd.isna(row.get(c, 0)) and not pd.isna(row.get(c.replace('/T', '/P'), 0))
+        and row.get(c, 0) != 0 and row.get(c.replace('/T', '/P'), 0) != 0]
+
     fx_data = {f'F{n_i}{s}': row[f'F{o_i}{s}'] for n_i, o_i in enumerate(
         v_idx, 1) for s in sfxs if f'F{o_i}{s}' in row}
     return pd.Series({**row[non_fx].to_dict(), **fx_data}), len(v_idx)
@@ -146,13 +166,35 @@ def process_row(row):
 
 adj_matrix = original_adj_matrix.copy()
 # conf = pd.read_csv("./timestamps/TL_MAWI-WIDE_2023-2025.csv")
-conf = pd.read_csv("./timestamps/TL_MAWI_balanced.csv")
+CSV_PATH = "./timestamps/TL_MAWI_balanced.csv"
+conf = pd.read_csv(CSV_PATH)
 # Filter to only include rows with specified traffic levels (if enabled)
 if FILTER_TRAFFIC_LEVELS:
     conf = conf[conf['traffic_level'].isin(TRAFFIC_LEVELS)].reset_index(drop=True)
     print(f"Filtered dataset to {len(conf)} rows with traffic levels: {TRAFFIC_LEVELS}")
 else:
     print(f"Using full dataset with {len(conf)} rows (no traffic level filtering)")
+
+# Load traffic normalization constants (pre-computed from main CSV)
+if USE_TRAFFIC_AWARE:
+    import json
+    try:
+        print("Loading traffic normalization constants from traffic_norm_constants.json...")
+        traffic_norm_constants = load_traffic_norm_constants('./traffic_norm_constants.json')
+        print(f"✓ Loaded norm constants for {len(QOS_TYPES)} QoS types")
+    except FileNotFoundError:
+        print("traffic_norm_constants.json not found!")
+        print("Computing normalization constants from CSV (this may take a moment)...")
+        from utils import compute_traffic_norm_constants
+        traffic_norm_constants = compute_traffic_norm_constants(CSV_PATH, percentile=99)
+
+        # Save the generated constants for future runs
+        with open('./traffic_norm_constants.json', 'w') as f:
+            json.dump(traffic_norm_constants, f, indent=2)
+        print(f"✓ Generated and saved traffic_norm_constants.json")
+        print(f"✓ Computed norm constants for {len(QOS_TYPES)} QoS types")
+
+    qos_profiles = sim_sample_data['mawi_q_list']
 row = conf.iloc[0]
 fx_t_columns = [col for col in conf.columns if col.startswith(
     'F') and col.endswith('/T')]
@@ -207,11 +249,28 @@ for epoch in range(start_epoch, start_epoch + 100):
 
     print('-'*20, f" Epoch: {epoch} ", '-'*20)
 
+    # Extract flows grouped by QoS type for per-QoS FBC computation
+    if USE_TRAFFIC_AWARE:
+        flows_by_qos = extract_flows_by_qos(row, client_gateways, server_gateways)
+    else:
+        flows_by_qos = None
+
     m = get_state(adj_matrix, client_gateways,
-                  server_gateways, original_adj_matrix)
-    actions, p, logits = agent.get_action(m, adj_matrix)
+                  server_gateways, original_adj_matrix, flows_by_qos=flows_by_qos)
+
+    # Get actions from agent (with or without traffic features)
+    if USE_TRAFFIC_AWARE:
+        traffic_features = get_traffic_features(row, traffic_norm_constants, qos_profiles)
+        actions, p, logits, attn_weights = agent.get_action(m, adj_matrix, traffic_features)
+    else:
+        actions, p, logits = agent.get_action(m, adj_matrix)
 
     adj_matrix = changeAdj(actions, original_adj_matrix)
+
+    # Compute traffic intensity for adaptive reward
+    # Note: traffic_intensity for adaptive reward not implemented yet
+    # if USE_TRAFFIC_AWARE:
+    #     traffic_intensity = compute_traffic_intensity(row, traffic_norm_constants)
 
     env = NetworkEnv(
         simulation_duration=SIMULATION_TIME,
@@ -232,7 +291,7 @@ for epoch in range(start_epoch, start_epoch + 100):
             np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
         print("="*20, f" SIM FAIL TL: {row.get('traffic_level', 'N/A')} ", "="*20)
         ns.Simulator.Destroy()
-        
+
         # Advance to next row to avoid infinite loop
         adj_matrix = original_adj_matrix.copy()
         next_row_idx = (epoch + 1) % len(conf)
@@ -241,12 +300,12 @@ for epoch in range(start_epoch, start_epoch + 100):
             next_row_idx = (next_row_idx + 1) % len(conf)
             print("Redundant row")
             row, non_zero_count = process_row(conf.iloc[next_row_idx])
-        
+
         # Update clients/servers for new row
         n_clients = non_zero_count
         n_servers = non_zero_count
         client_gateways, server_gateways = get_gw(adj_matrix, n_clients, n_servers)
-        
+
         continue
     elif fail:
         print("REAL FAIL")
@@ -283,7 +342,8 @@ for epoch in range(start_epoch, start_epoch + 100):
     # print("Sigmoid probabilities:", p.view(-1))
     # print("Sampled actions:", actions.view(-1))
 
-    if successful_epochs_in_block >= 100:
+    # Save plot after every 100 epochs (regardless of failures)
+    if (epoch + 1) % 100 == 0 and block_losses:
         avg_loss = sum(block_losses) / len(block_losses)
         avg_energy = sum(block_energies) / len(block_energies)
         avg_qos = sum(block_qos) / len(block_qos)
@@ -348,6 +408,50 @@ for epoch in range(start_epoch, start_epoch + 100):
 
         client_gateways, server_gateways = get_gw(
             adj_matrix, n_clients, n_servers)
+
+# Save final plot if there's incomplete block data (for interrupted runs)
+if block_losses:
+    # First, save the current incomplete block before plotting
+    avg_loss = sum(block_losses) / len(block_losses)
+    avg_energy = sum(block_energies) / len(block_energies)
+    avg_qos = sum(block_qos) / len(block_qos)
+    avg_r = sum(block_ratios) / len(block_ratios) if block_ratios else 0
+
+    block_avg_loss.append(avg_loss)
+    block_fails_count.append(fails)
+    block_avg_energy.append(avg_energy)
+    block_avg_qos.append(avg_qos)
+    block_avg_r.append(avg_r)
+
+    x = [(i+1) * 100 for i in range(len(block_avg_loss))]
+
+    fig, axes = plt.subplots(5, 1, figsize=(8, 12), sharex=True)
+    fig.suptitle(f'Metrics by 100-Epoch Block up to Epoch {epoch+1}', fontsize=14)
+
+    axes[0].plot(x, block_avg_loss, color='purple', marker='o')
+    axes[0].set_ylabel('Avg Loss History')
+    axes[0].grid(True)
+
+    axes[1].plot(x, block_fails_count, color='blue', marker='o')
+    axes[1].set_ylabel('Avg Path Unreachability History')
+    axes[1].grid(True)
+
+    axes[2].plot(x, block_avg_energy, color='red', marker='o')
+    axes[2].set_ylabel('Avg Energy History')
+    axes[2].grid(True)
+
+    axes[3].plot(x, block_avg_qos, color='black', marker='o')
+    axes[3].set_ylabel('Avg Qos History')
+    axes[3].grid(True)
+
+    axes[4].plot(x, block_avg_r, color='green', marker='o')
+    axes[4].set_ylabel('Avg Ratio (r) History')
+    axes[4].set_xlabel('Epochs')
+    axes[4].grid(True)
+
+    plt.savefig('results.png')
+    plt.close()
+    print("✓ Saved results.png")
 
 torch.save({
     'agent_state_dict': agent.state_dict(),
