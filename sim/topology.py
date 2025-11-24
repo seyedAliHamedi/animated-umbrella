@@ -158,6 +158,18 @@ class Topology:
             for (i, j, ltype, rate, delay, qpkts, err) in LINK_TABLE
         }
 
+        # Load router queue sizes from mawi_routers_one_per_city
+        router_specs = sample_data["mawi_routers_one_per_city"]
+
+        # Calculate degree (number of interfaces) for each router
+        router_degrees = [sum(self.adj_matrix[i]) for i in range(self.N_routers)]
+
+        # Queue per interface = total queue / number of interfaces
+        router_queue_per_interface = {
+            i: router_specs[i]["Queue_size_packets"] // router_degrees[i]
+            for i in range(self.N_routers)
+        }
+
         # ────────────────────────────────────────────────────────────────
         # 1)  Replace your old “random distribute” block with this loop
         # ────────────────────────────────────────────────────────────────
@@ -170,7 +182,13 @@ class Topology:
                 # --- fetch the spec for this (i,j) edge ---------------
                 spec_key = (i, j)
                 assert spec_key in link_specs, f"Edge {spec_key} missing in LINK_TABLE"
-                link_type, rate, delay, q_pkts, err_rate = link_specs[spec_key]
+                link_type, rate, delay, _, err_rate = link_specs[spec_key]
+
+                # Queue size is min of the two endpoint router queue-per-interface sizes
+                q_pkts = min(
+                    router_queue_per_interface[i],
+                    router_queue_per_interface[j]
+                )
 
                 # --- create the helper --------------------------------
                 if link_type == "p2p":
