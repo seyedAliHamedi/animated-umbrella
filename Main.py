@@ -228,6 +228,11 @@ successful_epochs_in_block = 0
 fails = 0
 start_epoch = 0
 
+# Per-q_type QoS tracking
+QOS_TYPES_LIST = ["Interactive_Web", "Streaming_Media", "Background_Sync", "Real_Time_Interactive"]
+block_qos_by_type = {q_type: [] for q_type in QOS_TYPES_LIST}  # Accumulate per epoch within block
+block_avg_qos_by_type = {q_type: [] for q_type in QOS_TYPES_LIST}  # Store block averages
+
 if os.path.exists('./agent_weights.pth'):
     checkpoint = torch.load('./agent_weights.pth', weights_only=True)
     agent.load_state_dict(checkpoint['agent_state_dict'])
@@ -242,6 +247,9 @@ if os.path.exists('./agent_weights.pth'):
     block_avg_energy = checkpoint['block_avg_energy']
     block_avg_qos = checkpoint['block_avg_qos']
     block_avg_r = checkpoint['block_avg_r']
+    # Load per-q_type tracking if available (for backward compatibility)
+    if 'block_avg_qos_by_type' in checkpoint:
+        block_avg_qos_by_type = checkpoint['block_avg_qos_by_type']
 
 
 SIMULATION_TIME = 1
@@ -286,7 +294,23 @@ for epoch in range(start_epoch, start_epoch + 100):
         n_apps=non_zero_count,
     )
 
-    metrics, reward, fail, ratio, e, q = env.step()
+    metrics, reward, fail, ratio, e, q, qos_by_type = env.step()
+
+    # If there's a real fail, set QoS to 0 for q_types that completely failed (had flows but no successful packets)
+    if fail:
+        # Extract expected q_types from the configuration (flows that were supposed to exist)
+        if USE_TRAFFIC_AWARE and flows_by_qos:
+            expected_q_types = [q_type for q_type, flow_list in flows_by_qos.items() if flow_list]
+        else:
+            # Fallback: extract from row configuration directly
+            flow_cols = [c for c in row.index if c.startswith('F') and c.endswith('/q_type')]
+            expected_q_types = list(set([row[c] for c in flow_cols if c in row.index and row[c] in QOS_TYPES_LIST]))
+
+        # For q_types that were expected but not in qos_by_type (completely failed), set to 0
+        for q_type in expected_q_types:
+            if q_type not in qos_by_type:
+                qos_by_type[q_type] = 0.0
+
     if fail and len(list(nx.all_simple_paths(nx.from_numpy_array(
             np.array(adj_matrix)), client_gateways[0], server_gateways[0]))) > 0:
         print("="*20, f" SIM FAIL TL: {row.get('traffic_level', 'N/A')} ", "="*20)
@@ -328,6 +352,11 @@ for epoch in range(start_epoch, start_epoch + 100):
     qos_history.append(q)
     block_qos.append(q)
 
+    # Accumulate per-q_type QoS scores
+    for q_type in QOS_TYPES_LIST:
+        if q_type in qos_by_type:
+            block_qos_by_type[q_type].append(qos_by_type[q_type])
+
     if ratio != 0:
         ratio_history.append(ratio)
         block_ratios.append(ratio)
@@ -354,6 +383,15 @@ for epoch in range(start_epoch, start_epoch + 100):
         block_avg_energy.append(avg_energy)
         block_avg_qos.append(avg_qos)
         block_avg_r.append(avg_r)
+
+        # Compute per-q_type averages for this block
+        for q_type in QOS_TYPES_LIST:
+            if block_qos_by_type[q_type]:
+                avg_qos_for_type = sum(block_qos_by_type[q_type]) / len(block_qos_by_type[q_type])
+                block_avg_qos_by_type[q_type].append(avg_qos_for_type)
+            else:
+                # If no data for this q_type in this block, append None or 0
+                block_avg_qos_by_type[q_type].append(None)
 
         x = [(i+1) * 100 for i in range(len(block_avg_loss))]
 
@@ -384,10 +422,32 @@ for epoch in range(start_epoch, start_epoch + 100):
 
         plt.savefig('results.png')
         plt.close()
+
+        # Create per-q_type QoS plot
+        fig_qos, ax_qos = plt.subplots(figsize=(10, 6))
+        fig_qos.suptitle(f'QoS Scores by Type (100-Epoch Blocks) up to Epoch {epoch+1}', fontsize=14)
+
+        for q_type in QOS_TYPES_LIST:
+            # Filter out None values and their corresponding x values
+            data = [(x_val, y_val) for x_val, y_val in zip(x, block_avg_qos_by_type[q_type]) if y_val is not None]
+            if data:
+                x_filtered, y_filtered = zip(*data)
+                ax_qos.plot(x_filtered, y_filtered, marker='o', label=q_type, linewidth=2)
+
+        ax_qos.set_xlabel('Epochs')
+        ax_qos.set_ylabel('Average QoS Score')
+        ax_qos.legend(loc='best')
+        ax_qos.grid(True)
+        plt.tight_layout()
+        plt.savefig('QoS.png')
+        plt.close()
+
         block_losses = []
         block_energies = []
         block_qos = []
         block_ratios = []
+        # Clear per-q_type accumulators
+        block_qos_by_type = {q_type: [] for q_type in QOS_TYPES_LIST}
         successful_epochs_in_block = 0
         fails = 0
 
@@ -423,6 +483,14 @@ if block_losses:
     block_avg_qos.append(avg_qos)
     block_avg_r.append(avg_r)
 
+    # Compute per-q_type averages for final incomplete block
+    for q_type in QOS_TYPES_LIST:
+        if block_qos_by_type[q_type]:
+            avg_qos_for_type = sum(block_qos_by_type[q_type]) / len(block_qos_by_type[q_type])
+            block_avg_qos_by_type[q_type].append(avg_qos_for_type)
+        else:
+            block_avg_qos_by_type[q_type].append(None)
+
     x = [(i+1) * 100 for i in range(len(block_avg_loss))]
 
     fig, axes = plt.subplots(5, 1, figsize=(8, 12), sharex=True)
@@ -453,6 +521,26 @@ if block_losses:
     plt.close()
     print("✓ Saved results.png")
 
+    # Create per-q_type QoS plot for final block
+    fig_qos, ax_qos = plt.subplots(figsize=(10, 6))
+    fig_qos.suptitle(f'QoS Scores by Type (100-Epoch Blocks) up to Epoch {epoch+1}', fontsize=14)
+
+    for q_type in QOS_TYPES_LIST:
+        # Filter out None values and their corresponding x values
+        data = [(x_val, y_val) for x_val, y_val in zip(x, block_avg_qos_by_type[q_type]) if y_val is not None]
+        if data:
+            x_filtered, y_filtered = zip(*data)
+            ax_qos.plot(x_filtered, y_filtered, marker='o', label=q_type, linewidth=2)
+
+    ax_qos.set_xlabel('Epochs')
+    ax_qos.set_ylabel('Average QoS Score')
+    ax_qos.legend(loc='best')
+    ax_qos.grid(True)
+    plt.tight_layout()
+    plt.savefig('QoS.png')
+    plt.close()
+    print("✓ Saved QoS.png")
+
 torch.save({
     'agent_state_dict': agent.state_dict(),
     'optimizer_state_dict': agent.optimizer.state_dict(),
@@ -465,7 +553,8 @@ torch.save({
     'block_fails_count': block_fails_count,
     'block_avg_energy': block_avg_energy,
     'block_avg_qos': block_avg_qos,
-    'block_avg_r': block_avg_r
+    'block_avg_r': block_avg_r,
+    'block_avg_qos_by_type': block_avg_qos_by_type
 }, "./agent_weights.pth")
 # print('\n\n', '-'*50, ' Saved ', '-'*50, '\n\n')
 print("HEHEHEHHEHEHEHEH", time.time()-t)

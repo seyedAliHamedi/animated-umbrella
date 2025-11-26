@@ -115,7 +115,7 @@ class NetworkEnv:
                 f"[timing] calculate_energy: {time.time()-energy_start:.3f}s")
 
         qos_start = time.time()
-        q = self.calculate_qos()
+        q, qos_by_type = self.calculate_qos()
         if SHOW_TIMING:
             print(f"[timing] calculate_qos: {time.time()-qos_start:.3f}s")
 
@@ -125,7 +125,7 @@ class NetworkEnv:
             print(
                 f"[timing] calculate_reward: {time.time()-reward_start:.3f}s")
             print(f"[timing] step_total: {time.time()-overall_start:.3f}s")
-        return None, reward, f, r, e_eff, q
+        return None, reward, f, r, e_eff, q, qos_by_type
 
     def run_simulation(self, duration):
         i = 0
@@ -234,6 +234,9 @@ class NetworkEnv:
 
         W = []
         Q = []
+        # Track per-q_type scores
+        qos_by_type = {}  # {q_type: [list of q scores]}
+
         for flow_id, flow in self.monitor.flow_info.items():
             q_type = flow["q_type"]
             cfg = sample_data["mawi_q_list"][q_type]
@@ -266,6 +269,7 @@ class NetworkEnv:
             #     b_norm = 1.0
 
             q = 1 - (w_j * j + w_d * d + w_l * l)
+            # print(f"q type: {q_type}, score: {q}")
             # if q < 0.5:
             #     print(f"l: {l}, d: {d}, j: {j}")
         #     q = 1.0 - (
@@ -277,13 +281,22 @@ class NetworkEnv:
             # q = max(0.0, min(1.0, q))
             Q.append(q)
 
+            # Track score by q_type
+            if q_type not in qos_by_type:
+                qos_by_type[q_type] = []
+            qos_by_type[q_type].append(q)
+
         total_weight = sum(W)
         if total_weight == 0:
-            return 0
+            return 0, {}
 
         weighted_qos = sum(w * q for w, q in zip(W, Q)) / total_weight
 
-        return weighted_qos
+        # Average the scores per q_type
+        avg_qos_by_type = {q_type: sum(scores) / len(scores)
+                           for q_type, scores in qos_by_type.items()}
+
+        return weighted_qos, avg_qos_by_type
 
     def collect_edge_features(self):
         # Optimized packet processing without pandas in hot loop
